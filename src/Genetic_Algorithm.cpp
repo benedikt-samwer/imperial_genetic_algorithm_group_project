@@ -39,9 +39,22 @@ int optimize(int int_vector_size, int *int_vector,
   // We'll grow a population of these:
   std::vector<std::vector<int>> population;
 
-  // TODO: initialize `population` with `params.population_size` random genomes
-  //        each of length `int_vector_size`, genes in [min_gene..max_gene].
+  // --- 1. Initialize population
+  int n_units = (int_vector_size - 1) / 2;
+  int min_gene = -3;
+  int max_gene = n_units + 2;
+  std::uniform_int_distribution<int> gene_dist(min_gene, max_gene);
 
+  population.clear();
+  population.reserve(params.population_size);
+
+  while (population.size() < params.population_size) {
+    std::vector<int> genome(int_vector_size);
+    for (int &g : genome)
+      g = gene_dist(rng());
+    if (validity(int_vector_size, genome.data()))
+      population.push_back(std::move(genome));
+  }
   // --- 2. Main GA loop
   for (int gen = 0; gen < params.max_iterations; ++gen) {
     // 2a) Evaluate fitness of each genome
