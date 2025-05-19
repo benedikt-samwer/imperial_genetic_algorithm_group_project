@@ -41,6 +41,46 @@ This represents:
 - Intermediate stream from unit 2 goes to Palusznium product
 - Tailings stream from unit 2 goes to Gormanium product
 
+#### Visual Representation
+
+```mermaid
+graph TD;
+    %% Define nodes
+    Feed([Circuit Feed])
+    Unit0[Unit 0]
+    Unit1[Unit 1]
+    Unit2[Unit 2]
+    Palusznium[Palusznium Product]
+    Gormanium[Gormanium Product]
+    Tailings[Tailings Output]
+    
+    %% Define connections
+    Feed -->|Feed| Unit0
+    
+    Unit0 -->|High-grade| Unit1
+    Unit0 -->|Intermediate| Unit2
+    Unit0 -->|Tailings| Tailings
+    
+    Unit1 -->|High-grade| Palusznium
+    Unit1 -->|Intermediate| Gormanium
+    Unit1 -->|Tailings| Tailings
+    
+    Unit2 -->|High-grade| Unit0
+    Unit2 -->|Intermediate| Palusznium
+    Unit2 -->|Tailings| Gormanium
+    
+    %% Styling
+    classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef product fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef feed fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef tailings fill:#fbb,stroke:#333,stroke-width:2px;
+    
+    class Unit0,Unit1,Unit2 unit;
+    class Palusznium,Gormanium product;
+    class Feed feed;
+    class Tailings tailings;
+```
+
 ## 2. Key Data Structures
 
 ### 2.1 Separation Unit (CUnit)
@@ -147,3 +187,112 @@ Valid circuits must satisfy the following conditions:
 4. All products from a unit should not point to the same destination
 
 Circuits that violate these conditions may fail to converge or be physically unreasonable. 
+
+## Appendix A: Common Circuit Configurations
+
+### A.1 Two-Stage Simple Circuit
+
+Vector: `[0, 2, 1, -3, -1, -2, -3]`
+
+```mermaid
+graph TD;
+    Feed([Circuit Feed])
+    Unit0[Unit 0]
+    Unit1[Unit 1]
+    Unit2[Unit 2]
+    Palusznium[Palusznium Product]
+    Gormanium[Gormanium Product]
+    Tailings[Tailings Output]
+    
+    Feed -->|Feed| Unit0
+    
+    Unit0 -->|High-grade| Unit2
+    Unit0 -->|Intermediate| Unit1
+    Unit0 -->|Tailings| Tailings
+    
+    Unit1 -->|High-grade| Palusznium
+    Unit1 -->|Intermediate| Gormanium
+    Unit1 -->|Tailings| Tailings
+    
+    classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef product fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef feed fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef tailings fill:#fbb,stroke:#333,stroke-width:2px;
+    
+    class Unit0,Unit1,Unit2 unit;
+    class Palusznium,Gormanium product;
+    class Feed feed;
+    class Tailings tailings;
+```
+
+### A.2 Circuit with Recycle
+
+Vector: `[0, 1, -3, -2, 0, -1, -3]`
+
+```mermaid
+graph TD;
+    Feed([Circuit Feed])
+    Unit0[Unit 0]
+    Unit1[Unit 1]
+    Palusznium[Palusznium Product]
+    Gormanium[Gormanium Product]
+    Tailings[Tailings Output]
+    
+    Feed -->|Feed| Unit0
+    
+    Unit0 -->|High-grade| Unit1
+    Unit0 -->|Intermediate| Tailings
+    Unit0 -->|Tailings| Gormanium
+    
+    Unit1 -->|High-grade| Unit0
+    Unit1 -->|Intermediate| Palusznium
+    Unit1 -->|Tailings| Tailings
+    
+    classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef product fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef feed fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef tailings fill:#fbb,stroke:#333,stroke-width:2px;
+    
+    class Unit0,Unit1 unit;
+    class Palusznium,Gormanium product;
+    class Feed feed;
+    class Tailings tailings;
+```
+
+### A.3 Invalid Circuit (Self-Recycle)
+
+Vector: `[0, 0, 1, -3, -1, -2, -3]`
+
+```mermaid
+graph TD;
+    Feed([Circuit Feed])
+    Unit0[Unit 0]
+    Unit1[Unit 1]
+    Palusznium[Palusznium Product]
+    Gormanium[Gormanium Product]
+    Tailings[Tailings Output]
+    
+    Feed -->|Feed| Unit0
+    
+    Unit0 -->|High-grade| Unit0
+    Unit0 -->|Intermediate| Unit1
+    Unit0 -->|Tailings| Tailings
+    
+    Unit1 -->|High-grade| Palusznium
+    Unit1 -->|Intermediate| Gormanium
+    Unit1 -->|Tailings| Tailings
+    
+    classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef product fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef feed fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef tailings fill:#fbb,stroke:#333,stroke-width:2px;
+    classDef invalid fill:#f99,stroke:red,stroke-width:3px;
+    
+    class Unit0 invalid;
+    class Unit1 unit;
+    class Palusznium,Gormanium product;
+    class Feed feed;
+    class Tailings tailings;
+```
+
+Note: This circuit is invalid because Unit 0 has a self-recycle connection (high-grade stream feeds back to itself). 
