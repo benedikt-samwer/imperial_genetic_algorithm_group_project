@@ -54,7 +54,43 @@ Examples:
    git push origin <your-branch-name>
    ```
 
-### 2.3 Code Review Process
+### 2.3 Synchronizing with Main Branch
+
+1. Regularly sync your feature branch with main:
+   ```bash
+   # First, save your current work
+   git stash  # If you have uncommitted changes
+
+   # Update main branch
+   git checkout main
+   git pull origin main
+
+   # Update your core branch
+   git checkout <core-branch>  # e.g., genetic-algorithm-dev
+   git merge main
+   git push origin <core-branch>
+
+   # Update your feature branch
+   git checkout <your-feature-branch>
+   git merge <core-branch>
+
+   # Restore your work if stashed
+   git stash pop  # If you stashed changes
+   ```
+
+2. Resolve any conflicts:
+   - If conflicts occur during merge, Git will mark the files
+   - Resolve conflicts in each file
+   - Use `git add <file>` for each resolved file
+   - Complete the merge with `git commit`
+
+3. Best practices:
+   - Sync with main at least once per week
+   - Always sync before starting new features
+   - Sync immediately when critical updates are announced
+   - Test thoroughly after syncing
+
+### 2.4 Code Review Process
 
 1. Create a Pull Request (PR) to merge into your core branch
 2. Request reviews from at least two team members
