@@ -7,7 +7,6 @@
 #include <functional>
 #include <vector>
 
-
 // Structure to hold genetic algorithm parameters
 struct Algorithm_Parameters {
   // General parameters
@@ -17,7 +16,7 @@ struct Algorithm_Parameters {
 
   // Selection parameters
   double selection_pressure = 1.5; // Linear rank selection pressure parameter
-  int k = params.tournament_size > 0 ? params.tournament_size : 2;
+  int tournament_size = 2;         // Number of contenders per tournament
 
   // Crossover parameters
   double crossover_probability = 0.8; // Probability of crossover
