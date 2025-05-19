@@ -50,6 +50,8 @@ int optimize(int real_vector_size, double * real_vector,
 
 return 0;
 
+}
+
 int optimize(int int_vector_size, int * int_vector, int real_vector_size, double * real_vector,
                   double (&func) (int, int*, int, double*),
                            bool (&validity) (int, int*, int, double*),
@@ -69,6 +71,5 @@ int optimize(int int_vector_size, int * int_vector, int real_vector_size, double
 
 
 
-}
 
 // additional variables, classes and functions as needed.
