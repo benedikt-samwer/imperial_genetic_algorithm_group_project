@@ -28,9 +28,12 @@ class Circuit {
     bool initialize_from_vector(int vector_size, const int* circuit_vector);
     
     // Check validity of a circuit vector
-    static bool check_validity(int vector_size, const int* circuit_vector);
-    static bool check_validity(int vector_size, const int* circuit_vector,
-                              int unit_parameters_size, const double* unit_parameters);
+    // static bool check_validity(int vector_size, int* circuit_vector);
+    // static bool check_validity(int vector_size, int* circuit_vector,
+    //                           int unit_parameters_size, const double* unit_parameters);
+    bool check_validity(int vector_size, const int* circuit_vector);
+    bool check_validity(int vector_size, int* circuit_vector,
+                               int unit_parameters_size, double* unit_parameters);
     
     // Run a mass balance calculation on the circuit
     bool run_mass_balance(double tolerance = 1e-6, int max_iterations = 1000);
@@ -90,5 +93,15 @@ class Circuit {
     double gormanium_value;       // £/kg in Gormanium stream
     double waste_penalty_palusznium; // £/kg waste in Palusznium stream
     double waste_penalty_gormanium;  // £/kg waste in Gormanium stream
+
+    /* ----------  ---------- */
+    int n               = 10;
+    int feed_dest       = 0;
+    uint8_t outlet_mask(int unit_idx,std::vector<int8_t>& cache) const;
+    inline int OUT_P1() const { return n;     }   // palusznium
+    inline int OUT_P2() const { return n + 1; }   // gormanium
+    inline int OUT_TA() const { return n + 2; }   // 尾矿
+
+
 };
 
