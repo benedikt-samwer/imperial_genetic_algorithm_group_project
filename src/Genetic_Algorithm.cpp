@@ -15,6 +15,15 @@ static std::mt19937 &rng() {
   return gen;
 }
 
+// default validity checks
+bool all_true(int iv, int *ivs, int rv, double *rvs) { return true; }
+bool all_true_ints(int iv, int *ivs) { return true; }
+bool all_true_reals(int rv, double *rvs) { return true; }
+
+// (if not in another file) backing storage + accessor:
+static OptimizationResult last_result;
+OptimizationResult get_last_optimization_result() { return last_result; }
+
 // ********************************************************************
 // 1) Discrete-only optimize
 // ********************************************************************
