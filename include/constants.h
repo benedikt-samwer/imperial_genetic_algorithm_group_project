@@ -15,12 +15,9 @@ namespace Constants {
         constexpr double SOLIDS_CONTENT = 0.1;       // Fraction of solids by volume
         
         // Rate constants (s⁻¹)
-        constexpr double K_PALUSZNIUM_HIGH = 0.008;
-        constexpr double K_PALUSZNIUM_INTER = 0.004;
-        constexpr double K_GORMANIUM_HIGH = 0.004;
-        constexpr double K_GORMANIUM_INTER = 0.002;
-        constexpr double K_WASTE_HIGH = 0.0005;
-        constexpr double K_WASTE_INTER = 0.00025;
+        constexpr double K_PALUSZNIUM = 0.008;       // Rate constant for Palusznium
+        constexpr double K_GORMANIUM = 0.004;        // Rate constant for Gormanium
+        constexpr double K_WASTE = 0.0005;           // Rate constant for Waste
     }
     
     // Economic parameters
