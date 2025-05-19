@@ -99,9 +99,6 @@ def generate_graph(list):
 
 
 def main():
-    """
-    Main function to orchestrate reading data, creating diagram, annotating image, and displaying image.
-    """ 
     ini_list = [0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8]
     generate_graph(ini_list)
     
