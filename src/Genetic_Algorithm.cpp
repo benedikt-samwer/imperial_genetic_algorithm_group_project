@@ -39,7 +39,7 @@ int optimize(int int_vector_size, int *int_vector,
   // We'll grow a population of these:
   std::vector<std::vector<int>> population;
 
-  // --- 1. Initialie population
+  // --- 1. Initialise population
   int n_units = (int_vector_size - 1) / 2;
   int min_gene = -3;
   int max_gene = n_units + 2;
@@ -55,6 +55,12 @@ int optimize(int int_vector_size, int *int_vector,
     if (validity(int_vector_size, genome.data()))
       population.push_back(std::move(genome));
   }
+
+  double best_overall = -1e300;              // best seen so far
+  int stall_count = 0;                       // gens since last improvement
+  double eps = params.convergence_threshold; // “meaningful” fitness delta
+  int max_stall = params.stall_generations;  // allowed idle generations
+
   // --- 2. Main GA loop
   for (int gen = 0; gen < params.max_iterations; ++gen) {
     // 2a) Evaluate fitness of each genome
@@ -68,7 +74,20 @@ int optimize(int int_vector_size, int *int_vector,
       }
     }
 
-    // TODO: check for convergence/stall_generations here
+    double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
+    if (gen_best > best_overall + eps) {
+      best_overall = gen_best;
+      stall_count = 0; // reset when we see new best
+    } else {
+      stall_count++;
+    }
+    if (stall_count >= max_stall) {
+      if (params.verbose) {
+        std::cout << "[GA] No improvement for " << stall_count
+                  << " generations—stopping early.\n";
+      }
+      break; // exit the generation loop
+    }
 
     // 2b) Elitism: copy best genome to next generation
     std::vector<std::vector<int>> next_gen;
