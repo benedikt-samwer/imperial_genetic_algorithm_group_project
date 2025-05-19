@@ -129,10 +129,31 @@ int optimize(int int_vector_size, int *int_vector,
           std::swap(c1[j], c2[j]);
       }
 
-      // – Mutation
-      for (int j = 0; j < int_vector_size; ++j) {
-        if (u01(rng()) < params.mutation_probability) {
-          // TODO: apply step +/- params.mutation_step_size, wrap if needed
+      // – Mutation (step‐size ± params.mutation_step_size, wrapping)
+      {
+        int range = max_gene - min_gene + 1;
+        std::uniform_int_distribution<int> step_dist(-params.mutation_step_size,
+                                                     params.mutation_step_size);
+
+        for (int j = 0; j < int_vector_size; ++j) {
+          if (u01(rng()) < params.mutation_probability) {
+            // pick a random step in [–step_size…+step_size]
+            int step = step_dist(rng());
+            int val = c1[j] + step;
+            // wrap into [min_gene…max_gene]
+            val = min_gene + ((val - min_gene) % range + range) % range;
+            c1[j] = val;
+          }
+        }
+
+        // repeat for the second child, c2:
+        for (int j = 0; j < int_vector_size; ++j) {
+          if (u01(rng()) < params.mutation_probability) {
+            int step = step_dist(rng());
+            int val = c2[j] + step;
+            val = min_gene + ((val - min_gene) % range + range) % range;
+            c2[j] = val;
+          }
         }
       }
 
