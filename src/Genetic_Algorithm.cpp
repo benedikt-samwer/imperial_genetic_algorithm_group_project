@@ -35,11 +35,11 @@ int optimize(int int_vector_size, int *int_vector,
   auto t0 = Clock::now();
 
   // --- 1. Wrap C array to std::vector
-  std::vector<int> population_member(int_vector_size);
+  // std::vector<int> population_member(int_vector_size); CURRENTLY UNUSED
   // We'll grow a population of these:
   std::vector<std::vector<int>> population;
 
-  // --- 1. Initialize population
+  // --- 1. Initialie population
   int n_units = (int_vector_size - 1) / 2;
   int min_gene = -3;
   int max_gene = n_units + 2;
@@ -78,12 +78,28 @@ int optimize(int int_vector_size, int *int_vector,
       next_gen.push_back(population[best_idx]);
     }
 
+    // ----- TOURNAMENT SETUP -----
+    int k = params.tournament_size > 0 ? params.tournament_size : 2;
+    std::uniform_int_distribution<size_t> pop_dist(0, population.size() - 1);
+    auto pick_parent = [&]() {
+      size_t best = pop_dist(rng());
+      double best_fit = fitnesses[best];
+      for (int i = 1; i < k; ++i) {
+        size_t idx = pop_dist(rng());
+        if (fitnesses[idx] > best_fit) {
+          best = idx;
+          best_fit = fitnesses[idx];
+        }
+      }
+      return population[best];
+    };
+
     // 2c) Fill rest via selection, crossover, mutation
     std::uniform_real_distribution<double> u01(0.0, 1.0);
     while (next_gen.size() < population.size()) {
-      // – Selection (e.g., tournament or roulette) → parents p1, p2
-      std::vector<int> p1 = population[0]; // TODO
-      std::vector<int> p2 = population[1]; // TODO
+      // – Selection via k-way tournament
+      auto p1 = pick_parent();
+      auto p2 = pick_parent();
 
       // – Crossover
       std::vector<int> c1 = p1, c2 = p2;
