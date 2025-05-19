@@ -4,12 +4,59 @@
 
 ### 1.1 Core Branches
 
-The project maintains four core development branches, all based on the `data-structure-setup` branch:
+The project maintains four core development branches, all based on the `pre-main` branch:
 
-- `genetic-algorithm-dev`: Genetic algorithm optimization development
-- `circuit-simulation-dev`: Circuit simulation and modeling
-- `circuit-viz-dev`: Circuit visualization and UI
-- `validity-check-dev`: Circuit validation and verification
+```mermaid
+%%{init: { 'logLevel': 'debug', 'theme': 'base' } }%%
+gitGraph
+    commit id: "init"
+    branch pre-main
+    commit id: "setup"
+    
+    %% Genetic Algorithm branches
+    branch genetic-algorithm
+    commit id: "ga-init"
+    branch "genetic-algorithm/pranav/initial-setup"
+    commit id: "pranav"
+    checkout genetic-algorithm
+    branch "genetic-algorithm/benedikt/initial-setup"
+    commit id: "benedikt"
+    checkout genetic-algorithm
+    branch "genetic-algorithm/mohamed/initial-setup"
+    commit id: "mohamed"
+    
+    %% Circuit Simulation branches
+    checkout pre-main
+    branch circuit-simulation
+    commit id: "sim-init"
+    branch "circuit-simulation/haitong/initial-setup"
+    commit id: "haitong"
+    checkout circuit-simulation
+    branch "circuit-simulation/prince/initial-setup"
+    commit id: "prince"
+    
+    %% Circuit Visualization branches
+    checkout pre-main
+    branch circuit-viz
+    commit id: "viz-init"
+    branch "circuit-viz/jiaxuan/initial-setup"
+    commit id: "jiaxuan"
+    checkout circuit-viz
+    branch "circuit-viz/jiatong/initial-setup"
+    commit id: "jiatong"
+    
+    %% Validity Check branches
+    checkout pre-main
+    branch validity-check
+    commit id: "check-init"
+    branch "validity-check/yilin/initial-setup"
+    commit id: "yilin"
+    checkout validity-check
+    branch "validity-check/daiying/initial-setup"
+    commit id: "daiying"
+```
+
+- `genetic-algorithm`: Genetic algorithm optimization development
 
 ### 1.2 Branch Naming Convention
 
@@ -26,7 +73,41 @@ Examples:
 
 ## 2. Development Workflow
 
-### 2.1 Starting New Development
+### 2.1 Branch Merging Path
+
+The project follows a structured merging path to ensure code quality and integration:
+
+1. Personal Development Branch → Feature Branch
+   ```bash
+   # Example: Merging from personal branch to genetic-algorithm
+   git checkout genetic-algorithm/pranav/initial-setup
+   git pull origin genetic-algorithm/pranav/initial-setup
+   # Create PR to merge into genetic-algorithm
+   ```
+
+2. Feature Branch → pre-main
+   ```bash
+   # After feature is complete and tested
+   git checkout genetic-algorithm
+   git pull origin genetic-algorithm
+   # Create PR to merge into pre-main
+   ```
+
+3. pre-main → main (Production)
+   ```bash
+   # Only after thorough testing and review
+   git checkout pre-main
+   git pull origin pre-main
+   # Create PR to merge into main
+   ```
+
+Merging Rules:
+- Personal branches (`*/member/feature`) should only merge into their respective feature branch
+- Feature branches (`genetic-algorithm`, `circuit-simulation`, etc.) merge into `pre-main`
+- `pre-main` is the integration branch where all features are tested together
+- `main` is the production branch, only accepting well-tested code from `pre-main`
+
+### 2.2 Starting New Development
 
 1. Choose the appropriate core branch for your feature
 2. Create your feature branch:
@@ -36,7 +117,7 @@ Examples:
    git checkout -b <core-branch>/<your-name>/<feature-name>
    ```
 
-### 2.2 Development Process
+### 2.3 Development Process
 
 1. Make regular commits with meaningful messages:
    ```bash
@@ -54,26 +135,26 @@ Examples:
    git push origin <your-branch-name>
    ```
 
-### 2.3 Synchronizing with Main Branch
+### 2.4 Synchronizing with Main Branch
 
 1. Regularly sync your feature branch with main:
    ```bash
    # First, save your current work
    git stash  # If you have uncommitted changes
-
+   
    # Update main branch
    git checkout main
    git pull origin main
-
+   
    # Update your core branch
    git checkout <core-branch>  # e.g., genetic-algorithm-dev
    git merge main
    git push origin <core-branch>
-
+   
    # Update your feature branch
    git checkout <your-feature-branch>
    git merge <core-branch>
-
+   
    # Restore your work if stashed
    git stash pop  # If you stashed changes
    ```
@@ -90,7 +171,7 @@ Examples:
    - Sync immediately when critical updates are announced
    - Test thoroughly after syncing
 
-### 2.4 Code Review Process
+### 2.5 Code Review Process
 
 1. Create a Pull Request (PR) to merge into your core branch
 2. Request reviews from at least two team members
