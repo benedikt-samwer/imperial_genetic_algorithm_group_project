@@ -6,7 +6,9 @@
 
 struct Simulator_Parameters default_simulator_parameters = {1e-6, 100};
 
+// Compute performance of a circuit vector
 double circuit_performance(int vector_size, int* circuit_vector,
+
                         int unit_parameters_size, double *unit_parameters,
                         struct Simulator_Parameters simulator_parameters) {
 
@@ -37,6 +39,7 @@ double circuit_performance(int vector_size, int* circuit_vector,
 }
 
 // Overloads for other input
+
 double circuit_performance(int vector_size, int* circuit_vector,
                         int unit_parameters_size, double *unit_parameters){
     return circuit_performance(vector_size, circuit_vector,
@@ -52,6 +55,7 @@ double circuit_performance(int vector_size, int* circuit_vector){
     double result = circuit_performance(vector_size, circuit_vector, 
                             num_parameters, parameters,
                             default_simulator_parameters);
+
     delete[] parameters;
     return result;
 }
