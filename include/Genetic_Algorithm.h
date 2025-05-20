@@ -27,6 +27,10 @@ struct Algorithm_Parameters {
   int mutation_step_size = 2;         // Maximum change in value during mutation
   bool allow_mutation_wrapping = true; // Allow mutations to wrap around
 
+  // Inversion‐mutation parameters
+  bool use_inversion = true;           // turn inversion on/off
+  double inversion_probability = 0.05; // chance to invert per child
+
   // Termination criteria
   double convergence_threshold = 1e-6; // Convergence threshold
   int stall_generations = 50;          // Max generations with no improvement
