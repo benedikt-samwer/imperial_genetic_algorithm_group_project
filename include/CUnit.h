@@ -13,8 +13,8 @@ class CUnit {
  public:
   // Index of the unit to which this unit's concentrate stream is connected 
   int conc_num;
-  // Index of the unit to which this unit's waste stream is connected 
-  int waste_num;
+  // Index of the unit to which this unit's tailings stream is connected
+  int tails_num;
   // A Boolean that is changed to true if the unit has been seen during graph traversal
   bool mark;
 
@@ -32,7 +32,7 @@ class CUnit {
   double k_waste;               // Rate constant for Waste
 
   // Constructor with default values
-  CUnit() : conc_num(0), waste_num(0), mark(false), volume(10.0),
+  CUnit() : conc_num(0), tails_num(0), mark(false), volume(10.0),
             feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
             k_palusznium(0.008), k_gormanium(0.004), k_waste(0.0005) {}
 
