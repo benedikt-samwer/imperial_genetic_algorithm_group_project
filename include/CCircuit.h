@@ -22,6 +22,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <cstdint>
 #include <vector>
 #include <string>
 

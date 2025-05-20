@@ -6,6 +6,7 @@
 #include <CUnit.h>
 #include <CCircuit.h>
 #include <iostream>
+#include <cstdint>
 
 Circuit::Circuit(int num_units){
   n = num_units;
