@@ -77,50 +77,54 @@ bool Circuit::check_validity(int vector_size, const int* vec)
     }
 
     // R2 each unit must reach at least 2 different terminals
-    std::vector<int8_t> cache(n, -1);        // memorize bitmask 0bxyz
+    std::vector<int8_t> cache(n, -1);
     for (int i = 0; i < n; ++i) {
-        uint8_t m = outlet_mask(i, cache);
-        int cnt = (m & 1) + ((m >> 1) & 1) + ((m >> 2) & 1);
-        if (cnt < 2) {
-          std::cout << "false 07" << std::endl;
-          return false;
-        }
+        // uint8_t mask = outlet_mask(i, cache); 
+        uint8_t mask = term_mask(i);
+        int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
+        if (cnt < 2) { std::cout << "false 07\n"; return false; }
     }
 
     // R6 detect cycle of length ≥2 (self-loop is prohibited)
     // 0 = white, 1 = gray, 2 = black （white: not visited，gray: visited but not explored，black: visited and explored）
-    std::vector<char> color(n, 0);
+    // std::vector<char> color(n, 0);
 
 
-    auto has_cycle = [&](auto&& self, int u) -> bool
-    {
-        // visit the gray node again, it means this node along the descendants back to itself, forming a cycle
-        if (color[u] == 1) {
-          std::cout << "false 08" << std::endl;
-          return true;
-        } 
-        // the node has been fully explored, no cycle in the subtree
-        if (color[u] == 2) {
-          return false;
-        }
-        color[u] = 1; // mark as gray
-        // recursively check the subtree, along conc and tail recursively call, and find a cycle through its some descendant
-        if (dest[u].conc < n && self(self, dest[u].conc)) {
-          std::cout << "false 09" << std::endl;
-          return true;
-        }
-        if (dest[u].tail < n && self(self, dest[u].tail)) {
-          std::cout << "false 11" << std::endl;
-          return true;
-        }
-        color[u] = 2;                     // mark black
+    // auto has_cycle = [&](auto&& self, int u) -> bool
+    // {
+    //     // visit the gray node again, it means this node along the descendants back to itself, forming a cycle
+    //     if (color[u] == 1) {
+    //       std::cout << "false 08" << std::endl;
+    //       return true;
+    //     } 
+    //     // the node has been fully explored, no cycle in the subtree
+    //     if (color[u] == 2) {
+    //       return false;
+    //     }
+    //     color[u] = 1; // mark as gray
+    //     // recursively check the subtree, along conc and tail recursively call, and find a cycle through its some descendant
+    //     if (dest[u].conc < n && self(self, dest[u].conc)) {
+    //       std::cout << "false 09" << std::endl;
+    //       return true;
+    //     }
+    //     if (dest[u].tail < n && self(self, dest[u].tail)) {
+    //       std::cout << "false 11" << std::endl;
+    //       return true;
+    //     }
+    //     color[u] = 2;                     // mark black
+    //     return false;
+    // };
+
+    // for (int i = 0; i < n; ++i)
+    //     if (has_cycle(has_cycle, i)) {
+    //       return false;
+    //     }
+    
+    // check mass balance convergence
+    if (!mass_balance_converges(1e-6, 2000)) {
+        std::cout << "false 99 (mass-balance diverge)\n";
         return false;
-    };
-
-    for (int i = 0; i < n; ++i)
-        if (has_cycle(has_cycle, i)) {
-          return false;
-        }
+    }
 
     return true;    // legal
 }
@@ -129,12 +133,28 @@ bool Circuit::check_validity(int vector_size, int *circuit_vector,
                               int num_parameters, double *parameters)
                               
 {
+    // check the validity of the circuit vector
+    if (!check_validity(vector_size,
+                        static_cast<const int*>(circuit_vector)))
+        return false;
 
-  // Rewrite this to check the validity of the circuit vector
-  // This is a dummy function that checks if the circuit vector is valid
-  return check_validity(vector_size, circuit_vector);
+    // the length of the continuous parameters must be exactly = n units
+    if (num_parameters != n) {
+        std::cout << "false P0 (parameter length)" << std::endl;
+        return false;
+    }
 
-  // return true;
+    // each parameter must be in [0,1] (or other physical range)
+    for (int i = 0; i < num_parameters; ++i) {
+        double beta = parameters[i];
+        if (beta < 0.0 || beta > 1.0 || std::isnan(beta)) {
+            std::cout << "false P1 (β out of range)" << std::endl;
+            return false;
+        }
+    }
+
+    return true;          // legal
+
 }
 
 void Circuit::mark_units(int unit_num) {
@@ -162,23 +182,125 @@ void Circuit::mark_units(int unit_num) {
   }
 }
 
-
-uint8_t Circuit::outlet_mask(int unit_num, std::vector<int8_t>& cache) const
+bool Circuit::mass_balance_converges(double tol, int maxIter) const
 {
-    if (unit_num < n)          // normal unit
-    {
-        if (cache[unit_num] != -1) return static_cast<uint8_t>(cache[unit_num]);
+    using namespace Constants;
+    
+    // physical constants & rate constants
+    const double rho = Physical::MATERIAL_DENSITY;    // ρ = 3000 kg/m³
+    const double phi = Physical::SOLIDS_CONTENT;      // φ = 0.10
+    const double V = Constants::Circuit::DEFAULT_UNIT_VOLUME; // V = 10 m³
+    
+    const double kP  = Physical::K_PALUSZNIUM_HIGH;  // 0.008 s⁻¹
+    const double kG  = Physical::K_GORMANIUM_HIGH;   // 0.004 s⁻¹
+    const double kW  = Physical::K_WASTE_HIGH;        // 0.0005 s⁻¹
 
-        uint8_t m = 0;
-        m |= outlet_mask(units[unit_num].conc_num , cache);
-        m |= outlet_mask(units[unit_num].tails_num, cache);
-        cache[unit_num] = static_cast<int8_t>(m);
-        return m;
-    }
-    else                        // terminal stream
+    // default tolerance & max iterations
+    if (tol     <= 0.0) tol     = Simulation::DEFAULT_TOLERANCE;
+    if (maxIter <= 0  ) maxIter = Simulation::DEFAULT_MAX_ITERATIONS;
+    
+    // index convention
+    const int NS = n + 3;                // n units + 3 terminals
+    
+    // initialize flow rates (kg/s)
+    std::vector<double> FP(NS, 0.0), FW(NS, 0.0), FG(NS, 0.0);   // current iteration
+    std::vector<double> FPn(NS, 0.0), FWn(NS, 0.0), FGn(NS, 0.0); // next iteration
+    
+    FP[feed_dest] = Feed::DEFAULT_PALUSZNIUM_FEED;   // 8 kg/s
+    FG[feed_dest] = Feed::DEFAULT_GORMANIUM_FEED;    // 12 kg/s
+    FW[feed_dest] = Feed::DEFAULT_WASTE_FEED;       // 80 kg/s
+    
+    // mass balance iteration
+    for (int it = 0; it < maxIter; ++it)
     {
-        if (unit_num == OUT_P1()) return 0b001;
-        if (unit_num == OUT_P2()) return 0b010;
-        /* unit_num == OUT_TA() */return 0b100;
+        // Reset next iteration flow rates
+        std::fill(FPn.begin(), FPn.end(), 0.0);
+        std::fill(FWn.begin(), FWn.end(), 0.0);
+        std::fill(FGn.begin(), FGn.end(), 0.0);
+        
+        for (int u = 0; u < n; ++u)
+        {
+            double FP_in = FP[u];
+            double FG_in = FG[u];
+            double FW_in = FW[u];
+            
+            // Skip if no material entering this unit
+            if (FP_in == 0.0 && FG_in == 0.0 && FW_in == 0.0) continue;
+            
+            // calculate residence time τ
+            double total_solids = FP_in + FG_in + FW_in;
+            double Qv = total_solids / rho / phi;      // m³/s
+            if (Qv < 1e-12) Qv = 1e-12;               // avoid division by zero
+            double tau = V / Qv;                      // s
+            
+            // first-order kinetics recovery
+            double RP = (kP * tau) / (1.0 + kP * tau);    // Palusznium recovery
+            double RG = (kG * tau) / (1.0 + kG * tau);    // Gormanium recovery
+            double RW = (kW * tau) / (1.0 + kW * tau);    // Waste recovery
+            
+            // flow rate allocation to conc / tail
+            double FPc = FP_in * RP;
+            double FPt = FP_in - FPc;
+            
+            double FGc = FG_in * RG;
+            double FGt = FG_in - FGc;
+            
+            double FWc = FW_in * RW;
+            double FWt = FW_in - FWc;
+            
+            int dstC = units[u].conc_num;   // destination of concentrate stream
+            int dstT = units[u].tails_num;  // destination of tailings stream
+            
+            // Update flow rates for next iteration
+            FPn[dstC] += FPc; 
+            FGn[dstC] += FGc;
+            FWn[dstC] += FWc;
+            
+            FPn[dstT] += FPt;
+            FGn[dstT] += FGt;
+            FWn[dstT] += FWt;
+        }
+        
+        // convergence criterion: check all three components
+        double err = 0.0;
+        for (int idx = 0; idx < n; ++idx) {
+            err = std::max(err, std::fabs(FPn[idx] - FP[idx]));
+            err = std::max(err, std::fabs(FGn[idx] - FG[idx]));
+            err = std::max(err, std::fabs(FWn[idx] - FW[idx]));
+        }
+        if (err < tol) {
+          std::cout << "iteration: " << it << std::endl;
+          std::cout << "err: " << err << std::endl;
+          return true; 
+        }     // converged
+        
+        // Prepare for next iteration
+        FP.swap(FPn);
+        FG.swap(FGn);
+        FW.swap(FWn);
     }
+    return false;                        // not converged after maxIter
+}
+
+// calculate the mask of the terminal streams that the unit can reach
+uint8_t Circuit::term_mask(int start) const
+{
+    std::vector<char> seen(n, 0);
+    std::queue<int> q;  q.push(start);
+    uint8_t m = 0;
+    // BFS
+    while (!q.empty()) {
+        int u = q.front(); q.pop();
+        if (u < n) {                          // u is a unit
+            if (seen[u]) continue;
+            seen[u] = 1;
+            q.push(units[u].conc_num);
+            q.push(units[u].tails_num);
+        } else {                              // u is a terminal
+            if (u == OUT_P1()) m |= 0b001;
+            else if (u == OUT_P2()) m |= 0b010;
+            else                 m |= 0b100;
+        }
+    }
+    return m;
 }

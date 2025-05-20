@@ -7,6 +7,7 @@
 #pragma once
 
 #include "CUnit.h"
+#include "constants.h"
 
 #include <vector>
 #include <string>
@@ -51,6 +52,9 @@ class Circuit {
     
     // Export the circuit to a dot file for visualization
     bool export_to_dot(const std::string& filename) const;
+
+    bool mass_balance_converges(double tol = Constants::Simulation::DEFAULT_TOLERANCE,
+                            int    maxIter = Constants::Simulation::DEFAULT_MAX_ITERATIONS) const;
     
   private:
     // Mark units that are accessible from a given unit (for validity checking)
@@ -97,7 +101,8 @@ class Circuit {
     /* ----------  ---------- */
     int n               = 10;
     int feed_dest       = 0;
-    uint8_t outlet_mask(int unit_idx,std::vector<int8_t>& cache) const;
+    uint8_t term_mask(int start) const;
+    
     inline int OUT_P1() const { return n;     }   // palusznium
     inline int OUT_P2() const { return n + 1; }   // gormanium
     inline int OUT_TA() const { return n + 2; }   // 尾矿

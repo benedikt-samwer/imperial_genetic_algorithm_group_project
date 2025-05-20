@@ -9,8 +9,8 @@
  *───────────────────────────────────────────────*/
 void manual_demo()
 {
-    int valid[7] = { 0, 1,3, 2,4, 4,5 };   // n = 3
-    Circuit c(3);
+    int valid[13] = { 0,3,1,3,2,3,5,4,7,6,3,3,8 };   // n = 3
+    Circuit c(6);
 
     std::cout << "check_validity demo: ";
     bool ok = c.check_validity(std::size(valid), valid);
@@ -89,6 +89,27 @@ void test_only_one_terminal()
     CU_ASSERT_FALSE(c.check_validity((int)v.size(), v.data()));
 }
 
+void test_R2_condition() {
+    Circuit c(10);  // 10 units
+    
+    // 构造一个无效电路：Unit 0的conc和tail都指向P1（只能到达一个终端流）
+    std::vector<int> v = {
+        0,           // feed -> Unit 0
+        10, 10,      // Unit 0: conc -> P1, tail -> P1 (违反R2)
+        10, 11,      // Unit 1: conc -> P1, tail -> P2
+        10, 11,      // Unit 2: conc -> P1, tail -> P2
+        10, 11,      // Unit 3: conc -> P1, tail -> P2
+        10, 11,      // Unit 4: conc -> P1, tail -> P2
+        10, 11,      // Unit 5: conc -> P1, tail -> P2
+        10, 11,      // Unit 6: conc -> P1, tail -> P2
+        10, 11,      // Unit 7: conc -> P1, tail -> P2
+        10, 11,      // Unit 8: conc -> P1, tail -> P2
+        10, 11       // Unit 9: conc -> P1, tail -> P2
+    };
+    
+    CU_ASSERT_FALSE(c.check_validity((int)v.size(), v.data()));
+}
+
 // 08 / 09 / 13 two-node cycle
 void test_two_node_cycle()
 {
@@ -114,14 +135,40 @@ void test_basic_valid()
     CU_ASSERT_TRUE(c.check_validity((int)v.size(), v.data()));
 }
 
-// 11 small valid n = 2
+// 11 small valid n = 4
 void test_small_valid()
 {
-    Circuit c(2);
+    Circuit c(4);
     std::vector<int> v = {
-        0,          // feed
-        1,2,        // unit0
-        3,4         // unit1
+        1,2,3,0,3,4,3,0,6
+    };
+    CU_ASSERT_TRUE(c.check_validity((int)v.size(), v.data()));
+}
+
+void test_small_valid_02()
+{
+    Circuit c(3);
+    std::vector<int> v = {
+        0,1,2,3,0,0,5
+    };
+    CU_ASSERT_TRUE(c.check_validity((int)v.size(), v.data()));
+}
+
+void test_small_valid_03()
+{
+    Circuit c(10);
+    std::vector<int> v = {
+         /* Feed destination */ 0,  // 输入流进入单元0
+    /* Unit 0 */ 1, 3,   // 浓缩流到单元1, 尾矿流到单元3
+    /* Unit 1 */ 2, 4,   // 浓缩流到单元2, 尾矿流到单元4
+    /* Unit 2 */ 5, 6,   // 浓缩流到单元5, 尾矿流到单元6
+    /* Unit 3 */ 0, 7,   // 浓缩流回收至单元0, 尾矿流到单元7
+    /* Unit 4 */ 8, 9,   // 浓缩流到单元8, 尾矿流到单元9
+    /* Unit 5 */ 10, 11, // 浓缩流到palusznium产品(10), 尾矿流到gormanium产品(11)
+    /* Unit 6 */ 0, 12,  // 浓缩流回收至单元0, 尾矿到尾矿产品(12)
+    /* Unit 7 */ 2, 12,  // 浓缩流到单元2, 尾矿到尾矿产品
+    /* Unit 8 */ 10, 12, // 浓缩流到palusznium产品, 尾矿到尾矿产品
+    /* Unit 9 */ 11, 12  // 浓缩流到gormanium产品, 尾矿到尾矿产品
     };
     CU_ASSERT_TRUE(c.check_validity((int)v.size(), v.data()));
 }
@@ -136,6 +183,37 @@ void test_basic_circuit_validity()
     };
     Circuit c(10);
     CU_ASSERT_TRUE(c.check_validity(static_cast<int>(v.size()), v.data()));
+}
+
+// 13 mass balance converges
+void test_mass_balance_converges_valid(void)
+{
+    Circuit c(2);
+
+    int cv[5] = { 0,   // feed_dest = unit0
+                  1, 2,// unit0: conc→unit1, tail→P1
+                  3, 4 // unit1: conc→P2,   tail→TA
+                };
+
+    CU_ASSERT_TRUE( c.check_validity(5, cv) );
+
+    CU_ASSERT_TRUE( c.mass_balance_converges() );
+}
+
+// 14 mass balance not converge
+static void test_mass_balance_not_converge_small_iter(void)
+{
+    Circuit c(2);
+
+    int cv[5] = { 0,        // feed → unit0
+                  1, 2,     // unit0: conc→unit1, tail→P1
+                  3, 4      // unit1: conc→P2,   tail→TA
+                };
+
+    CU_ASSERT_TRUE( c.check_validity(5, cv) );
+
+    CU_ASSERT_FALSE( c.mass_balance_converges(Constants::Simulation::DEFAULT_TOLERANCE,
+                                              1) );          // ← only 1 iteration
 }
 
 /*───────────────────────────────────────────────*
@@ -161,7 +239,13 @@ int main()
     CU_add_test(s, "single terminal only",     test_only_one_terminal);
     CU_add_test(s, "two-node cycle",           test_two_node_cycle);
     CU_add_test(s, "basic valid (n=10)",       test_basic_valid);
-    CU_add_test(s, "small valid (n=2)",        test_small_valid);
+    CU_add_test(s, "small valid (n=4)",        test_small_valid);
+    CU_add_test(s, "valid circuit should converge", test_mass_balance_converges_valid);
+    CU_add_test(s, "not converge with 1 iteration", test_mass_balance_not_converge_small_iter);
+    CU_add_test(s, "R2 condition", test_R2_condition);
+    CU_add_test(s, "small valid (n=3)",        test_small_valid_02);
+    CU_add_test(s, "small valid (n=10)",       test_small_valid_03);
+
 
 
     /*----------- run tests ----------------------*/
