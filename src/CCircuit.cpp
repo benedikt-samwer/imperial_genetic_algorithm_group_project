@@ -80,22 +80,22 @@ Circuit::Circuit(int num_units)
       waste_penalty_gormanium(Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM)
 {}
 
-// 初始化电路结构
+// Initialize the circuit from a circuit vector
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta) {
     // num_units = n
     int num_units = (vector_size - 1) / 2;
     if (vector_size != 2 * num_units + 1) return false;
     units.resize(num_units);
 
-    // feed_unit 是第一个值
+    // feed_unit is the first element of the circuit vector
     feed_unit = circuit_vector[0];
 
-    // 将 n, n+1, n+2 映射到负值索引
+    // Map the target units to corresponding unit numbers
     for (int i = 0; i < num_units; ++i) {
         int conc = circuit_vector[1 + 2 * i];
         int tails = circuit_vector[1 + 2 * i + 1];
 
-        // 若遇到 n, n+1, n+2，则转为 -1, -2, -3
+        // transform the unit numbers from n, n+1, n+2 to -1, -2, -3
         if (conc == num_units)       conc = PALUSZNIUM_PRODUCT;   
         else if (conc == num_units+1) conc = GORMANIUM_PRODUCT;   
         else if (conc == num_units+2) conc = TAILINGS_OUTPUT;
@@ -114,34 +114,22 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
     }
     return true;
 }
-// bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector) {
-//     int num_units = (vector_size - 1) / 2;
-//     if (vector_size != 2 * num_units + 1) return false;
-//     units.resize(num_units);
 
-//     feed_unit = circuit_vector[0];
-//     for (int i = 0; i < num_units; ++i) {
-//         int conc = circuit_vector[1 + 2 * i];
-//         int tails = circuit_vector[1 + 2 * i + 1];
-//         units[i] = CUnit(conc, tails);
-//     }
-//     return true;
-// }
 
-// 质量平衡主循环
+// Mass balance calculation
 bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
-    // 初始化所有单元的进料为0
+    // Initialize feed for all the units
     for (auto& u : units) {
         u.feed_palusznium = 0.0;
         u.feed_gormanium = 0.0;
         u.feed_waste = 0.0;
     }
-    // 初始进料
+    // Initialize feed for the first unit
     units[feed_unit].feed_palusznium = feed_palusznium_rate;
     units[feed_unit].feed_gormanium = feed_gormanium_rate;
     units[feed_unit].feed_waste = feed_waste_rate;
 
-    // 记录上一次进料用于收敛判断
+    // Record the last feed for each unit for convergence check
     std::vector<double> last_feed_p(units.size(), 0.0);
     std::vector<double> last_feed_g(units.size(), 0.0);
     std::vector<double> last_feed_w(units.size(), 0.0);
@@ -150,14 +138,14 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
     for (int iter = 0; iter < max_iterations; ++iter) {
         std::cout << "迭代 " << iter + 1 << "：\n";
 
-        // 记录当前进料
-        // 记录当次循环的feed到last中去，并清零当前循环的feed
+        // Record the current feed 
+        // Record the current feed to last_feed and clear the current feed
         if(iter ==0){
             for (size_t i = 0; i < units.size(); ++i) {
                 last_feed_p[i] = units[i].feed_palusznium;
                 last_feed_g[i] = units[i].feed_gormanium;
                 last_feed_w[i] = units[i].feed_waste;
-                // 清零，待重新累加
+                // clear the current feed
                 units[i].feed_palusznium = 0.0;
                 units[i].feed_gormanium = 0.0;
                 units[i].feed_waste = 0.0;
@@ -169,13 +157,12 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
                 last_feed_w[i] = units[i].feed_waste;
             }
         }
-        // 初始进料
-        // 往第一个里面feed进料
+        // Initialize feed for the first unit
         units[feed_unit].feed_palusznium = feed_palusznium_rate;
         units[feed_unit].feed_gormanium = feed_gormanium_rate;
         units[feed_unit].feed_waste = feed_waste_rate;
 
-        // 处理所有单元
+        // Process all units
         for (size_t i = 0; i < units.size(); ++i) {
             std::cout << "  单元" << i << " 进料(P,G,W): " << units[i].feed_palusznium << ", "
                     << units[i].feed_gormanium << ", " << units[i].feed_waste << "\n";
@@ -186,10 +173,11 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
                     << units[i].tails_gormanium << ", " << units[i].tails_waste << "\n";
         }
 
-        // 先准备一个标记，用于确保每个下游单元只清零一次
+        // This vector is used to mark whether the feed for each unit has been cleared
+        // We need to make sure that the feed for each unit is cleared only once
         std::vector<bool> feedCleared(units.size(), false);
 
-        // 汇总所有出口流到下游单元或最终产品
+        // Initialize the product flow rates
         palusznium_product_palusznium = palusznium_product_gormanium = palusznium_product_waste = 0.0;
         gormanium_product_palusznium = gormanium_product_gormanium = gormanium_product_waste = 0.0;
         tailings_palusznium = tailings_gormanium = tailings_waste = 0.0;
@@ -197,7 +185,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
         
         std::cout<<"=====分配下游数据====="<<std::endl;
         for (size_t i = 0; i < units.size(); ++i) {
-            // 浓缩流
+            // concentrate flow
             int concDest = units[i].conc_num;
             // std::cout << "  单元" << i << " 浓缩流向: " << concDest << std::endl;
             if (concDest == PALUSZNIUM_PRODUCT) {
@@ -229,7 +217,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
             // std::cout << "  单元" << i << " 尾矿流向: " << units[i].tails_num << std::endl;
             // std::cout<<"尾矿数据"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
             // std::cout<<units[i].tails_waste << std::endl;
-            // 尾矿流
+            // tail flow
             int tailsDest = units[i].tails_num;
             if (tailsDest == PALUSZNIUM_PRODUCT) {
                 palusznium_product_palusznium += units[i].tails_palusznium;
@@ -266,7 +254,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
         }
  
 
-        // 判断收敛
+        // convergence check
         double max_rel_change = 0.0;
         for (size_t i = 0; i < units.size(); ++i) {
             double rel_p = std::abs(units[i].feed_palusznium - last_feed_p[i]) / std::max(last_feed_p[i], 1e-12);
@@ -276,7 +264,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
         }
 
 
-        // ---- 调试输出 ----
+        // ---- debug output ----
         for (size_t i = 0; i < units.size(); ++i) {
             std::cout << "  单元" << i
                     << " 上轮进料(P,G,W): " << last_feed_p[i] << ", "
@@ -288,22 +276,22 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
                 << "  Gormanium产品流量: " << gormanium_product_gormanium
                 << "  尾矿流量: " << tailings_waste << std::endl;
         std::cout << "  max_rel_change = " << max_rel_change << std::endl;
-        // ---- 调试输出 ----
+        // ---- debug output ----
         if (max_rel_change < tolerance) return true;
 
         
     }
-    return false; // 未收敛
+    return false; // not converged
 }
 
-// 经济性计算
+// Calculate the economic value of the circuit
 double Circuit::get_economic_value() const {
     double value = 0.0;
     // Palusznium product
     value += palusznium_product_palusznium * palusznium_value;
     value += palusznium_product_gormanium * -20.0;
     value += palusznium_product_waste * waste_penalty_palusznium;
-    // Gormanium产品
+    // Gormanium product 
     value += gormanium_product_palusznium * 0.0;
     value += gormanium_product_gormanium * gormanium_value;
     value += gormanium_product_waste * waste_penalty_gormanium;
@@ -314,16 +302,16 @@ double Circuit::get_economic_value() const {
     if (total_volume >= 150.0) {
         cost += 1000.0 * std::pow(total_volume - 150.0, 2.0);
     }
-    value -= cost; // 作为惩罚扣除
-    get_palusznium_recovery();// 调试输出
-    get_gormanium_recovery();// 调试输出
+    value -= cost; // cost of the circuit
+    get_palusznium_recovery();// debug output
+    get_gormanium_recovery();// debug output
 
-    std::cout<<"grade for palusznium: "<<get_palusznium_grade()<<std::endl;// 调试输出
-    std::cout<<"grade for gormanium: "<<get_gormanium_grade()<<std::endl;// 调试输出
+    std::cout<<"grade for palusznium: "<<get_palusznium_grade()<<std::endl;// debug output
+    std::cout<<"grade for gormanium: "<<get_gormanium_grade()<<std::endl;// debug output
     return value;
 }
 
-// 回收率
+// calculate the recovery of valuable materials
 double Circuit::get_palusznium_recovery() const {
     // CUnit cal =  CUnit(-1,-1);
     // cal.feed_palusznium = feed_palusznium_rate;
@@ -352,7 +340,7 @@ double Circuit::get_gormanium_recovery() const {
     // std::cout<<"gormanium recovery: "<<cal.Rg<<std::endl;
 }
 
-// 品位
+// Calculate the grade of valuable materials
 double Circuit::get_palusznium_grade() const {
     double total = palusznium_product_palusznium + palusznium_product_gormanium + palusznium_product_waste;
     return (total > 0) ? (palusznium_product_palusznium / total) : 0.0;
@@ -362,14 +350,14 @@ double Circuit::get_gormanium_grade() const {
     return (total > 0) ? (gormanium_product_gormanium / total) : 0.0;
 }
 
-// 可视化导出（简单dot格式）
+// Export the circuit to a dot file for visualization
 bool Circuit::export_to_dot(const std::string& filename) const {
     std::ofstream ofs(filename);
     if (!ofs) return false;
     ofs << "digraph Circuit {\n";
     for (size_t i = 0; i < units.size(); ++i) {
         ofs << "  unit" << i << " [label=\"Unit " << i << "\"];\n";
-        // 浓缩流
+        // concentrate flow
         if (units[i].conc_num >= 0)
             ofs << "  unit" << i << " -> unit" << units[i].conc_num << " [label=\"conc\"];\n";
         else if (units[i].conc_num == PALUSZNIUM_PRODUCT)
@@ -378,7 +366,7 @@ bool Circuit::export_to_dot(const std::string& filename) const {
             ofs << "  unit" << i << " -> gormanium_product [label=\"conc\"];\n";
         else if (units[i].conc_num == TAILINGS_OUTPUT)
             ofs << "  unit" << i << " -> tailings [label=\"conc\"];\n";
-        // 尾矿流
+        // tailings flow
         if (units[i].tails_num >= 0)
             ofs << "  unit" << i << " -> unit" << units[i].tails_num << " [label=\"tails\"];\n";
         else if (units[i].tails_num == PALUSZNIUM_PRODUCT)

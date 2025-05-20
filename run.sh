@@ -7,8 +7,9 @@ cmake ..
 make
 
 if [ $? -eq 0 ]; then
-    echo "编译成功，开始运行："
+    echo "Compile success!"
+    echo "Running the program..."
     ./bin/Circuit_Optimizer
 else
-    echo "编译失败！"
+    echo "Compile failed!"
 fi

@@ -2,7 +2,7 @@ import graphviz
 import os
 
 print("当前工作目录:", os.getcwd())
-# 读取 dot 文件
+# read the dot file
 with open('./circuit.dot', 'r') as f:
     dot_source = f.read()
 
@@ -13,7 +13,7 @@ graph.attr('node', shape='rectangle')
 for line in dot_source.splitlines():
     line = line.strip()
     if '->' in line:
-        # 解析边
+        # analyze edges
         parts = line.replace(';', '').split('->')
         src = parts[0].strip()
         rest = parts[1].strip().split('[')
@@ -27,7 +27,7 @@ for line in dot_source.splitlines():
             for attr in attrs.split(','):
                 if 'label=' in attr:
                     label = attr.split('=')[1].strip()
-                    # 按流类型设置颜色和端口
+                    # Set color and ports based on stream type
                     if label == 'conc':
                         color = 'blue'
                         tailport = 'n'
@@ -37,7 +37,7 @@ for line in dot_source.splitlines():
         graph.edge(src, dst, label=label, color=color,
                    headport=headport, tailport=tailport, arrowhead='normal')
     elif '[' in line and 'label=' in line:
-        # 解析节点
+        # analyze nodes
         node = line.split('[')[0].strip()
         label = line.split('label="')[1].split('"')[0]
         graph.node(node, label=label)
