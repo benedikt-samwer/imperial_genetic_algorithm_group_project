@@ -1,4 +1,6 @@
 #include <vector>
+#include <queue>
+#include <cmath>
 
 #include <stdio.h>
 #include <CUnit.h>
@@ -191,9 +193,9 @@ bool Circuit::mass_balance_converges(double tol, int maxIter) const
     const double phi = Physical::SOLIDS_CONTENT;      // φ = 0.10
     const double V = Constants::Circuit::DEFAULT_UNIT_VOLUME; // V = 10 m³
     
-    const double kP  = Physical::K_PALUSZNIUM_HIGH;  // 0.008 s⁻¹
-    const double kG  = Physical::K_GORMANIUM_HIGH;   // 0.004 s⁻¹
-    const double kW  = Physical::K_WASTE_HIGH;        // 0.0005 s⁻¹
+    const double kP  = Physical::K_PALUSZNIUM;  // 0.008 s⁻¹
+    const double kG  = Physical::K_GORMANIUM;   // 0.004 s⁻¹
+    const double kW  = Physical::K_WASTE;       // 0.0005 s⁻¹
 
     // default tolerance & max iterations
     if (tol     <= 0.0) tol     = Simulation::DEFAULT_TOLERANCE;
