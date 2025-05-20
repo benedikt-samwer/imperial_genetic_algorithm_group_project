@@ -7,6 +7,7 @@
 #pragma once
 
 #include "CUnit.h"
+#include "constants.h"
 
 #include <vector>
 #include <string>
@@ -28,9 +29,12 @@ class Circuit {
     bool initialize_from_vector(int vector_size, const int* circuit_vector);
     
     // Check validity of a circuit vector
-    static bool check_validity(int vector_size, const int* circuit_vector);
-    static bool check_validity(int vector_size, const int* circuit_vector,
-                              int unit_parameters_size, const double* unit_parameters);
+    // static bool check_validity(int vector_size, int* circuit_vector);
+    // static bool check_validity(int vector_size, int* circuit_vector,
+    //                           int unit_parameters_size, const double* unit_parameters);
+    bool check_validity(int vector_size, const int* circuit_vector);
+    bool check_validity(int vector_size, int* circuit_vector,
+                               int unit_parameters_size, double* unit_parameters);
     
     // Run a mass balance calculation on the circuit
     bool run_mass_balance(double tolerance = 1e-6, int max_iterations = 1000);
@@ -48,6 +52,9 @@ class Circuit {
     
     // Export the circuit to a dot file for visualization
     bool export_to_dot(const std::string& filename) const;
+
+    bool mass_balance_converges(double tol = Constants::Simulation::DEFAULT_TOLERANCE,
+                            int    maxIter = Constants::Simulation::DEFAULT_MAX_ITERATIONS) const;
     
   private:
     // Mark units that are accessible from a given unit (for validity checking)
@@ -90,5 +97,16 @@ class Circuit {
     double gormanium_value;       // £/kg in Gormanium stream
     double waste_penalty_palusznium; // £/kg waste in Palusznium stream
     double waste_penalty_gormanium;  // £/kg waste in Gormanium stream
+
+    /* ----------  ---------- */
+    int n               = 10;
+    int feed_dest       = 0;
+    uint8_t term_mask(int start) const;
+    
+    inline int OUT_P1() const { return n;     }   // palusznium
+    inline int OUT_P2() const { return n + 1; }   // gormanium
+    inline int OUT_TA() const { return n + 2; }   // 尾矿
+
+
 };
 
