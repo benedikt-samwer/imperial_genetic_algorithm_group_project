@@ -37,6 +37,8 @@ public:
 
     /* ---------------- Physical / kinetic parameters ----------------------- */
     double volume;          ///< Unit volume V  (m³) – default 10 m³
+    double V_min;          ///< Minimum volume (m³) – default 2.5 m³
+    double V_max;          ///< Maximum volume (m³) – default 20 m³
 
     double k_palusznium;    ///< First‑order rate constant k_i (s⁻¹) – Palusznium
     double k_gormanium;     ///< First‑order rate constant k_i (s⁻¹) – Gormanium
@@ -57,6 +59,7 @@ public:
     double tails_gormanium; ///< T_G  (kg s⁻¹)
     double tails_waste;     ///< T_W  (kg s⁻¹)
 
+    /* -------------------- Computed recoveries for each component ----------- */
     double Rp, Rg, Rw; ///< Recoveries for each component
 
     /* --------------------------- Constructors ----------------------------- */
@@ -96,4 +99,12 @@ public:
      * @return true if valid, false otherwise.
      */
     // double calculate_recovery(const string& component, double feed_rate) const;
+
+    /**
+     * @brief Update the volume of the unit.
+     *
+     * @param beta The new volume of the unit.
+     */
+    void update_volume(double beta) ;
+    
 };

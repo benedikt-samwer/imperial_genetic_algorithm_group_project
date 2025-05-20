@@ -81,7 +81,7 @@ Circuit::Circuit(int num_units)
 {}
 
 // 初始化电路结构
-bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector) {
+bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta) {
     // num_units = n
     int num_units = (vector_size - 1) / 2;
     if (vector_size != 2 * num_units + 1) return false;
@@ -103,6 +103,12 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector)
         if (tails == num_units)       tails = PALUSZNIUM_PRODUCT; 
         else if (tails == num_units+1) tails = GORMANIUM_PRODUCT;
         else if (tails == num_units+2) tails = TAILINGS_OUTPUT;
+
+        //TODO: 这里需要考虑 beta 的情况
+        // beta 是一个可选参数，表示单元的体积比例
+        // if (beta) {
+        //     units[i].update_volume(beta[i]);
+        // }
 
         units[i] = CUnit(conc, tails);
     }

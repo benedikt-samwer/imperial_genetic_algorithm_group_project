@@ -5,7 +5,7 @@ CUnit::CUnit()
       feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
       k_palusznium(0.008), k_gormanium(0.004), k_waste(0.0005),
       conc_palusznium(0.0), conc_gormanium(0.0), conc_waste(0.0),
-      tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0) {}
+      tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0), V_min(2.5), V_max(20.0) {}
 
 CUnit::CUnit(int conc, int tails)
     : conc_num(conc), tails_num(tails), mark(false),
@@ -15,7 +15,9 @@ CUnit::CUnit(int conc, int tails)
       k_gormanium(Constants::Physical::K_GORMANIUM),
       k_waste(Constants::Physical::K_WASTE),
       conc_palusznium(0.0), conc_gormanium(0.0), conc_waste(0.0),
-      tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0) {}
+      tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0), V_min(Constants::Circuit::MIN_UNIT_VOLUME), V_max(Constants::Circuit::MAX_UNIT_VOLUME) {}
+
+
 
 void CUnit::process()
 {
@@ -30,9 +32,9 @@ void CUnit::process()
     const double tau = phi * volume / (std::max(Ftot, minFlow)/rho);
 
     /* ----------- 2. Recoveries R_i^C ----------- */
-    const double Rp = k_palusznium * tau / (1.0 + k_palusznium * tau);
-    const double Rg = k_gormanium * tau / (1.0 + k_gormanium * tau);
-    const double Rw = k_waste      * tau / (1.0 + k_waste      * tau);
+    Rp = k_palusznium * tau / (1.0 + k_palusznium * tau);
+    Rg = k_gormanium * tau / (1.0 + k_gormanium * tau);
+    Rw = k_waste      * tau / (1.0 + k_waste      * tau);
 
     /* ----------- 3. Split feed into products --- */
     // Palusznium
@@ -46,4 +48,8 @@ void CUnit::process()
     // Waste
     conc_waste  = feed_waste * Rw;
     tails_waste = feed_waste - conc_waste;
+}
+
+void CUnit::update_volume(double beta) {
+    this->volume = this->V_min + (this->V_max - this->V_min) * beta; 
 }
