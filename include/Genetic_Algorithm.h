@@ -5,6 +5,7 @@
 #pragma once
 
 #include <functional>
+#include <string>
 #include <vector>
 
 // Structure to hold genetic algorithm parameters
