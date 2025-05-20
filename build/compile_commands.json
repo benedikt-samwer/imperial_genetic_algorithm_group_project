@@ -1,0 +1,44 @@
+[
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/src",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/geneticAlgorithm.dir/Genetic_Algorithm.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/Genetic_Algorithm.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/Genetic_Algorithm.cpp",
+  "output": "src/CMakeFiles/geneticAlgorithm.dir/Genetic_Algorithm.cpp.o"
+},
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/src",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/circuitSimulator.dir/CCircuit.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/CCircuit.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/CCircuit.cpp",
+  "output": "src/CMakeFiles/circuitSimulator.dir/CCircuit.cpp.o"
+},
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/src",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/circuitSimulator.dir/CSimulator.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/CSimulator.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/CSimulator.cpp",
+  "output": "src/CMakeFiles/circuitSimulator.dir/CSimulator.cpp.o"
+},
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/src",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/Circuit_Optimizer.dir/main.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/main.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/src/main.cpp",
+  "output": "src/CMakeFiles/Circuit_Optimizer.dir/main.cpp.o"
+},
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/tests",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/../includes\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/test_circuit_simulator.dir/test_circuit_simulator.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/test_circuit_simulator.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/test_circuit_simulator.cpp",
+  "output": "tests/CMakeFiles/test_circuit_simulator.dir/test_circuit_simulator.cpp.o"
+},
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/tests",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/../includes\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/test_genetic_algorithm.dir/test_genetic_algorithm.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/test_genetic_algorithm.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/test_genetic_algorithm.cpp",
+  "output": "tests/CMakeFiles/test_genetic_algorithm.dir/test_genetic_algorithm.cpp.o"
+},
+{
+  "directory": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/build/tests",
+  "command": "/usr/bin/clang++  -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/include\" -I\"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/../includes\" -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/test_validity_checker.dir/test_validity_checker.cpp.o -c \"/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/test_validity_checker.cpp\"",
+  "file": "/Users/apple/Library/Mobile Documents/com~apple~CloudDocs/Studium/Imperial/acs-palusznium-rush-ilmenite/tests/test_validity_checker.cpp",
+  "output": "tests/CMakeFiles/test_validity_checker.dir/test_validity_checker.cpp.o"
+}
+]

@@ -1,27 +1,38 @@
 #include "CUnit.h"
 #include "CCircuit.h"
 #include "CSimulator.h"
+#include "constants.h"
 
 #include <cmath>
+#include <iostream>
 
-struct Simulator_Parameters default_simulator_parameters = {0.01, 1000};
+Simulator_Parameters default_simulator_parameters = {};
 
-int fake_answer_vector[] = {0, 1, 2, 2, 3, 4, 2, 1, 4, 4, 5, 4, 4, 1, 2, 6};
-
+// Compute performance of a circuit vector
 double circuit_performance(int vector_size, int* circuit_vector,
-                        int unit_parameters_size, double *unit_parameters,
-                        struct Simulator_Parameters simulator_parameters) {
-//This function takes a circuit vector and returns a performance value.
-//The current version of the function is a dummy function that returns
-// a performance value based on how close the circuit vector is to a predetermined answer vector.
+                           int unit_parameters_size, double* unit_parameters,
+                           Simulator_Parameters simulator_parameters) {
+    
+    int num_units = (vector_size - 1) / 2;
+    Circuit circuit(num_units);
 
-  double performance = 0.0; 
-  for (int i=0;i<vector_size;i++) {
-    //dummy_answer_vector is a predetermined answer vector (same size as circuit_vector)
-    performance += (20-std::abs(circuit_vector[i]-fake_answer_vector[i]))*100.0; 
-  }
-  return performance; 
+    // Step 1: Initialize the circuit from the vector
+    if (!circuit.initialize_from_vector(vector_size, circuit_vector)) {
+        return -1e9;  // Large negative penalty for invalid circuit
+    }
+
+    // Step 2: Run mass balance simulation
+    if (!circuit.run_mass_balance(simulator_parameters.tolerance,
+                                  simulator_parameters.max_iterations)) {
+        return -1e9;  // Non-converging circuits are penalized heavily
+    }
+
+    // Step 3: Get the economic value of the circuit
+    double value = circuit.get_economic_value();
+
+    return value;
 }
+
 
 // overloads (delete if not needed)
 double circuit_performance(int vector_size, int* circuit_vector,
@@ -43,3 +54,5 @@ double circuit_performance(int vector_size, int* circuit_vector){
 };
 
 // Other functions and variables to evaluate a real circuit.
+
+
