@@ -105,7 +105,7 @@ class Circuit {
     
     inline int OUT_P1() const { return n;     }   // palusznium
     inline int OUT_P2() const { return n + 1; }   // gormanium
-    inline int OUT_TA() const { return n + 2; }   // 尾矿
+    inline int OUT_TA() const { return n + 2; }   // tails
 
 
 };
