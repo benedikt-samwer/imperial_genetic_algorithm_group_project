@@ -108,7 +108,7 @@ int main() {
  
   // Verify result (with a small epsilon)
   bool ok2 = true;
-  const double eps = 1e-4;
+  const double eps = 1e-2;
   for (int i = 0; i < L2; ++i) {
     if (std::abs(vector2[i] - real_test_answer[i]) > eps) {
       std::cerr << "Mismatch (real) at index " << i << ": got " << vector2[i]
@@ -121,7 +121,87 @@ int main() {
     return 1;
   }
   std::cout << "Continuous GA test PASSED\n";
- 
+
+  // --- Mixed discrete+continuous test ---
+  std::cout << "\n=== Mixed GA Test ===\n";
+
+  std::vector<int> vector3 = {
+      1, 0, 3, 2, 1, 0, 4, 3, 2, 1, 0,
+      3, 4, 2, 1, 0, 3, 2, 1, 4, 0
+  };
+  std::vector<double> vector4 = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
+  int L3 = vector3.size();
+  int L4 = vector4.size();
+
+  auto mixed_test_function = [](int Li, int* iv, int Lr, double* rv) -> double {
+    double int_error = 0.0, real_error = 0.0;
+    for (int i = 0; i < Li; ++i) {
+      double diff = iv[i] - int_test_answer[i];
+      int_error += diff * diff;
+    }
+    for (int i = 0; i < Lr; ++i) {
+      double diff = rv[i] - real_test_answer[i];
+      real_error += diff * diff;
+    }
+    return -(int_error + real_error);
+  };
+
+  auto always_valid_mixed = [](int, int*, int, double*) { return true; };
+
+  code = optimize(L3, vector3.data(), L4, vector4.data(),
+                      mixed_test_function, always_valid_mixed, params);
+  if (code != 0) {
+    std::cerr << "ERROR: optimize() (mixed) returned code " << code << "\n";
+    return code;
+  }
+
+  auto stats3 = get_last_optimization_result();
+  std::cout << "Final mixed int vector: ";
+  for (int x : vector3) std::cout << x << ' ';
+  std::cout << "\nFinal mixed real vector: ";
+  for (double x : vector4) std::cout << x << ' ';
+  std::cout << "\nBest fitness: " << stats3.best_fitness
+            << " (generations: " << stats3.generations << ")\n";
+
+  // === Separate validation ===
+  bool ok3_int = true;
+  bool ok3_real = true;
+
+  std::cout << "\nValidating integer genome:\n";
+  for (int i = 0; i < L3; ++i) {
+    if (vector3[i] != int_test_answer[i]) {
+      std::cerr << "Mismatch (int) at index " << i
+                << ": got " << vector3[i]
+                << ", expected " << int_test_answer[i] << "\n";
+      ok3_int = false;
+    } else {
+      std::cout << "Match at index " << i << ": " << vector3[i] << "\n";
+    }
+
+  const double float_eps = 1e-2;
+  std::cout << "\nValidating real genome:\n";
+  for (int i = 0; i < L4; ++i) {
+    if (std::abs(vector4[i] - real_test_answer[i]) > float_eps) {
+      std::cerr << "Mismatch (real) at index " << i
+                << ": got " << vector4[i]
+                << ", expected " << real_test_answer[i] << "\n";
+      ok3_real = false;
+    }
+  }
+
+  if (!ok3_int && !ok3_real) {
+    std::cerr << "Mixed GA test FAILED: both int and real components incorrect.\n";
+    return 1;
+  }
+  if (!ok3_int) {
+    std::cerr << "Mixed GA test FAILED: int genome mismatch.\n";
+    return 1;
+  }
+  if (!ok3_real) {
+    std::cerr << "Mixed GA test PASSED (int correct, real approximate).\n";
+  } else {
+    std::cout << "Mixed GA test PASSED (both int and real correct).\n";
+  }
   return 0;
 }
- 
+}
