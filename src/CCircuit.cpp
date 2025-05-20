@@ -311,8 +311,9 @@ double Circuit::get_economic_value() const {
     value -= cost; // 作为惩罚扣除
     get_palusznium_recovery();// 调试输出
     get_gormanium_recovery();// 调试输出
-    get_palusznium_grade();// 调试输出
-    get_gormanium_grade();// 调试输出
+
+    std::cout<<"grade for palusznium: "<<get_palusznium_grade()<<std::endl;// 调试输出
+    std::cout<<"grade for gormanium: "<<get_gormanium_grade()<<std::endl;// 调试输出
     return value;
 }
 

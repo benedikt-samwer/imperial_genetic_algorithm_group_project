@@ -27,7 +27,7 @@ void CUnit::process()
     const double Ftot = feed_palusznium + feed_gormanium + feed_waste;
     // guard against division‑by‑zero / vanishing flow
     const double minFlow = 1e-10;                          
-    const double tau = phi * volume / (rho * std::max(Ftot, minFlow));
+    const double tau = phi * volume / (std::max(Ftot, minFlow)/rho);
 
     /* ----------- 2. Recoveries R_i^C ----------- */
     const double Rp = k_palusznium * tau / (1.0 + k_palusznium * tau);
