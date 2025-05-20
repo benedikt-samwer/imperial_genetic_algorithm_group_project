@@ -52,6 +52,12 @@ void testUnit(){
 
 int testCCircuit(){
     int circuit_vec[] = {0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8}  ;
+    double *beta = new double[13];
+
+    for (int i = 0; i < 13; ++i) {
+        // std::cout << "beta[" << i << "] = " << beta[i] << std::endl;
+        beta[i] = 0.1+i*0.05;
+    }
     // int circuit_vec[] = {1,2,3,0,3,4,3,0,6};
 
     // std::vector<int> circuit_vec1 = {0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8};
@@ -79,7 +85,7 @@ int testCCircuit(){
     // circuit.export_to_dot("../circuit.dot");
     // std::cout << "export to dot: circuit.dot" << std::endl;
         
-    double result = circuit_performance(13, circuit_vec);
+    double result = circuit_performance(13, circuit_vec, 13, beta);
     
     std::cout << "circuit_performance(13, vec1) = "<< result <<"£\n";
     return 0;

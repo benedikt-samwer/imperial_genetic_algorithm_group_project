@@ -47,7 +47,10 @@ class Circuit {
     // The array of units in the circuit
     std::vector<CUnit> units;
 
+    /* --------- volume information --------- */
+    double *beta; // Array of beta values for unit volumes
 
+    
     /* --------- flow information --------- */
     // Feed unit number and feed rates
     int feed_unit;
@@ -81,8 +84,9 @@ class Circuit {
     /**
      * @brief Constructor for the Circuit class
      * @param num_units Number of units in the circuit
+     * @param beta Optional pointer to the beta values for unit volumes
      */
-    Circuit(int num_units);
+    Circuit(int num_units, double *beta = nullptr);
     
     // Initialize the circuit from a circuit vector
     /**
@@ -146,7 +150,7 @@ class Circuit {
      */
     bool export_to_dot(const std::string& filename) const;
     
-    
+
     // Mark units that are accessible from a given unit (for validity checking)
     void mark_units(int unit_num);
     

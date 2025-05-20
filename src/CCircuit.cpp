@@ -59,7 +59,7 @@ void Circuit::mark_units(int unit_num) {
 
 
 
-Circuit::Circuit(int num_units)
+Circuit::Circuit(int num_units,double *beta)
     : units(num_units),
       feed_unit(0),
       feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
@@ -74,6 +74,7 @@ Circuit::Circuit(int num_units)
       tailings_palusznium(0.0),
       tailings_gormanium(0.0),
       tailings_waste(0.0),
+      beta(beta),
       palusznium_value(Constants::Economic::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM),
       gormanium_value(Constants::Economic::GORMANIUM_VALUE_IN_GORMANIUM_STREAM),
       waste_penalty_palusznium(Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
@@ -106,11 +107,11 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
 
         //TODO: here we can set the volume of the unit through beta
         // beta is a choosable parameter
-        // if (beta) {
-        //     units[i].update_volume(beta[i]);
-        // }
-
         units[i] = CUnit(conc, tails);
+        if (beta!= nullptr) {
+         
+            units[i].update_volume(beta[i]);
+        }
     }
     return true;
 }

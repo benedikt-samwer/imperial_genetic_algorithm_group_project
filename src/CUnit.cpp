@@ -28,8 +28,9 @@ void CUnit::process()
     // total solids feed (kg/s)
     const double Ftot = feed_palusznium + feed_gormanium + feed_waste;
     // guard against division‑by‑zero / vanishing flow
-    const double minFlow = 1e-10;                          
-    const double tau = phi * volume / (std::max(Ftot, minFlow)/rho);
+    const double minFlow = 1e-10;        
+    // std::cout<<"volume: "<<this->volume<<std::endl;                  
+    const double tau = phi * this->volume / (std::max(Ftot, minFlow)/rho);
 
     /* ----------- 2. Recoveries R_i^C ----------- */
     Rp = k_palusznium * tau / (1.0 + k_palusznium * tau);
@@ -51,5 +52,8 @@ void CUnit::process()
 }
 
 void CUnit::update_volume(double beta) {
+    // std::cout<<"beta: "<<beta<<std::endl;
+    // std::cout<<"before volume: "<<this->volume<<std::endl;
     this->volume = this->V_min + (this->V_max - this->V_min) * beta; 
+    // std::cout<<"after volume: "<<this->volume<<std::endl;
 }

@@ -9,6 +9,7 @@ struct Simulator_Parameters default_simulator_parameters = {1e-6, 100};
 double circuit_performance(int vector_size, int* circuit_vector,
                         int unit_parameters_size, double *unit_parameters,
                         struct Simulator_Parameters simulator_parameters) {
+
     // Calculate the number of units
     int num_units = (vector_size - 1) / 2;
     // Check if the vector size is valid
@@ -18,8 +19,8 @@ double circuit_performance(int vector_size, int* circuit_vector,
     }
 
     // Initialize the circuit
-    Circuit circuit(num_units);
-    if (!circuit.initialize_from_vector(vector_size, circuit_vector)) {
+    Circuit circuit(num_units, unit_parameters);
+    if (!circuit.initialize_from_vector(vector_size, circuit_vector, unit_parameters)) {
         // Invalid structure
         return -1e12;
     }
