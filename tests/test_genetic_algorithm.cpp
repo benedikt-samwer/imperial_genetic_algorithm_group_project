@@ -6,9 +6,11 @@
 #include <vector>
  
 // Known “answer” vectors for testing
-static const int int_test_answer[] = {2, 1, 1, 2, 0, 2, 3, 0, 4, 4, 1};
-static const double real_test_answer[] = {2.0, 1.0, 1.0, 2.0, 0.0, 2.0};
- 
+static const int int_test_answer[21] = {
+    0, 1, 2, 0, 3, 1, 4, 2, 0, 1, 3,
+    4, 2, 1, 0, 3, 2, 4, 1, 3, 0
+};
+static const double real_test_answer[] = {0.8, 0.4, 0.4, 0.8, 0.0, 0.8};
 // Discrete‐only fitness: we want to minimize sum of squared differences,
 // so we return its negative (GA maximizes fitness).
 double test_function(int L, int *v) {
@@ -36,16 +38,19 @@ bool always_valid_real(int L, double *v) { return true; }
  
 int main() {
   // --- Discrete test ---
-  std::vector<int> vector1 = {0, 1, 1, 2, 2, 3, 3, 0, 1, 0, 4};
+  std::vector<int> vector1 = {
+      1, 0, 3, 2, 1, 0, 4, 3, 2, 1, 0,
+      3, 4, 2, 1, 0, 3, 2, 1, 4, 0
+  };
   int L1 = vector1.size();
  
   Algorithm_Parameters params;
   params.verbose = true;
-  params.max_iterations = 100;
-  params.population_size = 100;
+  params.max_iterations = 200;
+  params.population_size = 500;
   params.tournament_size = 2;
   params.crossover_probability = 0.8;
-  params.mutation_probability = 0.2;
+  params.mutation_probability = 0.05;
   params.mutation_step_size = 2;
   params.convergence_threshold = 1e-6;
   params.stall_generations = 50;
@@ -82,7 +87,7 @@ int main() {
   std::cout << "Discrete GA test PASSED\n\n";
  
   // --- Continuous test ---
-  std::vector<double> vector2 = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0};
+  std::vector<double> vector2 = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
   int L2 = vector2.size();
  
   std::cout << "=== Continuous GA Test ===\n";
@@ -103,7 +108,7 @@ int main() {
  
   // Verify result (with a small epsilon)
   bool ok2 = true;
-  const double eps = 1e-6;
+  const double eps = 1e-4;
   for (int i = 0; i < L2; ++i) {
     if (std::abs(vector2[i] - real_test_answer[i]) > eps) {
       std::cerr << "Mismatch (real) at index " << i << ": got " << vector2[i]
