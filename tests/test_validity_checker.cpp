@@ -158,17 +158,17 @@ void test_small_valid_03()
 {
     Circuit c(10);
     std::vector<int> v = {
-         /* Feed destination */ 0,  // 输入流进入单元0
-    /* Unit 0 */ 1, 3,   // 浓缩流到单元1, 尾矿流到单元3
-    /* Unit 1 */ 2, 4,   // 浓缩流到单元2, 尾矿流到单元4
-    /* Unit 2 */ 5, 6,   // 浓缩流到单元5, 尾矿流到单元6
-    /* Unit 3 */ 0, 7,   // 浓缩流回收至单元0, 尾矿流到单元7
-    /* Unit 4 */ 8, 9,   // 浓缩流到单元8, 尾矿流到单元9
-    /* Unit 5 */ 10, 11, // 浓缩流到palusznium产品(10), 尾矿流到gormanium产品(11)
-    /* Unit 6 */ 0, 12,  // 浓缩流回收至单元0, 尾矿到尾矿产品(12)
-    /* Unit 7 */ 2, 12,  // 浓缩流到单元2, 尾矿到尾矿产品
-    /* Unit 8 */ 10, 12, // 浓缩流到palusznium产品, 尾矿到尾矿产品
-    /* Unit 9 */ 11, 12  // 浓缩流到gormanium产品, 尾矿到尾矿产品
+    /* Feed destination */ 0,  // Input flow enters unit 0
+    /* Unit 0 */ 1, 3,   // Concentrate to unit 1, tailings to unit 3
+    /* Unit 1 */ 2, 4,   // Concentrate to unit 2, tailings to unit 4  
+    /* Unit 2 */ 5, 6,   // Concentrate to unit 5, tailings to unit 6
+    /* Unit 3 */ 0, 7,   // Concentrate recycled to unit 0, tailings to unit 7
+    /* Unit 4 */ 8, 9,   // Concentrate to unit 8, tailings to unit 9
+    /* Unit 5 */ 10, 11, // Concentrate to palusznium product (10), tailings to gormanium product (11)
+    /* Unit 6 */ 0, 12,  // Concentrate recycled to unit 0, tailings to tailings product (12)
+    /* Unit 7 */ 2, 12,  // Concentrate to unit 2, tailings to tailings product
+    /* Unit 8 */ 10, 12, // Concentrate to palusznium product, tailings to tailings product
+    /* Unit 9 */ 11, 12  // Concentrate to gormanium product, tailings to tailings product
     };
     CU_ASSERT_TRUE(c.check_validity((int)v.size(), v.data()));
 }
