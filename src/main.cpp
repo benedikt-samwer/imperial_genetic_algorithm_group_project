@@ -57,31 +57,31 @@ int testCCircuit(){
     // std::vector<int> circuit_vec1 = {0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8};
 
 
-    Circuit circuit(13);
-    if (!circuit.initialize_from_vector(13, circuit_vec)) {
-        std::cout << "电路初始化失败！" << std::endl;
-        return 1;
-    }
+    // Circuit circuit(13);
+    // if (!circuit.initialize_from_vector(13, circuit_vec)) {
+    //     std::cout << "initialization failed" << std::endl;
+    //     return 1;
+    // }
 
-    if (!circuit.run_mass_balance()) {
-        std::cout << "质量平衡未收敛！" << std::endl;
-        return 1;
-    }
+    // if (!circuit.run_mass_balance()) {
+    //     std::cout << "mass balance did not converge" << std::endl;
+    //     return 1;
+    // }
 
-    std::cout << "Palusznium产品流量: " << circuit.palusznium_product_palusznium << " kg/s" << std::endl;
-    std::cout << "Gormanium产品流量:  " << circuit.gormanium_product_gormanium << " kg/s" << std::endl;
-    std::cout << "尾矿流量:           " << circuit.tailings_waste << " kg/s" << std::endl;
+    // std::cout << "Palusznium product flow: " << circuit.palusznium_product_palusznium << " kg/s" << std::endl;
+    // std::cout << "Gormanium product flow:  " << circuit.gormanium_product_gormanium << " kg/s" << std::endl;
+    // std::cout << "tail flow:           " << circuit.tailings_waste << " kg/s" << std::endl;
 
-    std::cout << "经济价值: " << circuit.get_economic_value() << std::endl;
-    std::cout << "Palusznium回收率: " << circuit.get_palusznium_recovery() << std::endl;
-    std::cout << "Gormanium回收率:  " << circuit.get_gormanium_recovery() << std::endl;
+    // std::cout << "econimic value : " << circuit.get_economic_value() << std::endl;
+    // std::cout << "Palusznium recovery: " << circuit.get_palusznium_recovery() << std::endl;
+    // std::cout << "Gormanium recovery:  " << circuit.get_gormanium_recovery() << std::endl;
     
-    circuit.export_to_dot("../circuit.dot");
-    std::cout << "已导出 dot 文件: circuit.dot" << std::endl;
+    // circuit.export_to_dot("../circuit.dot");
+    // std::cout << "export to dot: circuit.dot" << std::endl;
         
     double result = circuit_performance(13, circuit_vec);
     
-    std::cout << "circuit_performance(13, vec1) = "<< result <<"\n";
+    std::cout << "circuit_performance(13, vec1) = "<< result <<"£\n";
     return 0;
 }
 

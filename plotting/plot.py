@@ -1,7 +1,7 @@
 import graphviz
 import os
 
-print("当前工作目录:", os.getcwd())
+print("Current directory:", os.getcwd())
 # read the dot file
 with open('./circuit.dot', 'r') as f:
     dot_source = f.read()
@@ -43,5 +43,5 @@ for line in dot_source.splitlines():
         graph.node(node, label=label)
 
 graph.render('circuit', cleanup=True, format='png')
-print("已生成 circuit.png")
+print("Generated circuit.png")
 

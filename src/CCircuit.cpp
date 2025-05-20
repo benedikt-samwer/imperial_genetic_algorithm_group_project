@@ -104,8 +104,8 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
         else if (tails == num_units+1) tails = GORMANIUM_PRODUCT;
         else if (tails == num_units+2) tails = TAILINGS_OUTPUT;
 
-        //TODO: 这里需要考虑 beta 的情况
-        // beta 是一个可选参数，表示单元的体积比例
+        //TODO: here we can set the volume of the unit through beta
+        // beta is a choosable parameter
         // if (beta) {
         //     units[i].update_volume(beta[i]);
         // }
@@ -133,12 +133,12 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
     std::vector<double> last_feed_p(units.size(), 0.0);
     std::vector<double> last_feed_g(units.size(), 0.0);
     std::vector<double> last_feed_w(units.size(), 0.0);
-    std::cout << "单元数量: " << units.size() << std::endl;
+    std::cout << "Unit number: " << units.size() << std::endl;
 
     for (int iter = 0; iter < max_iterations; ++iter) {
-        std::cout << "迭代 " << iter + 1 << "：\n";
+        // std::cout << "\n==========Iteration" << iter + 1 << "==========\n\n";
 
-        // Record the current feed 
+        // Record the current feed
         // Record the current feed to last_feed and clear the current feed
         if(iter ==0){
             for (size_t i = 0; i < units.size(); ++i) {
@@ -164,13 +164,14 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
 
         // Process all units
         for (size_t i = 0; i < units.size(); ++i) {
-            std::cout << "  单元" << i << " 进料(P,G,W): " << units[i].feed_palusznium << ", "
-                    << units[i].feed_gormanium << ", " << units[i].feed_waste << "\n";
+            
+            // std::cout << "  unit" << i << " feed (P,G,W): " << units[i].feed_palusznium << ", "
+                    // << units[i].feed_gormanium << ", " << units[i].feed_waste << "\n";
             units[i].process();
-            std::cout << "  单元" << i << " 浓缩流(P,G,W): " << units[i].conc_palusznium << ", "
-                    << units[i].conc_gormanium << ", " << units[i].conc_waste << "\n";
-            std::cout << "  单元" << i << " 尾矿流(P,G,W): " << units[i].tails_palusznium << ", "
-                    << units[i].tails_gormanium << ", " << units[i].tails_waste << "\n";
+            // std::cout << "  unit" << i << " concentrate flow (P,G,W): " << units[i].conc_palusznium << ", "
+                    // << units[i].conc_gormanium << ", " << units[i].conc_waste << "\n";
+            // std::cout << "  unit" << i << " tailings flow (P,G,W): " << units[i].tails_palusznium << ", "
+                    // << units[i].tails_gormanium << ", " << units[i].tails_waste << "\n\n";
         }
 
         // This vector is used to mark whether the feed for each unit has been cleared
@@ -182,18 +183,18 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
         gormanium_product_palusznium = gormanium_product_gormanium = gormanium_product_waste = 0.0;
         tailings_palusznium = tailings_gormanium = tailings_waste = 0.0;
 
-        
-        std::cout<<"=====分配下游数据====="<<std::endl;
+
+        // std::cout<<"=====Distributing downstream data====="<<std::endl;
         for (size_t i = 0; i < units.size(); ++i) {
             // concentrate flow
             int concDest = units[i].conc_num;
-            // std::cout << "  单元" << i << " 浓缩流向: " << concDest << std::endl;
+            // std::cout << "  unit" << i << " concentrate flow to: " << concDest << std::endl;
             if (concDest == PALUSZNIUM_PRODUCT) {
                 palusznium_product_palusznium += units[i].conc_palusznium;
                 palusznium_product_gormanium += units[i].conc_gormanium;
                 palusznium_product_waste += units[i].conc_waste;
             } else if (concDest == GORMANIUM_PRODUCT) {
-                // std::cout << "  单元" << i << " 浓缩流向: GORMANIUM_PRODUCT" << std::endl;
+                // std::cout << "  unit" << i << " concentrate flow to: GORMANIUM_PRODUCT" << std::endl;
                 gormanium_product_palusznium += units[i].conc_palusznium;
                 gormanium_product_gormanium += units[i].conc_gormanium;
                 gormanium_product_waste += units[i].conc_waste;
@@ -202,7 +203,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
                 tailings_gormanium += units[i].conc_gormanium;
                 tailings_waste += units[i].conc_waste;
             } else if (concDest >= 0 && concDest < (int)units.size()) {
-                // std::cout << "  单元" << i << " 浓缩流向: " << concDest << std::endl;
+                // std::cout << "  unit" << i << " concentrate flow to: " << concDest << std::endl;
                 if (!feedCleared[concDest]) {
                     feedCleared[concDest] = true;
                     units[concDest].feed_palusznium = 0.0;
@@ -214,8 +215,8 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
                 units[concDest].feed_waste += units[i].conc_waste;
             }
 
-            // std::cout << "  单元" << i << " 尾矿流向: " << units[i].tails_num << std::endl;
-            // std::cout<<"尾矿数据"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
+            // std::cout << "  unit" << i << " tailings flow to: " << units[i].tails_num << std::endl;
+            // std::cout<<"Tailings data"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
             // std::cout<<units[i].tails_waste << std::endl;
             // tail flow
             int tailsDest = units[i].tails_num;
@@ -224,31 +225,31 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
                 palusznium_product_gormanium += units[i].tails_gormanium;
                 palusznium_product_waste += units[i].tails_waste;
             } else if (tailsDest == GORMANIUM_PRODUCT) {
-                // std::cout << "  单元" << i << " 尾矿流向: GORMANIUM_PRODUCT" << std::endl;
+                // std::cout << "  unit" << i << " tailings flow to: GORMANIUM_PRODUCT" << std::endl;
                 gormanium_product_palusznium += units[i].tails_palusznium;
                 gormanium_product_gormanium += units[i].tails_gormanium;
                 gormanium_product_waste += units[i].tails_waste;
-                // std::cout<<"尾矿数据"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
+                // std::cout<<"Tailings data"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
                 // std::cout<<units[i].tails_waste << std::endl;
             } else if (tailsDest == TAILINGS_OUTPUT) {
                 tailings_palusznium += units[i].tails_palusznium;
                 tailings_gormanium += units[i].tails_gormanium;
                 tailings_waste += units[i].tails_waste;
             } else if (tailsDest >= 0 && tailsDest < (int)units.size()) {
-                // std::cout << "  单元" << i << " 非尾矿单元尾矿流向: " << tailsDest << std::endl;
+                // std::cout << "  unit" << i << " non-tailings unit tailings flow to: " << tailsDest << std::endl;
                 if (!feedCleared[tailsDest]) {
                     feedCleared[tailsDest] = true;
                     units[tailsDest].feed_palusznium = 0.0;
                     units[tailsDest].feed_gormanium = 0.0;
                     units[tailsDest].feed_waste = 0.0;
-                } 
-                // std::cout<<"尾矿数据"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
+                }
+                // std::cout<<"Tailings data"<<std::endl<<units[i].tails_palusznium << " " << units[i].tails_gormanium << std::endl;
                 // std::cout<<units[i].tails_waste << std::endl;
-                // std::cout<<"准备分配了！"<<std::endl;
+                // std::cout<<"Ready to distribute!"<<std::endl;
                 units[tailsDest].feed_palusznium += units[i].tails_palusznium;
                 units[tailsDest].feed_gormanium += units[i].tails_gormanium;
                 units[tailsDest].feed_waste += units[i].tails_waste;
-                // std::cout<<"尾矿数据"<<std::endl<<units[tailsDest].feed_palusznium << " " << units[tailsDest].feed_gormanium << std::endl;
+                // std::cout<<"Tailings data"<<std::endl<<units[tailsDest].feed_palusznium << " " << units[tailsDest].feed_gormanium << std::endl;
                 // std::cout<<units[tailsDest].feed_waste << std::endl;
             }
         }
@@ -265,17 +266,17 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
 
 
         // ---- debug output ----
-        for (size_t i = 0; i < units.size(); ++i) {
-            std::cout << "  单元" << i
-                    << " 上轮进料(P,G,W): " << last_feed_p[i] << ", "
-                    << last_feed_g[i] << ", " << last_feed_w[i]
-                    << " | 本轮进料(P,G,W): " << units[i].feed_palusznium << ", "
-                    << units[i].feed_gormanium << ", " << units[i].feed_waste << "\n";
-        }
-        std::cout << "  Palusznium产品流量: " << palusznium_product_palusznium
-                << "  Gormanium产品流量: " << gormanium_product_gormanium
-                << "  尾矿流量: " << tailings_waste << std::endl;
-        std::cout << "  max_rel_change = " << max_rel_change << std::endl;
+        // for (size_t i = 0; i < units.size(); ++i) {
+        //     std::cout << "  Unit" << i
+        //             << " Last feed (P,G,W): " << last_feed_p[i] << ", "
+        //             << last_feed_g[i] << ", " << last_feed_w[i]
+        //             << " | Current feed (P,G,W): " << units[i].feed_palusznium << ", "
+        //             << units[i].feed_gormanium << ", " << units[i].feed_waste << "\n";
+        // }
+        // std::cout << "  Palusznium product flow: " << palusznium_product_palusznium
+        //         << "  Gormanium product flow: " << gormanium_product_gormanium
+        //         << "  Tailings flow: " << tailings_waste << std::endl;
+        // std::cout << "  max_rel_change = " << max_rel_change << std::endl;
         // ---- debug output ----
         if (max_rel_change < tolerance) return true;
 
@@ -303,11 +304,11 @@ double Circuit::get_economic_value() const {
         cost += 1000.0 * std::pow(total_volume - 150.0, 2.0);
     }
     value -= cost; // cost of the circuit
-    get_palusznium_recovery();// debug output
-    get_gormanium_recovery();// debug output
+    std::cout<<"gormanium recovery: "<<(get_palusznium_recovery())*100<<"%"<<std::endl;
+    std::cout<<"palusznium recovery: "<<(get_gormanium_recovery())*100<<"%"<<std::endl;
 
-    std::cout<<"grade for palusznium: "<<get_palusznium_grade()<<std::endl;// debug output
-    std::cout<<"grade for gormanium: "<<get_gormanium_grade()<<std::endl;// debug output
+    std::cout<<"grade for palusznium: "<<(get_palusznium_grade())*100<<"%"<<std::endl;// debug output
+    std::cout<<"grade for gormanium: "<<(get_gormanium_grade())*100<<"%"<<std::endl;// debug output
     return value;
 }
 
@@ -323,14 +324,12 @@ double Circuit::get_palusznium_recovery() const {
     double total_feed = feed_palusznium_rate;
     double recovered = palusznium_product_palusznium;
     if (total_feed < 1e-12) return 0.0;
-    std::cout<<"palusznium recovery: "<<recovered / total_feed<<std::endl;
     return recovered / total_feed;
 }
 double Circuit::get_gormanium_recovery() const {
     double total_feed = feed_gormanium_rate;
     double recovered =  gormanium_product_gormanium;
     if (total_feed < 1e-12) return 0.0;
-    std::cout<<"palusznium recovery: "<<recovered / total_feed<<std::endl;
     return recovered / total_feed;
     // CUnit cal =  CUnit(-1,-1);
     // cal.feed_palusznium = feed_palusznium_rate;
