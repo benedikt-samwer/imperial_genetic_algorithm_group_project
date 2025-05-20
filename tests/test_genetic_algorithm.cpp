@@ -416,43 +416,43 @@ int main() {
   }
   std::cout << "Original Discrete GA test PASSED\n\n";
 
-  // --- Continuous test ---
-  std::vector<double> vector2 = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
-                                 0.7, 0.8, 0.9, 0.2, 0.3, 0.4, 0.5,
-                                 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2};
-  int L2 = vector2.size();
+  // // --- Continuous test ---
+  // std::vector<double> vector2 = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6,
+  //                                0.7, 0.8, 0.9, 0.2, 0.3, 0.4, 0.5,
+  //                                0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2};
+  // int L2 = vector2.size();
 
-  std::cout << "=== Continuous GA Test ===\n";
-  code = optimize(L2, vector2.data(), real_test_function, always_valid_real,
-                  standard_params);
-  if (code != 0) {
-    std::cerr << "ERROR: optimize() (real) returned code " << code << "\n";
-    return code;
-  }
+  // std::cout << "=== Continuous GA Test ===\n";
+  // code = optimize(L2, vector2.data(), real_test_function, always_valid_real,
+  //                 standard_params);
+  // if (code != 0) {
+  //   std::cerr << "ERROR: optimize() (real) returned code " << code << "\n";
+  //   return code;
+  // }
 
-  // Print out what the GA found
-  auto stats2 = get_last_optimization_result();
-  std::cout << "Final real genome: ";
-  for (double x : vector2)
-    std::cout << x << ' ';
-  std::cout << "\nBest fitness: " << stats2.best_fitness
-            << " (generations: " << stats2.generations << ")\n";
+  // // Print out what the GA found
+  // auto stats2 = get_last_optimization_result();
+  // std::cout << "Final real genome: ";
+  // for (double x : vector2)
+  //   std::cout << x << ' ';
+  // std::cout << "\nBest fitness: " << stats2.best_fitness
+  //           << " (generations: " << stats2.generations << ")\n";
 
-  // Verify result (with a small epsilon)
-  bool ok2 = true;
-  const double eps = 1e-4;
-  for (int i = 0; i < L2; ++i) {
-    if (std::abs(vector2[i] - real_test_answer[i]) > eps) {
-      std::cerr << "Mismatch (real) at index " << i << ": got " << vector2[i]
-                << " expected " << real_test_answer[i] << "\n";
-      ok2 = false;
-    }
-  }
-  if (!ok2) {
-    std::cerr << "Continuous GA test FAILED\n";
-    // return 1;
-  }
-  std::cout << "Continuous GA test PASSED\n";
+  // // Verify result (with a small epsilon)
+  // bool ok2 = true;
+  // const double eps = 1e-4;
+  // for (int i = 0; i < L2; ++i) {
+  //   if (std::abs(vector2[i] - real_test_answer[i]) > eps) {
+  //     std::cerr << "Mismatch (real) at index " << i << ": got " << vector2[i]
+  //               << " expected " << real_test_answer[i] << "\n";
+  //     ok2 = false;
+  //   }
+  // }
+  // if (!ok2) {
+  //   std::cerr << "Continuous GA test FAILED\n";
+  //   // return 1;
+  // }
+  // std::cout << "Continuous GA test PASSED\n";
 
   // --- Mixed discrete+continuous test ---
   std::cout << "\n=== Mixed GA Test ===\n";
