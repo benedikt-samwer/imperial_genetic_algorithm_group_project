@@ -358,14 +358,172 @@ int optimize(int real_vector_size, double *real_vector,
 
   return 0;
 }
-// ********************************************************************
-// 3) Mixed discrete-continuous optimize (stub)
-// ********************************************************************
+
 int optimize(int int_vector_size, int *int_vector, int real_vector_size,
              double *real_vector,
              std::function<double(int, int *, int, double *)> func,
              std::function<bool(int, int *, int, double *)> validity,
              Algorithm_Parameters params) {
-  // TODO: implement combined GA
-  return -1;
+  using Clock = std::chrono::high_resolution_clock;
+  auto t0 = Clock::now();
+
+  std::uniform_real_distribution<double> u01(0.0, 1.0);
+  std::uniform_real_distribution<double> mutation_step_dist(-params.mutation_step_size,
+                                                            params.mutation_step_size);
+  std::uniform_int_distribution<int> int_step_dist(-params.mutation_step_size,
+                                                   params.mutation_step_size);
+
+  int n_units = (int_vector_size - 1) / 2;
+  int min_gene = -3;
+  int max_gene = n_units + 2;
+  int gene_range = max_gene - min_gene + 1;
+  std::uniform_int_distribution<int> gene_dist(min_gene, max_gene);
+
+  // --- Initialize population
+  std::vector<std::pair<std::vector<int>, std::vector<double>>> population;
+  while (population.size() < params.population_size) {
+    std::vector<int> int_part(int_vector_size);
+    for (int &g : int_part) g = gene_dist(rng());
+
+    std::vector<double> real_part(real_vector_size);
+    for (double &x : real_part) x = u01(rng());
+
+    if (validity(int_vector_size, int_part.data(), real_vector_size, real_part.data()))
+      population.emplace_back(std::move(int_part), std::move(real_part));
+  }
+
+  double best_overall = -1e300;
+  int stall_count = 0;
+
+  for (int gen = 0; gen < params.max_iterations; ++gen) {
+    // Evaluate fitness
+    std::vector<double> fitnesses(population.size());
+    for (size_t i = 0; i < population.size(); ++i) {
+      auto &[i_part, r_part] = population[i];
+      fitnesses[i] = validity(int_vector_size, i_part.data(),
+                              real_vector_size, r_part.data())
+                         ? func(int_vector_size, i_part.data(),
+                                real_vector_size, r_part.data())
+                         : -1e9;
+    }
+
+    double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
+    if (gen_best > best_overall + params.convergence_threshold) {
+      best_overall = gen_best;
+      stall_count = 0;
+    } else {
+      stall_count++;
+    }
+    if (stall_count >= params.stall_generations) break;
+
+    // Elitism
+    std::vector<std::pair<std::vector<int>, std::vector<double>>> next_gen;
+    {
+      auto best_it = std::max_element(fitnesses.begin(), fitnesses.end());
+      size_t best_idx = std::distance(fitnesses.begin(), best_it);
+      next_gen.push_back(population[best_idx]);
+    }
+
+    // Tournament selection
+    int k = params.tournament_size > 0 ? params.tournament_size : 2;
+    std::uniform_int_distribution<size_t> pop_dist(0, population.size() - 1);
+    auto pick_parent = [&]() {
+      size_t best = pop_dist(rng());
+      double best_fit = fitnesses[best];
+      for (int i = 1; i < k; ++i) {
+        size_t idx = pop_dist(rng());
+        if (fitnesses[idx] > best_fit) {
+          best = idx;
+          best_fit = fitnesses[idx];
+        }
+      }
+      return population[best];
+    };
+
+    // Fill rest of population
+    while (next_gen.size() < population.size()) {
+      auto [p1_int, p1_real] = pick_parent();
+      auto [p2_int, p2_real] = pick_parent();
+
+      std::vector<int> c1_int = p1_int, c2_int = p2_int;
+      std::vector<double> c1_real = p1_real, c2_real = p2_real;
+
+      // Crossover (discrete)
+      if (u01(rng()) < params.crossover_probability) {
+        int cut = std::uniform_int_distribution<int>(1, int_vector_size - 1)(rng());
+        for (int j = cut; j < int_vector_size; ++j)
+          std::swap(c1_int[j], c2_int[j]);
+      }
+
+      // Crossover (real-valued uniform)
+      if (u01(rng()) < params.crossover_probability) {
+        for (int j = 0; j < real_vector_size; ++j) {
+          if (u01(rng()) < 0.5)
+            std::swap(c1_real[j], c2_real[j]);
+        }
+      }
+
+      // Mutation (discrete with wrapping)
+      for (int j = 0; j < int_vector_size; ++j) {
+        if (u01(rng()) < params.mutation_probability) {
+          int step = int_step_dist(rng());
+          int val = c1_int[j] + step;
+          val = min_gene + ((val - min_gene) % gene_range + gene_range) % gene_range;
+          c1_int[j] = val;
+        }
+        if (u01(rng()) < params.mutation_probability) {
+          int step = int_step_dist(rng());
+          int val = c2_int[j] + step;
+          val = min_gene + ((val - min_gene) % gene_range + gene_range) % gene_range;
+          c2_int[j] = val;
+        }
+      }
+
+      // Mutation (real bounded in [0, 1])
+      for (int j = 0; j < real_vector_size; ++j) {
+        if (u01(rng()) < params.mutation_probability) {
+          c1_real[j] = std::clamp(c1_real[j] + mutation_step_dist(rng()), 0.0, 1.0);
+        }
+        if (u01(rng()) < params.mutation_probability) {
+          c2_real[j] = std::clamp(c2_real[j] + mutation_step_dist(rng()), 0.0, 1.0);
+        }
+      }
+
+      next_gen.emplace_back(std::move(c1_int), std::move(c1_real));
+      if (next_gen.size() < population.size())
+        next_gen.emplace_back(std::move(c2_int), std::move(c2_real));
+    }
+
+    population.swap(next_gen);
+
+    if (params.verbose && gen % (params.max_iterations / 10) == 0) {
+      std::cout << "[GA-Mixed] Gen " << gen << " best fitness " << gen_best << "\n";
+    }
+  }
+
+  // Copy best solution
+  double best_fit = -1e12;
+  const std::pair<std::vector<int>, std::vector<double>>* best = nullptr;
+  for (auto &g : population) {
+    double fit = func(int_vector_size, g.first.data(),
+                      real_vector_size, g.second.data());
+    if (fit > best_fit) {
+      best_fit = fit;
+      best = &g;
+    }
+  }
+
+  if (best) {
+    std::copy(best->first.begin(), best->first.end(), int_vector);
+    std::copy(best->second.begin(), best->second.end(), real_vector);
+  }
+
+  auto t1 = Clock::now();
+  if (params.verbose) {
+    double secs = std::chrono::duration<double>(t1 - t0).count();
+    std::cout << "[GA-Mixed] Completed in " << secs
+              << "s, best_fitness=" << best_fit << "\n";
+  }
+
+  return 0;
 }
