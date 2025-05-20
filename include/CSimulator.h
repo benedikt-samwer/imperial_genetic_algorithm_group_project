@@ -36,7 +36,7 @@ struct Simulator_Parameters {
     double gormanium_value_in_palusznium_stream = -20.0;
     double waste_penalty_in_palusznium_stream = -300.0;
     
-    double palusznium_value_in_gormanium_stream = 40.0;
+    double palusznium_value_in_gormanium_stream = 0.0;
     double gormanium_value_in_gormanium_stream = 80.0;
     double waste_penalty_in_gormanium_stream = -25.0;
     

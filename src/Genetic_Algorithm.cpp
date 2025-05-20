@@ -73,3 +73,25 @@ int optimize(int int_vector_size, int * int_vector, int real_vector_size, double
 
 
 // additional variables, classes and functions as needed.
+
+
+int optimize(int int_vector_size, int* int_vector,
+             std::function<double(int, int*)> func,
+             std::function<bool(int, int*)> validity,
+             Algorithm_Parameters algorithm_parameters) {
+    // 包装 std::function 为 C 风格指针调用
+    return optimize(int_vector_size, int_vector, 
+        *func.target<double(*)(int, int*)>(), 
+        *validity.target<bool(*)(int, int*)>(), 
+        algorithm_parameters);
+}
+
+int optimize(int real_vector_size, double* real_vector,
+             std::function<double(int, double*)> func,
+             std::function<bool(int, double*)> validity,
+             Algorithm_Parameters algorithm_parameters) {
+    return optimize(real_vector_size, real_vector, 
+        *func.target<double(*)(int, double*)>(), 
+        *validity.target<bool(*)(int, double*)>(), 
+        algorithm_parameters);
+}
