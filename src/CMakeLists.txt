@@ -2,6 +2,8 @@
 
 add_library(geneticAlgorithm Genetic_Algorithm.cpp)
 
+# include_directories(${CMAKE_SOURCE_DIR}/include)
+
 set_target_properties( geneticAlgorithm
     PROPERTIES
     CXX_STANDARD 17
@@ -10,7 +12,7 @@ set_target_properties( geneticAlgorithm
 
 # build the circuit simulator as a testable library
 
-add_library(circuitSimulator CCircuit.cpp CSimulator.cpp)
+add_library(circuitSimulator CCircuit.cpp CSimulator.cpp CUnit.cpp  )
 set_target_properties( circuitSimulator
     PROPERTIES
     CXX_STANDARD 17

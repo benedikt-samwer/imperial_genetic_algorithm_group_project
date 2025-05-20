@@ -22,6 +22,7 @@
 #pragma once
 
 #include <vector>
+#include <iostream>
 #include "constants.h"   // contains default k‑values, density, φ, etc.
 
 /* ------------------------------------------------------------------ */
@@ -56,6 +57,8 @@ public:
     double tails_gormanium; ///< T_G  (kg s⁻¹)
     double tails_waste;     ///< T_W  (kg s⁻¹)
 
+    double Rp, Rg, Rw; ///< Recoveries for each component
+
     /* --------------------------- Constructors ----------------------------- */
     /// Default constructor – initialises all numeric members to zero and
     /// routes to invalid destinations (e.g. ‑1) until set by GA vector.
@@ -81,4 +84,16 @@ public:
      * Caller is responsible for ensuring feed_* are populated beforehand.
      */
     void process();
+
+    /**
+     * @brief Check if the unit is valid.
+     *
+     * A unit is valid if:
+     *   1. It has a valid destination for both concentrate and tails
+     *   2. It has a non-zero volume
+     *   3. It has a non-zero k-value for at least one component
+     *
+     * @return true if valid, false otherwise.
+     */
+    // double calculate_recovery(const string& component, double feed_rate) const;
 };

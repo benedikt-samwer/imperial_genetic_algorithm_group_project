@@ -5,8 +5,15 @@
  */
 
 #pragma once
-
 #include "CUnit.h"
+#include "constants.h"
+
+#include "CCircuit.h"
+#include <algorithm>
+#include <cassert>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 
 #include <vector>
 #include <string>
@@ -49,7 +56,7 @@ class Circuit {
     // Export the circuit to a dot file for visualization
     bool export_to_dot(const std::string& filename) const;
     
-  private:
+  // private:
     // Mark units that are accessible from a given unit (for validity checking)
     void mark_units(int unit_num);
     
