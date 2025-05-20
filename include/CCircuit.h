@@ -32,7 +32,7 @@ class Circuit {
     Circuit(int num_units);
     
     // Initialize the circuit from a circuit vector
-    bool initialize_from_vector(int vector_size, const int* circuit_vector);
+    bool initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta = nullptr);
     
     // Check validity of a circuit vector
     static bool check_validity(int vector_size, const int* circuit_vector);

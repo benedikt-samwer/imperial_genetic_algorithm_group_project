@@ -325,22 +325,31 @@ double Circuit::get_economic_value() const {
 
 // 回收率
 double Circuit::get_palusznium_recovery() const {
-    CUnit cal =  CUnit(-1,-1);
-    cal.feed_palusznium = feed_palusznium_rate;
-    cal.feed_gormanium = feed_gormanium_rate;
-    cal.feed_waste = feed_waste_rate;
-    cal.process();
-    std::cout<<"palusznium recovery: "<<cal.Rp<<std::endl;
+    // CUnit cal =  CUnit(-1,-1);
+    // cal.feed_palusznium = feed_palusznium_rate;
+    // cal.feed_gormanium = feed_gormanium_rate;
+    // cal.feed_waste = feed_waste_rate;
+    // cal.process();
+    // std::cout<<"palusznium recovery: "<<cal.Rp<<std::endl;
 
-
+    double total_feed = feed_palusznium_rate;
+    double recovered = palusznium_product_palusznium;
+    if (total_feed < 1e-12) return 0.0;
+    std::cout<<"palusznium recovery: "<<recovered / total_feed<<std::endl;
+    return recovered / total_feed;
 }
 double Circuit::get_gormanium_recovery() const {
-    CUnit cal =  CUnit(-1,-1);
-    cal.feed_palusznium = feed_palusznium_rate;
-    cal.feed_gormanium = feed_gormanium_rate;
-    cal.feed_waste = feed_waste_rate;
-    cal.process();
-    std::cout<<"gormanium recovery: "<<cal.Rg<<std::endl;
+    double total_feed = feed_gormanium_rate;
+    double recovered =  gormanium_product_gormanium;
+    if (total_feed < 1e-12) return 0.0;
+    std::cout<<"palusznium recovery: "<<recovered / total_feed<<std::endl;
+    return recovered / total_feed;
+    // CUnit cal =  CUnit(-1,-1);
+    // cal.feed_palusznium = feed_palusznium_rate;
+    // cal.feed_gormanium = feed_gormanium_rate;
+    // cal.feed_waste = feed_waste_rate;
+    // cal.process();
+    // std::cout<<"gormanium recovery: "<<cal.Rg<<std::endl;
 }
 
 // 品位
