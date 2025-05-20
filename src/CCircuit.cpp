@@ -8,7 +8,7 @@ Circuit::Circuit(int num_units){
   this->units.resize(num_units);
 }
 
-bool Circuit::check_validity(int vector_size, int *circuit_vector)
+bool Circuit::check_validity(int vector_size, const int *circuit_vector)
 {
 
   // Rewrite this to check the validity of the circuit vector
@@ -17,8 +17,8 @@ bool Circuit::check_validity(int vector_size, int *circuit_vector)
   return true;
 }
 
-bool Circuit::check_validity(int vector_size, int *circuit_vector,
-                              int num_parameters, double *parameters)
+bool Circuit::check_validity(int vector_size, const int *circuit_vector,
+                              int num_parameters, const double *parameters)
                               
 {
 

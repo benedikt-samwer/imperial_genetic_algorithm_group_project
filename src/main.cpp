@@ -1,37 +1,29 @@
-#include <iostream>
-
-#include "CUnit.h"
-#include "CCircuit.h"
-#include "CSimulator.h"
 #include "Genetic_Algorithm.h"
+#include "circuit_vector.h"
+#include "constants.h"
+#include <iostream>
+#include <functional>
 
+int main() {
+    constexpr int num_units = 10;
+    constexpr int vector_size = 2 * num_units + 1;
+    int vector[vector_size] = {0};
+    double dummy_params[5] = {1.0, 1.0, 1.0, 1.0, 1.0};
 
-int main(int argc, char * argv[])
-{
+    auto fitness = [](int a, int* b, int c, double* d) {
+        return 100.0;  // Dummy fitness value for testing
+    };
 
-    // set things up
-    int vector[11] = {0, 1, 2, 3, 3, 0, 2, 7, 5, 0, 6};
-    double parameters[5] = {1.0, 0.0, 1.0, 1.0, 0.5};
+    auto validity = [](int a, int* b, int c, double* d) {
+        return true;   // Always valid for test
+    };
 
-    // run your code
+    optimize(vector_size, vector, 5, dummy_params, fitness, validity);
 
-    int return_code=optimize(11, vector, 5, parameters, circuit_performance);
-    if (return_code==0) {
-        std::cout << "Optimization successful!" << std::endl;
-    } else {
-        std::cout << "Optimization failed!" << std::endl;
-    }
-    // or
-    // optimize(11, vector, circuit_performance, Circuit::check_validity)
-    // etc.
-
-    // generate final output, save to file, etc.
-    std::cout << circuit_performance(11, vector, 5, parameters) << std::endl;
-
-    for (int i = 0; i < sizeof(vector)/sizeof(int); i++) {
+    std::cout << "Tested vector: ";
+    for (int i = 0; i < vector_size; ++i)
         std::cout << vector[i] << " ";
-    }
     std::cout << std::endl;
 
-    return return_code;
+    return 0;
 }
