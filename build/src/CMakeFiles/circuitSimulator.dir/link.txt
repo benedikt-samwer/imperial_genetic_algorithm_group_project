@@ -1,2 +1,0 @@
-/usr/bin/ar qc ../lib/libcircuitSimulator.a CMakeFiles/circuitSimulator.dir/CCircuit.cpp.o CMakeFiles/circuitSimulator.dir/CSimulator.cpp.o
-/usr/bin/ranlib ../lib/libcircuitSimulator.a

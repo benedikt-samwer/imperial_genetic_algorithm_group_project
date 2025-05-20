@@ -1,1 +1,0 @@
-/usr/bin/clang++ -g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/Circuit_Optimizer.dir/main.cpp.o -o ../bin/Circuit_Optimizer  ../lib/libgeneticAlgorithm.a ../lib/libcircuitSimulator.a
