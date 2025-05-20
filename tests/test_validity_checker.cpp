@@ -92,10 +92,10 @@ void test_only_one_terminal()
 void test_R2_condition() {
     Circuit c(10);  // 10 units
     
-    // 构造一个无效电路：Unit 0的conc和tail都指向P1（只能到达一个终端流）
+    // Construct an invalid circuit: Unit 0's conc and tail both point to P1 (can only reach one terminal stream)
     std::vector<int> v = {
         0,           // feed -> Unit 0
-        10, 10,      // Unit 0: conc -> P1, tail -> P1 (违反R2)
+        10, 10,      // Unit 0: conc -> P1, tail -> P1 (violates R2)
         10, 11,      // Unit 1: conc -> P1, tail -> P2
         10, 11,      // Unit 2: conc -> P1, tail -> P2
         10, 11,      // Unit 3: conc -> P1, tail -> P2
