@@ -43,4 +43,4 @@ git clone –recurse-submodules https://gitlab.com/graphviz/graphviz.git
 
 - Circuit Visualization
 - Execution Time and Parallel Efficiency
-- Unit Number change over Time
+- Time vs Units
