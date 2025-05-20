@@ -1,0 +1,122 @@
+#!/bin/bash
+# pre-commit hook to ensure proper branch synchronization
+
+# Color codes
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print help information
+print_help() {
+    echo -e "${BLUE}=== Palusznium Project Branch Synchronization Rules ===${NC}"
+    echo -e "1. Personal development branches must sync from feature branches"
+    echo -e "2. Feature branches must sync from pre-main"
+    echo -e "3. Branch structure: pre-main -> feature branch -> personal development branch"
+    echo -e "   Example: pre-main -> genetic-algorithm -> genetic-algorithm/pranav/initial-setup"
+    echo
+    echo -e "To skip this check, use ${YELLOW}git commit --no-verify${NC}"
+    echo
+}
+
+# Get current branch name
+current_branch=$(git symbolic-ref --short HEAD)
+echo -e "${BLUE}Current branch:${NC} $current_branch"
+
+# Identify branch type and upstream branch
+if [[ "$current_branch" == "pre-main" ]]; then
+    echo -e "${GREEN}✓ Committing directly to pre-main, no sync check needed${NC}"
+    exit 0
+elif [[ "$current_branch" == "genetic-algorithm" || "$current_branch" == "circuit-simulation" || "$current_branch" == "circuit-viz" || "$current_branch" == "validity-check" ]]; then
+    # Feature branches need to sync with pre-main
+    parent_branch="pre-main"
+    echo -e "${BLUE}Branch type:${NC} Feature branch"
+    echo -e "${BLUE}Upstream branch:${NC} $parent_branch"
+else
+    # Check if this is a personal development branch
+    # Branch format should be: feature-branch/person-name/feature-description
+    IFS='/' read -ra branch_parts <<< "$current_branch"
+    
+    if [[ ${#branch_parts[@]} -ge 2 ]]; then
+        parent_branch="${branch_parts[0]}"
+        if [[ "$parent_branch" == "genetic-algorithm" || "$parent_branch" == "circuit-simulation" || "$parent_branch" == "circuit-viz" || "$parent_branch" == "validity-check" ]]; then
+            echo -e "${BLUE}Branch type:${NC} Personal development branch"
+            echo -e "${BLUE}Upstream branch:${NC} $parent_branch"
+        else
+            echo -e "${RED}✗ Unrecognized branch format${NC}"
+            print_help
+            exit 1
+        fi
+    else
+        echo -e "${RED}✗ Unrecognized branch format${NC}"
+        print_help
+        exit 1
+    fi
+fi
+
+# Save current working directory state
+echo -e "${BLUE}Saving current work state...${NC}"
+git stash push -m "pre-commit-sync-stash" -q
+
+# Ensure remote updates are available
+echo -e "${BLUE}Fetching remote updates...${NC}"
+git fetch origin
+
+# If this is a feature branch, check sync with pre-main
+if [[ "$current_branch" == "genetic-algorithm" || "$current_branch" == "circuit-simulation" || "$current_branch" == "circuit-viz" || "$current_branch" == "validity-check" ]]; then
+    echo -e "${BLUE}Checking feature branch sync status with pre-main...${NC}"
+    
+    # Get current branch and pre-main latest commits
+    current_commit=$(git rev-parse HEAD)
+    pre_main_commit=$(git rev-parse origin/pre-main)
+    
+    # Check if pre-main is an ancestor of the current branch
+    if git merge-base --is-ancestor "$pre_main_commit" "$current_commit"; then
+        echo -e "${GREEN}✓ Feature branch is in sync with pre-main${NC}"
+    else
+        echo -e "${YELLOW}! Feature branch needs to sync with pre-main${NC}"
+        echo -e "${YELLOW}Suggested actions:${NC}"
+        echo "  git checkout $current_branch"
+        echo "  git pull origin pre-main"
+        
+        # Restore working directory
+        git stash pop -q 2>/dev/null || true
+        exit 1
+    fi
+fi
+
+# Check sync with upstream branch
+echo -e "${BLUE}Checking sync status with upstream branch $parent_branch...${NC}"
+
+# Check if upstream branch exists
+if ! git rev-parse --verify "origin/$parent_branch" >/dev/null 2>&1; then
+    echo -e "${RED}✗ Upstream branch 'origin/$parent_branch' does not exist${NC}"
+    git stash pop -q 2>/dev/null || true
+    exit 1
+fi
+
+# Get current branch and upstream branch latest commits
+current_commit=$(git rev-parse HEAD)
+parent_commit=$(git rev-parse "origin/$parent_branch")
+
+# Check if upstream branch is an ancestor of the current branch
+if git merge-base --is-ancestor "$parent_commit" "$current_commit"; then
+    echo -e "${GREEN}✓ Current branch is in sync with upstream branch $parent_branch${NC}"
+else
+    echo -e "${RED}✗ Current branch needs to sync with upstream branch $parent_branch${NC}"
+    echo -e "${YELLOW}Please execute the following:${NC}"
+    echo "  git checkout $current_branch"
+    echo "  git pull origin $parent_branch"
+    
+    # Restore working directory
+    git stash pop -q 2>/dev/null || true
+    exit 1
+fi
+
+# Restore working directory
+echo -e "${BLUE}Restoring work state...${NC}"
+git stash pop -q 2>/dev/null || true
+
+echo -e "${GREEN}✓ Branch sync check passed, commit allowed${NC}"
+exit 0 

@@ -23,13 +23,12 @@ enum CircuitDestination {
  * Class representing a circuit vector
  * 
  * A circuit vector has the following format:
- * [feed_unit, unit0_high, unit0_inter, unit0_tail, unit1_high, unit1_inter, unit1_tail, ...]
+ * [feed_unit, unit0_conc, unit0_waste, unit1_conc, unit1_waste, ...]
  * 
  * where:
  * - feed_unit: Index of the unit receiving the circuit feed (0 to num_units-1)
- * - unitX_high: Destination of the high-grade concentrate stream from unit X
- * - unitX_inter: Destination of the intermediate stream from unit X
- * - unitX_tail: Destination of the tailings stream from unit X
+ * - unitX_conc: Destination of the concentrate stream from unit X
+ * - unitX_waste: Destination of the waste stream from unit X
  * 
  * Destination can be:
  * - 0 to (num_units-1): Index of the unit receiving the stream
@@ -57,23 +56,17 @@ public:
     // Set feed unit
     void set_feed_unit(int unit);
     
-    // Get high-grade destination for unit
-    int get_high_grade_dest(int unit) const;
+    // Get concentrate destination for unit
+    int get_concentrate_dest(int unit) const;
     
-    // Get intermediate destination for unit
-    int get_intermediate_dest(int unit) const;
+    // Get waste destination for unit
+    int get_waste_dest(int unit) const;
     
-    // Get tailings destination for unit
-    int get_tailings_dest(int unit) const;
+    // Set concentrate destination for unit
+    void set_concentrate_dest(int unit, int dest);
     
-    // Set high-grade destination for unit
-    void set_high_grade_dest(int unit, int dest);
-    
-    // Set intermediate destination for unit
-    void set_intermediate_dest(int unit, int dest);
-    
-    // Set tailings destination for unit
-    void set_tailings_dest(int unit, int dest);
+    // Set waste destination for unit
+    void set_waste_dest(int unit, int dest);
     
     // Get the raw vector data
     const std::vector<int>& get_data() const;

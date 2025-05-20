@@ -1,5 +1,3 @@
-// src/genetic_algorithm.cpp
-
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -123,48 +121,59 @@ int optimize(int int_vector_size, int *int_vector,
       // – Crossover
       std::vector<int> c1 = p1, c2 = p2;
       if (u01(rng()) < params.crossover_probability) {
-          // Adaptive crossover points: more early on, fewer later
-          double progress = static_cast<double>(gen) / params.max_iterations;
-          int max_points = std::min(5, int_vector_size / 2); // limit excessive cuts
-          int num_cuts = static_cast<int>((1.0 - progress) * max_points);
-          num_cuts = std::max(1, num_cuts); // always at least 1 point
+        // Adaptive crossover points: more early on, fewer later
+        double progress = static_cast<double>(gen) / params.max_iterations;
+        int max_points =
+            std::min(5, int_vector_size / 2); // limit excessive cuts
+        int num_cuts = static_cast<int>((1.0 - progress) * max_points);
+        num_cuts = std::max(1, num_cuts); // always at least 1 point
 
-          std::vector<bool> crossover_mask(int_vector_size, false);
-          for (int i = 0; i < num_cuts; ++i) {
-              int cut = std::uniform_int_distribution<int>(0, int_vector_size - 1)(rng());
-              crossover_mask[cut] = true;
-          }
+        std::vector<bool> crossover_mask(int_vector_size, false);
+        for (int i = 0; i < num_cuts; ++i) {
+          int cut =
+              std::uniform_int_distribution<int>(0, int_vector_size - 1)(rng());
+          crossover_mask[cut] = true;
+        }
 
-          bool flip = false;
-          for (int j = 0; j < int_vector_size; ++j) {
-              if (crossover_mask[j]) flip = !flip;
-              if (flip) std::swap(c1[j], c2[j]);
-          }
+        bool flip = false;
+        for (int j = 0; j < int_vector_size; ++j) {
+          if (crossover_mask[j])
+            flip = !flip;
+          if (flip)
+            std::swap(c1[j], c2[j]);
+        }
       }
-      // – Mutation (step‐size ± params.mutation_step_size, wrapping)
+      // – Mutation (creep + optional inversion)
       {
+        // 1) Substitution (“creep”) mutation on both children
         int range = max_gene - min_gene + 1;
         std::uniform_int_distribution<int> step_dist(-params.mutation_step_size,
                                                      params.mutation_step_size);
-
-        for (int j = 0; j < int_vector_size; ++j) {
-          if (u01(rng()) < params.mutation_probability) {
-            // pick a random step in [–step_size…+step_size]
-            int step = step_dist(rng());
-            int val = c1[j] + step;
-            // wrap into [min_gene…max_gene]
-            val = min_gene + ((val - min_gene) % range + range) % range;
-            c1[j] = val;
+        for (auto *child : {&c1, &c2}) {
+          for (int j = 0; j < int_vector_size; ++j) {
+            if (u01(rng()) < params.mutation_probability) {
+              int step = step_dist(rng());
+              int val = (*child)[j] + step;
+              (*child)[j] =
+                  min_gene + ((val - min_gene) % range + range) % range;
+            }
           }
         }
 
-        // repeat for the second child, c2:
-        for (int j = 0; j < int_vector_size; ++j) {
-          if (u01(rng()) < params.mutation_probability) {
-            int step = step_dist(rng());
-            int val = c2[j] + step;
-            val = min_gene + ((val - min_gene) % range + range) % range;
-            c2[j] = val;
+        // 2) Inversion mutation, if enabled
+        if (params.use_inversion) {
+          // pick two indices a < b
+          std::uniform_int_distribution<int> a_dist(0, int_vector_size - 2);
+          int a = a_dist(rng());
+          std::uniform_int_distribution<int> b_dist(a + 1, int_vector_size - 1);
+          int b = b_dist(rng());
+
+          // reverse that slice in each child with its own probability
+          if (u01(rng()) < params.inversion_probability) {
+            std::reverse(c1.begin() + a, c1.begin() + b + 1);
+          }
+          if (u01(rng()) < params.inversion_probability) {
+            std::reverse(c2.begin() + a, c2.begin() + b + 1);
           }
         }
       }
@@ -227,7 +236,7 @@ int optimize(int real_vector_size, double *real_vector,
   while (population.size() < params.population_size) {
     std::vector<double> genome(real_vector_size);
     for (auto &g : genome)
-      g = dist01(rng());  // all β_i in [0,1]
+      g = dist01(rng()); // all β_i in [0,1]
     if (validity(real_vector_size, genome.data()))
       population.push_back(std::move(genome));
   }
@@ -241,8 +250,9 @@ int optimize(int real_vector_size, double *real_vector,
     // Evaluate fitness
     std::vector<double> fitnesses(population.size());
     for (size_t i = 0; i < population.size(); ++i) {
-      fitnesses[i] = validity(real_vector_size, population[i].data()) ?
-        func(real_vector_size, population[i].data()) : -1e9;
+      fitnesses[i] = validity(real_vector_size, population[i].data())
+                         ? func(real_vector_size, population[i].data())
+                         : -1e9;
     }
 
     double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
@@ -255,7 +265,8 @@ int optimize(int real_vector_size, double *real_vector,
 
     if (stall_count >= max_stall) {
       if (params.verbose)
-        std::cout << "[GA-Real] No improvement for " << stall_count << " generations — stopping.\n";
+        std::cout << "[GA-Real] No improvement for " << stall_count
+                  << " generations — stopping.\n";
       break;
     }
 
@@ -291,7 +302,8 @@ int optimize(int real_vector_size, double *real_vector,
 
       if (dist01(rng()) < params.crossover_probability) {
         for (int j = 0; j < real_vector_size; ++j) {
-          if (dist01(rng()) < 0.5) std::swap(c1[j], c2[j]);
+          if (dist01(rng()) < 0.5)
+            std::swap(c1[j], c2[j]);
         }
       }
 
@@ -299,11 +311,13 @@ int optimize(int real_vector_size, double *real_vector,
       for (int j = 0; j < real_vector_size; ++j) {
         if (dist01(rng()) < params.mutation_probability) {
           double step = dist01(rng()) * params.mutation_step_size;
-          c1[j] = std::clamp(c1[j] + step * (dist01(rng()) < 0.5 ? -1 : 1), 0.0, 1.0);
+          c1[j] = std::clamp(c1[j] + step * (dist01(rng()) < 0.5 ? -1 : 1), 0.0,
+                             1.0);
         }
         if (dist01(rng()) < params.mutation_probability) {
           double step = dist01(rng()) * params.mutation_step_size;
-          c2[j] = std::clamp(c2[j] + step * (dist01(rng()) < 0.5 ? -1 : 1), 0.0, 1.0);
+          c2[j] = std::clamp(c2[j] + step * (dist01(rng()) < 0.5 ? -1 : 1), 0.0,
+                             1.0);
         }
       }
 
@@ -315,13 +329,14 @@ int optimize(int real_vector_size, double *real_vector,
     population.swap(next_gen);
 
     if (params.verbose && gen % (params.max_iterations / 10) == 0) {
-      std::cout << "[GA-Real] Gen " << gen << " best fitness " << gen_best << "\n";
+      std::cout << "[GA-Real] Gen " << gen << " best fitness " << gen_best
+                << "\n";
     }
   }
 
   // Copy best solution
   double best_fit = -1e12;
-  std::vector<double>* best_genome = nullptr;
+  std::vector<double> *best_genome = nullptr;
   for (auto &g : population) {
     double fit = func(real_vector_size, g.data());
     if (fit > best_fit) {
@@ -337,7 +352,8 @@ int optimize(int real_vector_size, double *real_vector,
   auto t1 = Clock::now();
   if (params.verbose) {
     double secs = std::chrono::duration<double>(t1 - t0).count();
-    std::cout << "[GA-Real] Completed in " << secs << "s, best_fitness=" << best_fit << "\n";
+    std::cout << "[GA-Real] Completed in " << secs
+              << "s, best_fitness=" << best_fit << "\n";
   }
 
   return 0;
