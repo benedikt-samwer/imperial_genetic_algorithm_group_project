@@ -1,7 +1,5 @@
 // tests/test_genetic_algorithm.cpp
- 
-// tests/test_genetic_algorithm.cpp
- 
+
 #include "Genetic_Algorithm.h"
 #include <cmath>
 #include <iostream>
@@ -10,6 +8,13 @@
 #include <limits>
 
 // Known "answer" vectors for testing
+static const int int_test_answer_orig[21] = {
+    0, 1, 2, 0, 3, 1, 4, 2, 0, 1, 3,
+    4, 2, 1, 0, 3, 2, 4, 1, 3, 0
+};
+static const double real_test_answer[] = {0.8, 0.4, 0.4, 0.8, 0.0, 0.8};
+
+// Answer vector for the first test file
 static const int int_test_answer[] = {2, 1, 1, 2, 0, 2, 3, 0, 4, 4, 1};
 
 // Additional test vectors with different characteristics
@@ -26,6 +31,9 @@ Algorithm_Parameters setup_standard_parameters() {
     params.stall_generations = 100;
     params.elite_count = 2;
     params.max_iterations = 400;  // Same maximum iterations for all tests
+    params.tournament_size = 2;
+    params.mutation_step_size = 2;
+    params.convergence_threshold = 1e-6;
     
     return params;
 }
@@ -36,6 +44,16 @@ double test_function(int L, int *v) {
   double sumsq = 0;
   for (int i = 0; i < L; ++i) {
     double diff = v[i] - int_test_answer[i];
+    sumsq += diff * diff;
+  }
+  return -sumsq;
+}
+
+// Original test function from the second file
+double test_function_orig(int L, int *v) {
+  double sumsq = 0;
+  for (int i = 0; i < L; ++i) {
+    double diff = v[i] - int_test_answer_orig[i];
     sumsq += diff * diff;
   }
   return -sumsq;
@@ -107,8 +125,19 @@ double multi_optimum_function(int L, int *v) {
   return -std::min(dist1, dist2);
 }
 
+// Continuous‐only fitness, same idea
+double real_test_function(int L, double *v) {
+  double sumsq = 0;
+  for (int i = 0; i < L; ++i) {
+    double diff = v[i] - real_test_answer[i];
+    sumsq += diff * diff;
+  }
+  return -sumsq;
+}
+
 // All‐pass validity
 bool always_valid_int(int L, int *v) { return true; }
+bool always_valid_real(int L, double *v) { return true; }
 
 // Test for long discrete vector
 void test_long_vector(const Algorithm_Parameters& params) {
@@ -275,7 +304,9 @@ int main() {
             << "- Selection pressure: " << standard_params.selection_pressure << "\n"
             << "- Stall generations: " << standard_params.stall_generations << "\n" 
             << "- Elite count: " << standard_params.elite_count << "\n"
-            << "- Max iterations: " << standard_params.max_iterations << "\n\n";
+            << "- Max iterations: " << standard_params.max_iterations << "\n"
+            << "- Tournament size: " << standard_params.tournament_size << "\n"
+            << "- Mutation step size: " << standard_params.mutation_step_size << "\n\n";
  
   // --- Basic Discrete test ---
   std::vector<int> vector1 = {0, 1, 1, 2, 2, 3, 3, 0, 1, 0, 4};
@@ -316,7 +347,79 @@ int main() {
   test_multimodal(standard_params);
   test_deceptive(standard_params);
   test_multi_optimum(standard_params);
+  
+  // --- From the second file: Original Discrete test with different test vector ---
+  std::vector<int> vector_orig = {
+      1, 0, 3, 2, 1, 0, 4, 3, 2, 1, 0,
+      3, 4, 2, 1, 0, 3, 2, 1, 4, 0
+  };
+  int L_orig = vector_orig.size();
+  
+  std::cout << "=== Original Discrete GA Test ===\n";
+  code = optimize(L_orig, vector_orig.data(), test_function_orig, always_valid_int, standard_params);
+  if (code != 0) {
+    std::cerr << "ERROR: optimize() returned code " << code << "\n";
+    return code;
+  }
+  
+  // Print out what the GA found
+  auto stats_orig = get_last_optimization_result();
+  std::cout << "Final original discrete genome: ";
+  for (int x : vector_orig)
+    std::cout << x << ' ';
+  std::cout << "\nBest fitness: " << stats_orig.best_fitness
+            << " (generations: " << stats_orig.generations << ")\n";
+  
+  // Verify result
+  bool ok_orig = true;
+  for (int i = 0; i < L_orig; ++i) {
+    if (vector_orig[i] != int_test_answer_orig[i]) {
+      std::cerr << "Mismatch at index " << i << ": got " << vector_orig[i]
+                << " expected " << int_test_answer_orig[i] << "\n";
+      ok_orig = false;
+    }
+  }
+  if (!ok_orig) {
+    std::cerr << "Original Discrete GA test FAILED\n";
+    return 1;
+  }
+  std::cout << "Original Discrete GA test PASSED\n\n";
+ 
+  // --- Continuous test ---
+  std::vector<double> vector2 = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5};
+  int L2 = vector2.size();
+ 
+  std::cout << "=== Continuous GA Test ===\n";
+  code = optimize(L2, vector2.data(), real_test_function, always_valid_real,
+                  standard_params);
+  if (code != 0) {
+    std::cerr << "ERROR: optimize() (real) returned code " << code << "\n";
+    return code;
+  }
+ 
+  // Print out what the GA found
+  auto stats2 = get_last_optimization_result();
+  std::cout << "Final real genome: ";
+  for (double x : vector2)
+    std::cout << x << ' ';
+  std::cout << "\nBest fitness: " << stats2.best_fitness
+            << " (generations: " << stats2.generations << ")\n";
+ 
+  // Verify result (with a small epsilon)
+  bool ok2 = true;
+  const double eps = 1e-4;
+  for (int i = 0; i < L2; ++i) {
+    if (std::abs(vector2[i] - real_test_answer[i]) > eps) {
+      std::cerr << "Mismatch (real) at index " << i << ": got " << vector2[i]
+                << " expected " << real_test_answer[i] << "\n";
+      ok2 = false;
+    }
+  }
+  if (!ok2) {
+    std::cerr << "Continuous GA test FAILED\n";
+    return 1;
+  }
+  std::cout << "Continuous GA test PASSED\n";
  
   return 0;
 }
- 
