@@ -82,7 +82,7 @@ The `CUnit` class represents a single separation unit, containing the following 
 
 - Connection properties:
   - `conc_num`: Unit connected to concentrate stream
-  - `waste_num`: Unit connected to waste stream
+  - `tails_num`: Unit connected to waste stream
   - `mark`: Boolean flag used during graph traversal
 
 - Physical properties:

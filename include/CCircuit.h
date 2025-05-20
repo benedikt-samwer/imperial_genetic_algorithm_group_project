@@ -17,14 +17,11 @@
 #pragma once
 #include "CUnit.h"
 #include "constants.h"
-
-#include "CCircuit.h"
 #include <algorithm>
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-
 #include <vector>
 #include <string>
 
@@ -43,7 +40,43 @@ enum CircuitDestination {
 
 class Circuit {
   public:
+    // Constructor that takes the number of units in the circuit
+    Circuit(int num_units);
+    
+    // Constructor with beta values for unit volumes
+    Circuit(int num_units, double *beta);
+    
+    // Initialize the circuit from a circuit vector
+    bool initialize_from_vector(int vector_size, const int* circuit_vector);
+    bool initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta);
+    
+    // Check validity of a circuit vector
+    static bool check_validity(int vector_size, const int* circuit_vector);
+    static bool check_validity(int vector_size, const int* circuit_vector,
+                              int unit_parameters_size, const double* unit_parameters);
+    
+    // Run a mass balance calculation on the circuit
+    bool run_mass_balance(double tolerance = 1e-6, int max_iterations = 1000);
+    
+    // Get the economic value of the circuit
+    double get_economic_value() const;
+    
+    // Get the recovery of valuable materials
+    double get_palusznium_recovery() const;
+    double get_gormanium_recovery() const;
+    
+    // Get the grade of valuable materials in products
+    double get_palusznium_grade() const;
+    double get_gormanium_grade() const;
+    
+    // Export the circuit to a dot file for visualization
+    bool export_to_dot(const std::string& filename) const;
 
+    // Check if mass balance converges
+    bool mass_balance_converges(double tol = Constants::Simulation::DEFAULT_TOLERANCE,
+                            int    maxIter = Constants::Simulation::DEFAULT_MAX_ITERATIONS) const;
+    
+  private:
     // The array of units in the circuit
     std::vector<CUnit> units;
 
@@ -78,79 +111,6 @@ class Circuit {
     double waste_penalty_palusznium; // £/kg waste in Palusznium stream
     double waste_penalty_gormanium;  // £/kg waste in Gormanium stream
 
-
-
-    /* ----------------------------- Methods -------------------------------- */
-    /**
-     * @brief Constructor for the Circuit class
-     * @param num_units Number of units in the circuit
-     * @param beta Optional pointer to the beta values for unit volumes
-     */
-    Circuit(int num_units, double *beta = nullptr);
-    
-    // Initialize the circuit from a circuit vector
-    /**
-     * @brief Initialize the circuit from a circuit vector
-     * @param vector_size Size of the circuit vector
-     * @param circuit_vector Pointer to the circuit vector data
-     * @param beta Optional pointer to the beta values for unit volumes
-     * @return true if initialization is successful, false otherwise
-     */
-    bool initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta = nullptr);
-    
-    // Check validity of a circuit vector
-    static bool check_validity(int vector_size, const int* circuit_vector);
-    static bool check_validity(int vector_size, const int* circuit_vector,
-                              int unit_parameters_size, const double* unit_parameters);
-    
-    // Run a mass balance calculation on the circuit
-    /**
-     * @brief Run a mass balance calculation on the circuit
-     * @param tolerance Convergence tolerance
-     * @param max_iterations Maximum number of iterations
-     * @return true if the mass balance converges, false otherwise
-     */
-    bool run_mass_balance(double tolerance = 1e-6, int max_iterations = 1000);
-    
-    // Get the economic value of the circuit
-    /**
-     * @brief Get the economic value of the circuit
-     * @return The economic value of the circuit
-     */
-    double get_economic_value() const;
-    
-    /**
-     * @brief Get the recovery of valuable materials
-     * @return The recovery of valuable materials
-     */
-    double get_palusznium_recovery() const;
-
-    /**
-     * @brief Get the recovery of valuable materials
-     * @return The recovery of valuable materials
-     */
-    double get_gormanium_recovery() const;
-    
-    /**
-     * @brief Get the grade of valuable materials in products
-     * @return The grade of valuable materials in products
-     */
-    double get_palusznium_grade() const;
-
-    /**
-     * @brief Get the grade of valuable materials in products
-     * @return The grade of valuable materials in products
-     */
-    double get_gormanium_grade() const;
-    
-    /**
-     * @brief Export the circuit to a dot file for visualization
-     * @param filename The name of the output dot file
-     * @return true if export is successful, false otherwise
-     */
-    bool export_to_dot(const std::string& filename) const;
-    
-
     // Mark units that are accessible from a given unit (for validity checking)
     void mark_units(int unit_num);
     
@@ -164,5 +124,14 @@ class Circuit {
     bool check_no_self_recycle() const;
     bool check_not_all_same_destination() const;
     
+    /* ----------  Circuit validity checking ---------- */
+    int n               = 10;
+    int feed_dest       = 0;
+    uint8_t outlet_mask(int unit_idx, std::vector<int8_t>& cache) const;
+    uint8_t term_mask(int start) const;
+    
+    inline int OUT_P1() const { return n;     }   // palusznium
+    inline int OUT_P2() const { return n + 1; }   // gormanium
+    inline int OUT_TA() const { return n + 2; }   // tails
 };
 

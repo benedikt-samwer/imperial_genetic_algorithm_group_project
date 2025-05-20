@@ -29,38 +29,49 @@
 /*                         Separation‑unit class                       */
 /* ------------------------------------------------------------------ */
 class CUnit {
-public:
-    /* --------- Circuit‑topology fields (integers in the GA vector) --------- */
-    int conc_num;   ///< Index of destination for concentrate stream
-    int tails_num;  ///< Index of destination for tails stream
-    bool mark;      ///< Visitation flag for recursive graph traversal
+ public:
+  // Index of the unit to which this unit's concentrate stream is connected 
+  int conc_num;
+  // Index of the unit to which this unit's tailings stream is connected
+  int tails_num;
+  // A Boolean that is changed to true if the unit has been seen during graph traversal
+  bool mark;
 
-    /* ---------------- Physical / kinetic parameters ----------------------- */
-    double volume;          ///< Unit volume V  (m³) – default 10 m³
-    double V_min;          ///< Minimum volume (m³) – default 2.5 m³
-    double V_max;          ///< Maximum volume (m³) – default 20 m³
+  /* ---------------- Physical / kinetic parameters ----------------------- */
+  double volume;          ///< Unit volume V  (m³) – default 10 m³
+  double V_min;          ///< Minimum volume (m³) – default 2.5 m³
+  double V_max;          ///< Maximum volume (m³) – default 20 m³
+  
+  // Material flow rates (kg/s)
+  double feed_palusznium;       // Palusznium in feed
+  double feed_gormanium;        // Gormanium in feed  
+  double feed_waste;            // Waste material in feed
+  
+  // Rate constants for separation (s⁻¹)
+  double k_palusznium;          // Rate constant for Palusznium
+  double k_gormanium;           // Rate constant for Gormanium
+  double k_waste;               // Rate constant for Waste
+  
+  /* -------------------- Computed outlet mass flowrates ------------------ */
+  // Concentrate stream
+  double conc_palusznium; ///< C_P  (kg s⁻¹)
+  double conc_gormanium;  ///< C_G  (kg s⁻¹)
+  double conc_waste;      ///< C_W  (kg s⁻¹)
+  // Tails stream
+  double tails_palusznium;///< T_P  (kg s⁻¹)
+  double tails_gormanium; ///< T_G  (kg s⁻¹)
+  double tails_waste;     ///< T_W  (kg s⁻¹)
+  
+  /* -------------------- Computed recoveries for each component ----------- */
+  double Rp, Rg, Rw; ///< Recoveries for each component
 
-    double k_palusznium;    ///< First‑order rate constant k_i (s⁻¹) – Palusznium
-    double k_gormanium;     ///< First‑order rate constant k_i (s⁻¹) – Gormanium
-    double k_waste;         ///< First‑order rate constant k_i (s⁻¹) – Waste
+  // Constructor with default values
+  CUnit() : conc_num(0), tails_num(0), mark(false), volume(10.0),
+            feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
+            k_palusznium(0.008), k_gormanium(0.004), k_waste(0.0005) {}
 
-    /* -------------------- Current feed mass flowrates --------------------- */
-    double feed_palusznium; ///< F_P  (kg s⁻¹)
-    double feed_gormanium;  ///< F_G  (kg s⁻¹)
-    double feed_waste;      ///< F_W  (kg s⁻¹)
+};
 
-    /* -------------------- Computed outlet mass flowrates ------------------ */
-    // Concentrate stream
-    double conc_palusznium; ///< C_P  (kg s⁻¹)
-    double conc_gormanium;  ///< C_G  (kg s⁻¹)
-    double conc_waste;      ///< C_W  (kg s⁻¹)
-    // Tails stream
-    double tails_palusznium;///< T_P  (kg s⁻¹)
-    double tails_gormanium; ///< T_G  (kg s⁻¹)
-    double tails_waste;     ///< T_W  (kg s⁻¹)
-
-    /* -------------------- Computed recoveries for each component ----------- */
-    double Rp, Rg, Rw; ///< Recoveries for each component
 
     /* --------------------------- Constructors ----------------------------- */
     /// Default constructor – initialises all numeric members to zero and
