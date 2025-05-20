@@ -27,7 +27,7 @@ namespace Constants {
         constexpr double GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM = -20.0;
         constexpr double WASTE_PENALTY_IN_PALUSZNIUM_STREAM = -300.0;
         
-        constexpr double PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM = 40.0;
+        constexpr double PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM = 0.0;
         constexpr double GORMANIUM_VALUE_IN_GORMANIUM_STREAM = 80.0;
         constexpr double WASTE_PENALTY_IN_GORMANIUM_STREAM = -25.0;
         
