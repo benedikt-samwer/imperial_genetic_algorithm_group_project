@@ -51,8 +51,8 @@ class Circuit {
     bool initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta);
     
     // Check validity of a circuit vector
-    static bool check_validity(int vector_size, const int* circuit_vector);
-    static bool check_validity(int vector_size, const int* circuit_vector,
+    bool check_validity(int vector_size, const int* circuit_vector);
+    bool check_validity(int vector_size, const int* circuit_vector,
                               int unit_parameters_size, const double* unit_parameters);
     
     // Run a mass balance calculation on the circuit

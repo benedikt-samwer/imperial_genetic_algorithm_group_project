@@ -10,14 +10,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include "CCircuit.h"  // Include for CircuitDestination enum
 
-// Constants for the circuit destinations (product streams)
-// These match the values in CCircuit.h but are duplicated here for convenience
-enum CircuitDestination {
-    PALUSZNIUM_PRODUCT = -1,  // Final Palusznium concentrate product
-    GORMANIUM_PRODUCT = -2,   // Final Gormanium concentrate product  
-    TAILINGS_OUTPUT = -3       // Final tailings output
-};
 
 /**
  * Class representing a circuit vector

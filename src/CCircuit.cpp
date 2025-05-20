@@ -612,4 +612,48 @@ bool Circuit::export_to_dot(const std::string& filename) const {
     ofs << "}\n";
     return true;
 }
+uint8_t Circuit::term_mask(int start) const {
+    uint8_t mask = 0;
+    std::vector<bool> visited(n, false);
+    
+    // Use queue for breadth-first search
+    std::queue<int> q;
+    q.push(start);
+    visited[start] = true;
+    
+    while (!q.empty()) {
+        int current = q.front();
+        q.pop();
+        
+        // Check outputs of current unit
+        int conc_dest = units[current].conc_num;
+        int tails_dest = units[current].tails_num;
+        
+        // Check concentrate output
+        if (conc_dest >= n) {
+            // Terminal output
+            if (conc_dest == OUT_P1()) mask |= 1;      // Palusznium product
+            else if (conc_dest == OUT_P2()) mask |= 2; // Gormanium product
+            else if (conc_dest == OUT_TA()) mask |= 4; // Tailings
+        } else if (!visited[conc_dest]) {
+            // Continue search
+            visited[conc_dest] = true;
+            q.push(conc_dest);
+        }
+        
+        // Check tailings output
+        if (tails_dest >= n) {
+            // Terminal output
+            if (tails_dest == OUT_P1()) mask |= 1;      // Palusznium product
+            else if (tails_dest == OUT_P2()) mask |= 2; // Gormanium product
+            else if (tails_dest == OUT_TA()) mask |= 4; // Tailings
+        } else if (!visited[tails_dest]) {
+            // Continue search
+            visited[tails_dest] = true;
+            q.push(tails_dest);
+        }
+    }
+    
+    return mask;
+}
 
