@@ -12,7 +12,9 @@ Circuit::Circuit(int num_units){
   this->units.resize(num_units);
 }
 
+
 bool Circuit::check_validity(int vector_size, const int* vec)
+
 {
     // length must be 2*n+1
     int expected = 2 * n + 1;

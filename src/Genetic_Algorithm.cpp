@@ -1,97 +1,529 @@
-#include <stdio.h>
-#include <cmath>
-#include <array>
+#include <algorithm>
+#include <chrono>
+#include <functional>
+#include <iostream>
+#include <random>
+#include <vector>
 
 #include "Genetic_Algorithm.h"
 
-bool all_true(int int_vector_size, int * int_vector, int real_vector_size, double * real_vector) {
-  return true;
+// Helper RNG
+static std::mt19937 &rng() {
+  static thread_local std::mt19937 gen(std::random_device{}());
+  return gen;
 }
 
-bool all_true_ints(int int_vector_size, int * int_vector) {
-  return true;
-}
+// default validity checks
+bool all_true(int iv, int *ivs, int rv, double *rvs) { return true; }
+bool all_true_ints(int iv, int *ivs) { return true; }
+bool all_true_reals(int rv, double *rvs) { return true; }
 
-bool all_true_reals(int real_vector_size, double * real_vector) {
-  return true;
-}
+// (if not in another file) backing storage + accessor:
+static OptimizationResult last_result;
+OptimizationResult get_last_optimization_result() { return last_result; }
 
-int optimize(int int_vector_size, int * int_vector, 
-  double (&func) (int, int*),
-  bool (&validity) (int, int*),
- struct Algorithm_Parameters algorithm_parameters) {
+// ********************************************************************
+// 1) Discrete-only optimize
+// ********************************************************************
+int optimize(int int_vector_size, int *int_vector,
+             std::function<double(int, int *)> func,
+             std::function<bool(int, int *)> validity,
+             Algorithm_Parameters params) {
+  using Clock = std::chrono::high_resolution_clock;
+  auto t0 = Clock::now();
 
-  /**
-     This function optimizes an input vector with repect to the function passed to it via a genetic algorithm approach.
-     The function passed to it should return a double that
-     represents the performance of the vector.  The optimize function updates the vector with
-     the best solution found.
+  // --- 1. Wrap C array to std::vector
+  // std::vector<int> population_member(int_vector_size); CURRENTLY UNUSED
+  // We'll grow a population of these:
+  std::vector<std::vector<int>> population;
 
-     The function should return non-zero if it fails to find an optimal solution, the precise
-     value return can have meaning if you want it to.
+  // --- 1. Initialise population
+  int n_units = (int_vector_size - 1) / 2;
+  int min_gene = -3;
+  int max_gene = n_units + 2;
+  std::uniform_int_distribution<int> gene_dist(min_gene, max_gene);
 
-  */
+  population.clear();
+  population.reserve(params.population_size);
 
-  // Run the genetic algorithm process
+  while (population.size() < params.population_size) {
+    std::vector<int> genome(int_vector_size);
+    for (int &g : genome)
+      g = gene_dist(rng());
+    if (validity(int_vector_size, genome.data()))
+      population.push_back(std::move(genome));
+  }
 
-  // Update the vector with the best solution found and output the result in some way.
+  double best_overall = -1e300;              // best seen so far
+  int stall_count = 0;                       // gens since last improvement
+  double eps = params.convergence_threshold; // “meaningful” fitness delta
+  int max_stall = params.stall_generations;  // allowed idle generations
 
-return 0;
+  // --- 2. Main GA loop
+  for (int gen = 0; gen < params.max_iterations; ++gen) {
+    // 2a) Evaluate fitness of each genome
+    std::vector<double> fitnesses(population.size());
+    for (size_t i = 0; i < population.size(); ++i) {
+      int *gdata = population[i].data();
+      if (!validity(int_vector_size, gdata)) {
+        fitnesses[i] = -1e9; // heavy penalty
+      } else {
+        fitnesses[i] = func(int_vector_size, gdata);
+      }
+    }
 
-}
+    double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
+    if (gen_best > best_overall + eps) {
+      best_overall = gen_best;
+      stall_count = 0; // reset when we see new best
+    } else {
+      stall_count++;
+    }
+    if (stall_count >= max_stall) {
+      if (params.verbose) {
+        std::cout << "[GA] No improvement for " << stall_count
+                  << " generations—stopping early.\n";
+      }
+      break; // exit the generation loop
+    }
 
-int optimize(int real_vector_size, double * real_vector,
-  double (&func) (int, double*),
-  bool (&validity) (int, double*),
-  struct Algorithm_Parameters algorithm_parameters) {
+    // 2b) Elitism: copy best genome to next generation
+    std::vector<std::vector<int>> next_gen;
+    {
+      auto best_it = std::max_element(fitnesses.begin(), fitnesses.end());
+      size_t best_idx = std::distance(fitnesses.begin(), best_it);
+      next_gen.push_back(population[best_idx]);
+    }
 
+    // ----- TOURNAMENT SETUP -----
+    int k = params.tournament_size > 0 ? params.tournament_size : 2;
+    std::uniform_int_distribution<size_t> pop_dist(0, population.size() - 1);
+    auto pick_parent = [&]() {
+      size_t best = pop_dist(rng());
+      double best_fit = fitnesses[best];
+      for (int i = 1; i < k; ++i) {
+        size_t idx = pop_dist(rng());
+        if (fitnesses[idx] > best_fit) {
+          best = idx;
+          best_fit = fitnesses[idx];
+        }
+      }
+      return population[best];
+    };
 
-// Run the genetic algorithm process on just the real part
+    // 2c) Fill rest via selection, crossover, mutation
+    std::uniform_real_distribution<double> u01(0.0, 1.0);
+    while (next_gen.size() < population.size()) {
+      // – Selection via k-way tournament
+      auto p1 = pick_parent();
+      auto p2 = pick_parent();
 
-return 0;
+      // – Crossover
+      std::vector<int> c1 = p1, c2 = p2;
+      if (u01(rng()) < params.crossover_probability) {
+        // Adaptive crossover points: more early on, fewer later
+        double progress = static_cast<double>(gen) / params.max_iterations;
+        int max_points =
+            std::min(5, int_vector_size / 2); // limit excessive cuts
+        int num_cuts = static_cast<int>((1.0 - progress) * max_points);
+        num_cuts = std::max(1, num_cuts); // always at least 1 point
 
-}
+        std::vector<bool> crossover_mask(int_vector_size, false);
+        for (int i = 0; i < num_cuts; ++i) {
+          int cut =
+              std::uniform_int_distribution<int>(0, int_vector_size - 1)(rng());
+          crossover_mask[cut] = true;
+        }
 
-int optimize(int int_vector_size, int * int_vector, int real_vector_size, double * real_vector,
-                  double (&func) (int, int*, int, double*),
-                           bool (&validity) (int, int*, int, double*),
-                           struct Algorithm_Parameters algorithm_parameters) {
+        bool flip = false;
+        for (int j = 0; j < int_vector_size; ++j) {
+          if (crossover_mask[j])
+            flip = !flip;
+          if (flip)
+            std::swap(c1[j], c2[j]);
+        }
+      }
+      // – Mutation (creep + optional inversion)
+      {
+        // 1) Substitution (“creep”) mutation on both children
+        int range = max_gene - min_gene + 1;
+        std::uniform_int_distribution<int> step_dist(-params.mutation_step_size,
+                                                     params.mutation_step_size);
+        for (auto *child : {&c1, &c2}) {
+          for (int j = 0; j < int_vector_size; ++j) {
+            if (u01(rng()) < params.mutation_probability) {
+              int step = step_dist(rng());
+              int val = (*child)[j] + step;
+              (*child)[j] =
+                  min_gene + ((val - min_gene) % range + range) % range;
+            }
+          }
+        }
 
-  
-  // Combined optimization function for both int and real vectors
-  // Run the genetic algorithm process on both the int and real parts
+        // 2) Inversion mutation, if enabled
+        if (params.use_inversion) {
+          // pick two indices a < b
+          std::uniform_int_distribution<int> a_dist(0, int_vector_size - 2);
+          int a = a_dist(rng());
+          std::uniform_int_distribution<int> b_dist(a + 1, int_vector_size - 1);
+          int b = b_dist(rng());
+
+          // reverse that slice in each child with its own probability
+          if (u01(rng()) < params.inversion_probability) {
+            std::reverse(c1.begin() + a, c1.begin() + b + 1);
+          }
+          if (u01(rng()) < params.inversion_probability) {
+            std::reverse(c2.begin() + a, c2.begin() + b + 1);
+          }
+        }
+      }
+
+      next_gen.push_back(std::move(c1));
+      if (next_gen.size() < population.size())
+        next_gen.push_back(std::move(c2));
+    }
+
+    // 2d) Replace population
+    population.swap(next_gen);
+
+    if (params.verbose && gen % (params.max_iterations / 10) == 0) {
+      std::cout << "[GA] Gen " << gen << " best fitness "
+                << *std::max_element(fitnesses.begin(), fitnesses.end())
+                << std::endl;
+    }
+  }
+
+  // --- 3. Write best genome back into int_vector[]
+  // (Re-evaluate final fitness to find the winner)
+  double best_fit = -1e12;
+  std::vector<int> *best_genome = nullptr;
+  for (auto &g : population) {
+    double fit = func(int_vector_size, g.data());
+    if (fit > best_fit) {
+      best_fit = fit;
+      best_genome = &g;
+    }
+  }
+  if (best_genome) {
+    for (int i = 0; i < int_vector_size; ++i)
+      int_vector[i] = (*best_genome)[i];
+  }
+
+  // --- 4. (Optional) store statistics in a global/result struct...
+
+  auto t1 = Clock::now();
+  if (params.verbose) {
+    double secs = std::chrono::duration<double>(t1 - t0).count();
+    std::cout << "[GA] Completed in " << secs << "s, best_fitness=" << best_fit
+              << "\n";
+  }
 
   return 0;
-
 }
 
-// overloads (delete if not needed)
+int optimize(int real_vector_size, double *real_vector,
+             std::function<double(int, double *)> func,
+             std::function<bool(int, double *)> validity,
+             Algorithm_Parameters params) {
+  using Clock = std::chrono::high_resolution_clock;
+  auto t0 = Clock::now();
 
+  std::uniform_real_distribution<double> dist01(0.0, 1.0);
+  std::vector<std::vector<double>> population;
 
+  // --- 1. Initialise population
+  population.reserve(params.population_size);
+  while (population.size() < params.population_size) {
+    std::vector<double> genome(real_vector_size);
+    for (auto &g : genome)
+      g = dist01(rng()); // all β_i in [0,1]
+    if (validity(real_vector_size, genome.data()))
+      population.push_back(std::move(genome));
+  }
 
+  double best_overall = -1e300;
+  int stall_count = 0;
+  double eps = params.convergence_threshold;
+  int max_stall = params.stall_generations;
 
+  for (int gen = 0; gen < params.max_iterations; ++gen) {
+    // Evaluate fitness
+    std::vector<double> fitnesses(population.size());
+    for (size_t i = 0; i < population.size(); ++i) {
+      fitnesses[i] = validity(real_vector_size, population[i].data())
+                         ? func(real_vector_size, population[i].data())
+                         : -1e9;
+    }
 
+    double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
+    if (gen_best > best_overall + eps) {
+      best_overall = gen_best;
+      stall_count = 0;
+    } else {
+      stall_count++;
+    }
 
-// additional variables, classes and functions as needed.
+    if (stall_count >= max_stall) {
+      if (params.verbose)
+        std::cout << "[GA-Real] No improvement for " << stall_count
+                  << " generations — stopping.\n";
+      break;
+    }
 
+    // Elitism
+    std::vector<std::vector<double>> next_gen;
+    {
+      auto best_it = std::max_element(fitnesses.begin(), fitnesses.end());
+      size_t best_idx = std::distance(fitnesses.begin(), best_it);
+      next_gen.push_back(population[best_idx]);
+    }
 
-int optimize(int int_vector_size, int* int_vector,
-             std::function<double(int, int*)> func,
-             std::function<bool(int, int*)> validity,
-             Algorithm_Parameters algorithm_parameters) {
-    // 包装 std::function 为 C 风格指针调用
-    return optimize(int_vector_size, int_vector, 
-        *func.target<double(*)(int, int*)>(), 
-        *validity.target<bool(*)(int, int*)>(), 
-        algorithm_parameters);
+    // Tournament selection
+    int k = params.tournament_size > 0 ? params.tournament_size : 2;
+    std::uniform_int_distribution<size_t> pop_dist(0, population.size() - 1);
+    auto pick_parent = [&]() {
+      size_t best = pop_dist(rng());
+      double best_fit = fitnesses[best];
+      for (int i = 1; i < k; ++i) {
+        size_t idx = pop_dist(rng());
+        if (fitnesses[idx] > best_fit) {
+          best = idx;
+          best_fit = fitnesses[idx];
+        }
+      }
+      return population[best];
+    };
+
+    // Crossover + Mutation
+    while (next_gen.size() < population.size()) {
+      auto p1 = pick_parent();
+      auto p2 = pick_parent();
+      std::vector<double> c1 = p1, c2 = p2;
+
+      if (dist01(rng()) < params.crossover_probability) {
+        for (int j = 0; j < real_vector_size; ++j) {
+          if (dist01(rng()) < 0.5)
+            std::swap(c1[j], c2[j]);
+        }
+      }
+
+      // Mutation
+      for (int j = 0; j < real_vector_size; ++j) {
+        if (dist01(rng()) < params.mutation_probability) {
+          double step = dist01(rng()) * params.mutation_step_size;
+          c1[j] = std::clamp(c1[j] + step * (dist01(rng()) < 0.5 ? -1 : 1), 0.0,
+                             1.0);
+        }
+        if (dist01(rng()) < params.mutation_probability) {
+          double step = dist01(rng()) * params.mutation_step_size;
+          c2[j] = std::clamp(c2[j] + step * (dist01(rng()) < 0.5 ? -1 : 1), 0.0,
+                             1.0);
+        }
+      }
+
+      next_gen.push_back(std::move(c1));
+      if (next_gen.size() < population.size())
+        next_gen.push_back(std::move(c2));
+    }
+
+    population.swap(next_gen);
+
+    if (params.verbose && gen % (params.max_iterations / 10) == 0) {
+      std::cout << "[GA-Real] Gen " << gen << " best fitness " << gen_best
+                << "\n";
+    }
+  }
+
+  // Copy best solution
+  double best_fit = -1e12;
+  std::vector<double> *best_genome = nullptr;
+  for (auto &g : population) {
+    double fit = func(real_vector_size, g.data());
+    if (fit > best_fit) {
+      best_fit = fit;
+      best_genome = &g;
+    }
+  }
+  if (best_genome) {
+    for (int i = 0; i < real_vector_size; ++i)
+      real_vector[i] = (*best_genome)[i];
+  }
+
+  auto t1 = Clock::now();
+  if (params.verbose) {
+    double secs = std::chrono::duration<double>(t1 - t0).count();
+    std::cout << "[GA-Real] Completed in " << secs
+              << "s, best_fitness=" << best_fit << "\n";
+  }
+
+  return 0;
 }
 
-int optimize(int real_vector_size, double* real_vector,
-             std::function<double(int, double*)> func,
-             std::function<bool(int, double*)> validity,
-             Algorithm_Parameters algorithm_parameters) {
-    return optimize(real_vector_size, real_vector, 
-        *func.target<double(*)(int, double*)>(), 
-        *validity.target<bool(*)(int, double*)>(), 
-        algorithm_parameters);
+int optimize(int int_vector_size, int *int_vector, int real_vector_size,
+             double *real_vector,
+             std::function<double(int, int *, int, double *)> func,
+             std::function<bool(int, int *, int, double *)> validity,
+             Algorithm_Parameters params) {
+  using Clock = std::chrono::high_resolution_clock;
+  auto t0 = Clock::now();
+
+  std::uniform_real_distribution<double> u01(0.0, 1.0);
+  std::uniform_real_distribution<double> mutation_step_dist(-params.mutation_step_size,
+                                                            params.mutation_step_size);
+  std::uniform_int_distribution<int> int_step_dist(-params.mutation_step_size,
+                                                   params.mutation_step_size);
+
+  int n_units = (int_vector_size - 1) / 2;
+  int min_gene = -3;
+  int max_gene = n_units + 2;
+  int gene_range = max_gene - min_gene + 1;
+  std::uniform_int_distribution<int> gene_dist(min_gene, max_gene);
+
+  // --- Initialize population
+  std::vector<std::pair<std::vector<int>, std::vector<double>>> population;
+  while (population.size() < params.population_size) {
+    std::vector<int> int_part(int_vector_size);
+    for (int &g : int_part) g = gene_dist(rng());
+
+    std::vector<double> real_part(real_vector_size);
+    for (double &x : real_part) x = u01(rng());
+
+    if (validity(int_vector_size, int_part.data(), real_vector_size, real_part.data()))
+      population.emplace_back(std::move(int_part), std::move(real_part));
+  }
+
+  double best_overall = -1e300;
+  int stall_count = 0;
+
+  for (int gen = 0; gen < params.max_iterations; ++gen) {
+    // Evaluate fitness
+    std::vector<double> fitnesses(population.size());
+    for (size_t i = 0; i < population.size(); ++i) {
+      auto &[i_part, r_part] = population[i];
+      fitnesses[i] = validity(int_vector_size, i_part.data(),
+                              real_vector_size, r_part.data())
+                         ? func(int_vector_size, i_part.data(),
+                                real_vector_size, r_part.data())
+                         : -1e9;
+    }
+
+    double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
+    if (gen_best > best_overall + params.convergence_threshold) {
+      best_overall = gen_best;
+      stall_count = 0;
+    } else {
+      stall_count++;
+    }
+    if (stall_count >= params.stall_generations) break;
+
+    // Elitism
+    std::vector<std::pair<std::vector<int>, std::vector<double>>> next_gen;
+    {
+      auto best_it = std::max_element(fitnesses.begin(), fitnesses.end());
+      size_t best_idx = std::distance(fitnesses.begin(), best_it);
+      next_gen.push_back(population[best_idx]);
+    }
+
+    // Tournament selection
+    int k = params.tournament_size > 0 ? params.tournament_size : 2;
+    std::uniform_int_distribution<size_t> pop_dist(0, population.size() - 1);
+    auto pick_parent = [&]() {
+      size_t best = pop_dist(rng());
+      double best_fit = fitnesses[best];
+      for (int i = 1; i < k; ++i) {
+        size_t idx = pop_dist(rng());
+        if (fitnesses[idx] > best_fit) {
+          best = idx;
+          best_fit = fitnesses[idx];
+        }
+      }
+      return population[best];
+    };
+
+    // Fill rest of population
+    while (next_gen.size() < population.size()) {
+      auto [p1_int, p1_real] = pick_parent();
+      auto [p2_int, p2_real] = pick_parent();
+
+      std::vector<int> c1_int = p1_int, c2_int = p2_int;
+      std::vector<double> c1_real = p1_real, c2_real = p2_real;
+
+      // Crossover (discrete)
+      if (u01(rng()) < params.crossover_probability) {
+        int cut = std::uniform_int_distribution<int>(1, int_vector_size - 1)(rng());
+        for (int j = cut; j < int_vector_size; ++j)
+          std::swap(c1_int[j], c2_int[j]);
+      }
+
+      // Crossover (real-valued uniform)
+      if (u01(rng()) < params.crossover_probability) {
+        for (int j = 0; j < real_vector_size; ++j) {
+          if (u01(rng()) < 0.5)
+            std::swap(c1_real[j], c2_real[j]);
+        }
+      }
+
+      // Mutation (discrete with wrapping)
+      for (int j = 0; j < int_vector_size; ++j) {
+        if (u01(rng()) < params.mutation_probability) {
+          int step = int_step_dist(rng());
+          int val = c1_int[j] + step;
+          val = min_gene + ((val - min_gene) % gene_range + gene_range) % gene_range;
+          c1_int[j] = val;
+        }
+        if (u01(rng()) < params.mutation_probability) {
+          int step = int_step_dist(rng());
+          int val = c2_int[j] + step;
+          val = min_gene + ((val - min_gene) % gene_range + gene_range) % gene_range;
+          c2_int[j] = val;
+        }
+      }
+
+      // Mutation (real bounded in [0, 1])
+      for (int j = 0; j < real_vector_size; ++j) {
+        if (u01(rng()) < params.mutation_probability) {
+          c1_real[j] = std::clamp(c1_real[j] + mutation_step_dist(rng()), 0.0, 1.0);
+        }
+        if (u01(rng()) < params.mutation_probability) {
+          c2_real[j] = std::clamp(c2_real[j] + mutation_step_dist(rng()), 0.0, 1.0);
+        }
+      }
+
+      next_gen.emplace_back(std::move(c1_int), std::move(c1_real));
+      if (next_gen.size() < population.size())
+        next_gen.emplace_back(std::move(c2_int), std::move(c2_real));
+    }
+
+    population.swap(next_gen);
+
+    if (params.verbose && gen % (params.max_iterations / 10) == 0) {
+      std::cout << "[GA-Mixed] Gen " << gen << " best fitness " << gen_best << "\n";
+    }
+  }
+
+  // Copy best solution
+  double best_fit = -1e12;
+  const std::pair<std::vector<int>, std::vector<double>>* best = nullptr;
+  for (auto &g : population) {
+    double fit = func(int_vector_size, g.first.data(),
+                      real_vector_size, g.second.data());
+    if (fit > best_fit) {
+      best_fit = fit;
+      best = &g;
+    }
+  }
+
+  if (best) {
+    std::copy(best->first.begin(), best->first.end(), int_vector);
+    std::copy(best->second.begin(), best->second.end(), real_vector);
+  }
+
+  auto t1 = Clock::now();
+  if (params.verbose) {
+    double secs = std::chrono::duration<double>(t1 - t0).count();
+    std::cout << "[GA-Mixed] Completed in " << secs
+              << "s, best_fitness=" << best_fit << "\n";
+  }
+
+  return 0;
 }
