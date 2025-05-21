@@ -204,6 +204,7 @@ bool Circuit::initialize_from_vector(int vector_size, const int *circuit_vector,
   if (vector_size != 2 * num_units + 1)
     return false;
   units.resize(num_units);
+  this->circuit_vector = circuit_vector;
 
   // feed_unit is the first element of the circuit vector
   feed_unit = circuit_vector[0];
