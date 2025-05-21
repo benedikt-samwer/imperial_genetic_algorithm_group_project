@@ -11,4 +11,5 @@ test_ga
 .DS_Store
 
 build/
+build 2/
 

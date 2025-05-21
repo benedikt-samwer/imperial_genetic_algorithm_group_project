@@ -12,7 +12,7 @@ tournament_size=3
 crossover_probability=0.9
 
 # Mutation (creep)
-mutation_probability=0.1
+mutation_probability=0.08
 mutation_step_size=3
 
 # Inversion
@@ -21,7 +21,7 @@ inversion_probability=0.2
 
 # Termination
 convergence_threshold=1e-8
-stall_generations=20
+stall_generations=50
 
 # Logging
 verbose=true
@@ -29,4 +29,4 @@ log_results=false
 log_file=ga_run.log
 
 # Reproducibility
-random_seed=42
+random_seed=43
