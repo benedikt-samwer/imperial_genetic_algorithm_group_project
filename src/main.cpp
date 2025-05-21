@@ -198,5 +198,13 @@ int main() {
   std::cout << "- Net profit: £" << std::fixed << std::setprecision(2)
             << performance << "/s\n";
 
+  // Save raw circuit data into a CSV:
+  const std::string out_csv = "circuit_results.csv";
+  if (circuit.save_output_info(out_csv)) {
+    std::cout << "\n Saved detailed circuit info to " << out_csv << "\n";
+  } else {
+    std::cerr << "\n  Failed to write circuit info to " << out_csv << "\n";
+  }
+
   return 0;
 }
