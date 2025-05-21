@@ -2,10 +2,13 @@ import os
 import graphviz
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
+import argparse
+import graphviz
+import sys
 
 def generate_graph(list):
     """
-    This function generates a directed graph based on the input file and saves it as an SVG image.
+    This function generates a directed graph based on the input file and saves it as an PNG image.
     """
 
     # generate a directed graph
@@ -100,6 +103,8 @@ def generate_graph(list):
     
     file = graph.render(str('output/flowchart'), cleanup=True, format='png')
     return file
+
+
 
 def calculate_font_size(
     cell_width, cell_height, text, max_font_size=20, padding=(0, 0)
@@ -284,19 +289,48 @@ def get_concat_v(im1, im2):
     dst.paste(im2, (0, im1.height))
     return dst
 
-
-
-def main():
-    ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
-    file = generate_graph(ini_list)
+def generate_flow_chart(list):
+    file = generate_graph(list)
     image = Image.open(file)
-    table = create_table_image(ini_list,
+    table = create_table_image(list,
                                start_x=image.width // 7,
                                start_y=20,
                                image_size=(image.width, 150),
                                table_size=(4 * image.width // 7, 150),)
     image = get_concat_v(image, table)
     image.save(file)
+    return
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="📊 Generate a flowchart diagram from a list of integers.\n"
+                    "Use -f to generate a flowchart diagram of circuit.\n"
+                    "Use -u to generate a Time vs Units graph.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-f", "--flowchart",
+        action="store_true",
+        help="Visualize the circuit"
+    )
+    group.add_argument(
+        "-u", "--unitgraph",
+        action="store_true",
+        help="Generate a Time vs Units graph"
+    )
+
+    args = parser.parse_args()
+
+    if args.flowchart:
+        ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
+        generate_flow_chart(ini_list)
+    elif args.unitgraph:
+        print("Unit graph")
+        # generate_time_vs_units_graph()
+    
 
 
 
