@@ -22,7 +22,7 @@ def read_data(file_path):
 
 def generate_graph(file_path):
     """
-    This function generates a directed graph based on the input file and saves it as an SVG image.
+    This function generates a directed graph based on the input file and saves it as an PNG image.
     """
     ini_list_1, ini_list_2 = read_data(file_path)
 
@@ -346,7 +346,7 @@ def generate_flow_chart(list):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="📊 Generate a flowchart diagram from a list of integers.\n"
+        description="Generate a flowchart diagram from a list of integers.\n"
                     "Use -f to generate a flowchart diagram of circuit.\n"
                     "Use -u to generate a Time vs Units graph.",
         formatter_class=argparse.RawTextHelpFormatter
