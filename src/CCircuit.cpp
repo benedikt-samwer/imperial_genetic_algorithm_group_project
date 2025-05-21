@@ -2,13 +2,11 @@
 #include <queue>
 #include <vector>
 
-
 #include <CCircuit.h>
 #include <CUnit.h>
 #include <cstdint>
 #include <iostream>
 #include <stdio.h>
-
 
 Circuit::Circuit(int num_units) {
   n = num_units;
@@ -92,23 +90,22 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
     }
   }
 
+  // 7. two terminals check
+  std::vector<int8_t> cache(n, -1);
+  uint8_t global_mask = 0;
+  for (int i = 0; i < n; ++i) {
+    // uint8_t mask = outlet_mask(i, cache);
+    uint8_t mask = this->term_mask(i);
+    global_mask |= mask;
+    int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
+    //{ std::cout << "false 07\n"; return false; }
+  }
 
-    // 7. two terminals check
-    std::vector<int8_t> cache(n, -1);
-    uint8_t global_mask = 0; 
-    for (int i = 0; i < n; ++i) {
-        // uint8_t mask = outlet_mask(i, cache); 
-        uint8_t mask = this->term_mask(i);
-        global_mask |= mask; 
-        int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
-        //{ std::cout << "false 07\n"; return false; }
-    }
-    
-    // check mass balance convergence
-    if (!run_mass_balance(1e-6, 100)) {
-        //std::cout << "false 99 (mass-balance diverge)\n";
-        return false;
-    }
+  // check mass balance convergence
+  if (!run_mass_balance(1e-6, 100)) {
+    // std::cout << "false 99 (mass-balance diverge)\n";
+    return false;
+  }
 
   return true; // legal
 }
@@ -128,11 +125,11 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
     return valid;
   }
 
-    // the length of the continuous parameters must be exactly = n units
-    if (unit_parameters_size != n) {
-        //std::cout << "false P0 (parameter length)" << std::endl;
-        return false;
-    }
+  // the length of the continuous parameters must be exactly = n units
+  if (unit_parameters_size != n) {
+    // std::cout << "false P0 (parameter length)" << std::endl;
+    return false;
+  }
 
   // each parameter must be in [0,1] (or other physical range)
   for (int i = 0; i < unit_parameters_size; ++i) {
@@ -175,9 +172,8 @@ void Circuit::mark_units(int unit_num) {
   }
 }
 
-Circuit::Circuit(int num_units,double *beta)
-    : units(num_units),
-      feed_unit(0),
+Circuit::Circuit(int num_units, double *beta)
+    : units(num_units), feed_unit(0),
 
       feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
       feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
@@ -569,59 +565,62 @@ uint8_t Circuit::term_mask(int start) const {
       visited[conc_dest] = true;
       q.push(conc_dest);
     }
-
-bool Circuit::save_all_units_to_csv(const std::string& filename) {
-    std::ofstream ofs(filename, std::ios::app);
-    if (!ofs.is_open()) {
-        std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return false;
-    }
-
-    // output in a single line
-    ofs << std::fixed << std::setprecision(2);
-
-    for (size_t i = 0; i < units.size(); ++i) {
-        const CUnit& unit = units[i];
-
-        ofs << unit.conc_palusznium+unit.conc_gormanium+unit.conc_waste << ","
-            << unit.tails_palusznium+unit.tails_gormanium +unit.tails_waste ;
-
-        if (i < units.size() - 1) {
-            ofs << ",";
-        }
-    }
-    ofs << "\n";
-
-    ofs.close();
-    return true;
+  }
+  return mask;
 }
 
-bool Circuit::save_vector_to_csv(const std::string& filename) {
-    std::ofstream ofs(filename, std::ios::app);
-    if (!ofs.is_open()) {
-        std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return false;
+bool Circuit::save_all_units_to_csv(const std::string &filename) {
+  std::ofstream ofs(filename, std::ios::app);
+  if (!ofs.is_open()) {
+    std::cerr << "Error: Unable to open file " << filename << std::endl;
+    return false;
+  }
+
+  // output in a single line
+  ofs << std::fixed << std::setprecision(2);
+
+  for (size_t i = 0; i < units.size(); ++i) {
+    const CUnit &unit = units[i];
+
+    ofs << unit.conc_palusznium + unit.conc_gormanium + unit.conc_waste << ","
+        << unit.tails_palusznium + unit.tails_gormanium + unit.tails_waste;
+
+    if (i < units.size() - 1) {
+      ofs << ",";
     }
+  }
+  ofs << "\n";
 
-    int length = static_cast<int>(units.size()) * 2 + 1;
-
-    for (int i = 0; i < length; ++i) {
-        ofs << circuit_vector[i];
-        if (i < length - 1) {
-            ofs << ",";
-        }
-    }
-    ofs << "\n";
-
-    ofs.close();
-    return true;
+  ofs.close();
+  return true;
 }
 
-bool Circuit::save_output_info(const std::string& filename) {
-    if(!filename.empty()) {
-         // Clear the file if it exists
-        std::ofstream ofs(filename, std::ios::trunc);
-        ofs.close();
+bool Circuit::save_vector_to_csv(const std::string &filename) {
+  std::ofstream ofs(filename, std::ios::app);
+  if (!ofs.is_open()) {
+    std::cerr << "Error: Unable to open file " << filename << std::endl;
+    return false;
+  }
+
+  int length = static_cast<int>(units.size()) * 2 + 1;
+
+  for (int i = 0; i < length; ++i) {
+    ofs << circuit_vector[i];
+    if (i < length - 1) {
+      ofs << ",";
     }
-    return save_vector_to_csv(filename) && save_all_units_to_csv(filename);
+  }
+  ofs << "\n";
+
+  ofs.close();
+  return true;
+}
+
+bool Circuit::save_output_info(const std::string &filename) {
+  if (!filename.empty()) {
+    // Clear the file if it exists
+    std::ofstream ofs(filename, std::ios::trunc);
+    ofs.close();
+  }
+  return save_vector_to_csv(filename) && save_all_units_to_csv(filename);
 }
