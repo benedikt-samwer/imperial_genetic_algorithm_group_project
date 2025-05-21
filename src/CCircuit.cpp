@@ -159,69 +159,29 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
 
 }
 
-// void Circuit::mark_units(int unit_num) {
+void Circuit::mark_units(int unit_num) {
 
-//   if (this->units[unit_num].mark) return;
+  if (this->units[unit_num].mark) return;
 
-//   this->units[unit_num].mark = true;
+  this->units[unit_num].mark = true;
 
-//   //If we have seen this unit already exit
-//   //Mark that we have now seen the unit
+  //If we have seen this unit already exit
+  //Mark that we have now seen the unit
 
-//   //If conc_num does not point at a circuit outlet recursively call the function
-//   if (this->units[unit_num].conc_num<this->units.size()) {
-//     mark_units(this->units[unit_num].conc_num);
-//   } else {
-//     // ...Potentially do something to indicate that you have seen an exit
-//   }
+  //If conc_num does not point at a circuit outlet recursively call the function
+  if (this->units[unit_num].conc_num<this->units.size()) {
+    mark_units(this->units[unit_num].conc_num);
+  } else {
+    // ...Potentially do something to indicate that you have seen an exit
+  }
   
-//   //If tails_num does not point at a circuit outletrecursively call the function 
+  //If tails_num does not point at a circuit outletrecursively call the function 
 
-//   if (this->units[unit_num].tails_num<this->units.size()) {
-//     mark_units(this->units[unit_num].tails_num); 
-//   } else {
-//     // ...Potentially do something to indicate that you have seen an exit
-//   }
-// }
-
-void Circuit::mark_units(int start_unit) {
-    // 重置所有标记（必须在每次调用前执行）
-    for (auto& unit : units) {
-        unit.mark = false;
-    }
-
-    // 使用栈实现迭代式DFS（避免递归深度限制）
-    std::stack<int> to_visit;
-    to_visit.push(start_unit);
-
-    while (!to_visit.empty()) {
-        int u = to_visit.top();
-        to_visit.pop();
-
-        // 跳过已处理或无效单元
-        if (u < 0 || u >= units.size() || units[u].mark) {
-            continue;
-        }
-
-        // 标记当前单元
-        units[u].mark = true;
-
-        // 处理 conc 路径（仅限有效单元）
-        int conc_dest = units[u].conc_num;
-        if (conc_dest >= 0 && conc_dest < units.size()) {
-            if (!units[conc_dest].mark) {
-                to_visit.push(conc_dest);
-            }
-        }
-
-        // 处理 tail 路径（仅限有效单元）
-        int tail_dest = units[u].tails_num;
-        if (tail_dest >= 0 && tail_dest < units.size()) {
-            if (!units[tail_dest].mark) {
-                to_visit.push(tail_dest);
-            }
-        }
-    }
+  if (this->units[unit_num].tails_num<this->units.size()) {
+    mark_units(this->units[unit_num].tails_num); 
+  } else {
+    // ...Potentially do something to indicate that you have seen an exit
+  }
 }
 
 Circuit::Circuit(int num_units,double *beta)
