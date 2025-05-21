@@ -47,7 +47,7 @@ int main() {
     };
     
     std::cout << "Starting optimization for " << num_units << " unit circuit...\n";
-    
+    set_random_seed(42); // Set a fixed seed for reproducibility
     // Run discrete optimization
     optimize(vector_size, circuit_vector, fitness, validity, params);
     

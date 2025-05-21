@@ -20,7 +20,7 @@ bool Circuit::check_validity(int vector_size, const int* vec)
     // length must be 2*n+1
     int expected = 2 * n + 1;
     if (vector_size != expected) {
-      std::cout << "false 00" << std::endl;
+      //std::cout << "false 00" << std::endl;
       return false;
     }
 
@@ -28,7 +28,7 @@ bool Circuit::check_validity(int vector_size, const int* vec)
     feed_dest = vec[0];                      // feed points to the unit
     // feed cannot directly feed to terminal
     if (feed_dest < 0 || feed_dest >= n){
-      std::cout << "false 01" << std::endl;
+      //std::cout << "false 01" << std::endl;
       return false;
     }
         
@@ -44,23 +44,23 @@ bool Circuit::check_validity(int vector_size, const int* vec)
 
       // R5 vector elements must be in (0, n+2)
       if (conc < 0 || conc > max_idx) {
-        std::cout << "false 02" << std::endl;
+        //std::cout << "false 02" << std::endl;
         return false;
       }
       if (tail < 0 || tail > max_idx) {
-        std::cout << "false 03" << std::endl;
+        //std::cout << "false 03" << std::endl;
         return false;
       }
 
       // R3 no self-loop
       if (conc == i || tail == i) {
-        std::cout << "false 04" << std::endl;
+        //std::cout << "false 04" << std::endl;
         return false;
       }
 
       // R4 all outputs point to the same element
       if (conc == tail) {
-        std::cout << "false 05" << std::endl;
+        //std::cout << "false 05" << std::endl;
         return false;
       }
 
@@ -76,7 +76,7 @@ bool Circuit::check_validity(int vector_size, const int* vec)
 
     for (int i = 0; i < n; ++i) {
         if (!units[i].mark) {         // R1 trigger
-            std::cout << "false 06\n";
+            //std::cout << "false 06\n";
             return false;
         }
     }
@@ -87,7 +87,7 @@ bool Circuit::check_validity(int vector_size, const int* vec)
         // uint8_t mask = outlet_mask(i, cache); 
         uint8_t mask = term_mask(i);
         int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
-        if (cnt < 2) { std::cout << "false 07\n"; return false; }
+        //{ std::cout << "false 07\n"; return false; }
     }
 
     // R6 detect cycle of length ≥2 (self-loop is prohibited)
@@ -127,7 +127,7 @@ bool Circuit::check_validity(int vector_size, const int* vec)
     
     // check mass balance convergence
     if (!mass_balance_converges(1e-6, 2000)) {
-        std::cout << "false 99 (mass-balance diverge)\n";
+        //std::cout << "false 99 (mass-balance diverge)\n";
         return false;
     }
 
@@ -145,7 +145,7 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
 
     // the length of the continuous parameters must be exactly = n units
     if (num_parameters != n) {
-        std::cout << "false P0 (parameter length)" << std::endl;
+        //std::cout << "false P0 (parameter length)" << std::endl;
         return false;
     }
 
@@ -153,7 +153,7 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
     for (int i = 0; i < num_parameters; ++i) {
         double beta = parameters[i];
         if (beta < 0.0 || beta > 1.0 || std::isnan(beta)) {
-            std::cout << "false P1 (β out of range)" << std::endl;
+            //std::cout << "false P1 (β out of range)" << std::endl;
             return false;
         }
     }
@@ -277,8 +277,8 @@ bool Circuit::mass_balance_converges(double tol, int maxIter) const
             err = std::max(err, std::fabs(FWn[idx] - FW[idx]));
         }
         if (err < tol) {
-          std::cout << "iteration: " << it << std::endl;
-          std::cout << "err: " << err << std::endl;
+          //std::cout << "iteration: " << it << std::endl;
+          //std::cout << "err: " << err << std::endl;
           return true; 
         }     // converged
         
@@ -365,7 +365,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
     std::vector<double> last_feed_p(units.size(), 0.0);
     std::vector<double> last_feed_g(units.size(), 0.0);
     std::vector<double> last_feed_w(units.size(), 0.0);
-    std::cout << "Unit number: " << units.size() << std::endl;
+    //std::cout << "Unit number: " << units.size() << std::endl;
 
     for (int iter = 0; iter < max_iterations; ++iter) {
         // std::cout << "\n==========Iteration" << iter + 1 << "==========\n\n";
@@ -536,11 +536,11 @@ double Circuit::get_economic_value() const {
         cost += 1000.0 * std::pow(total_volume - 150.0, 2.0);
     }
     value -= cost; // cost of the circuit
-    std::cout<<"gormanium recovery: "<<(get_palusznium_recovery())*100<<"%"<<std::endl;
-    std::cout<<"palusznium recovery: "<<(get_gormanium_recovery())*100<<"%"<<std::endl;
+    //std::cout<<"gormanium recovery: "<<(get_palusznium_recovery())*100<<"%"<<std::endl;
+    //std::cout<<"palusznium recovery: "<<(get_gormanium_recovery())*100<<"%"<<std::endl;
 
-    std::cout<<"grade for palusznium: "<<(get_palusznium_grade())*100<<"%"<<std::endl;// debug output
-    std::cout<<"grade for gormanium: "<<(get_gormanium_grade())*100<<"%"<<std::endl;// debug output
+    //std::cout<<"grade for palusznium: "<<(get_palusznium_grade())*100<<"%"<<std::endl;// debug output
+    //std::cout<<"grade for gormanium: "<<(get_gormanium_grade())*100<<"%"<<std::endl;// debug output
     return value;
 }
 

@@ -8,11 +8,27 @@
 #include "CCircuit.h"
 #include "Genetic_Algorithm.h"
 
-// Helper RNG
-static std::mt19937 &rng() {
-  static thread_local std::mt19937 gen(std::random_device{}());
-  return gen;
+// Add at the top of the file
+static int g_random_seed = -1;  // -1 means use random seed
+ 
+// Add this function to set the seed
+void set_random_seed(int seed) {
+  g_random_seed = seed;
 }
+ 
+// Modify the rng() function
+static std::mt19937 &rng() {
+  if (g_random_seed >= 0) {
+    // Deterministic mode
+    static thread_local std::mt19937 gen(g_random_seed);
+    return gen;
+  } else {
+    // Non-deterministic mode (current behavior)
+    static thread_local std::mt19937 gen(std::random_device{}());
+    return gen;
+  }
+}
+ 
 
 // Generate a valid circuit based on a template pattern
 std::vector<int> generate_valid_circuit_template(int num_units) {
@@ -553,7 +569,7 @@ int optimize(int real_vector_size, double *real_vector,
 
   return 0;
 }
-
+/*
 // ********************************************************************
 // 3) Hybrid optimize (both discrete and continuous)
 // ********************************************************************
@@ -760,4 +776,33 @@ int optimize(int int_vector_size, int *int_vector, int real_vector_size,
   }
 
   return 0;
+}*/
+
+int optimize(int int_vector_size, int* int_vector,
+             int real_vector_size, double* real_vector,
+             std::function<double(int, int*, int, double*)> hybrid_func,
+             std::function<bool(int, int*, int, double*)> hybrid_validity,
+             Algorithm_Parameters params) {
+
+    // Discrete step: optimize only int vector
+    auto wrapped_func_int = [&](int n, int* v) {
+        return hybrid_func(n, v, real_vector_size, real_vector); // current real_vector
+    };
+    auto wrapped_valid_int = [&](int n, int* v) {
+        return hybrid_validity(n, v, real_vector_size, real_vector);
+    };
+
+    optimize(int_vector_size, int_vector, wrapped_func_int, wrapped_valid_int, params);
+
+    // Continuous step: optimize only real vector
+    auto wrapped_func_real = [&](int n, double* r) {
+        return hybrid_func(int_vector_size, int_vector, n, r); // fixed int_vector
+    };
+    auto wrapped_valid_real = [&](int n, double* r) {
+        return hybrid_validity(int_vector_size, int_vector, n, r);
+    };
+
+    optimize(real_vector_size, real_vector, wrapped_func_real, wrapped_valid_real, params);
+
+    return 0;
 }

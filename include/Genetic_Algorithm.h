@@ -51,7 +51,7 @@ bool all_true(int int_vector_size, int *int_vector, int real_vector_size,
               double *real_vector);
 bool all_true_ints(int int_vector_size, int *vector);
 bool all_true_reals(int real_vector_size, double *vector);
-
+void set_random_seed(int seed);
 // Optimization function for discrete vector
 int optimize(
     int int_vector_size, int *int_vector,
@@ -65,6 +65,7 @@ int optimize(
     std::function<double(int, double *)> func,
     std::function<bool(int, double *)> validity = all_true_reals,
     Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
+
 
 // Optimization function for mixed discrete-continuous vector
 int optimize(
