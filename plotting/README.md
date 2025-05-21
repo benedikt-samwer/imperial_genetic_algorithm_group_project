@@ -38,3 +38,9 @@ On Windows you might need to install the library manually. You can find the inst
 ```bash
 git clone –recurse-submodules https://gitlab.com/graphviz/graphviz.git
 ```
+
+## Plots
+
+- Circuit Visualization
+- Execution Time and Parallel Efficiency
+- Time vs Units
