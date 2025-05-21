@@ -10,7 +10,7 @@ def generate_graph(list):
 
     # generate a directed graph
     graph = graphviz.Digraph()
-    graph.attr('node', fontname='Arial')  # Or Helvetica, Courier, etc.
+    graph.attr('node', fontname='Arial')  
     graph.attr('edge', fontname='Arial')
     graph.attr(rankdir='LR')
     graph.attr('node', shape='rectangle')
@@ -287,7 +287,7 @@ def get_concat_v(im1, im2):
 
 
 def main():
-    ini_list = [0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8]
+    ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
     file = generate_graph(ini_list)
     image = Image.open(file)
     table = create_table_image(ini_list,
