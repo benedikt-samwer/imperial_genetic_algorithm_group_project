@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <queue> 
 
 // Constants for the circuit outlet destinations
 // These values will be used in the circuit vector to indicate the final product streams
