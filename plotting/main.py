@@ -2,101 +2,146 @@ import os
 import graphviz
 import pandas as pd
 from PIL import Image, ImageDraw, ImageFont
+import argparse
+import graphviz
+import sys
 
-def generate_graph(list):
+def read_data(file_path):
     """
-    This function generates a directed graph based on the input file and saves it as an SVG image.
+    This function reads the data from the input file and returns two lists.
     """
+    with open(file_path, 'r') as file:
+        data_1 = file.readline().replace(',', ' ')
+        data_2 = file.readline().replace(',', ' ')
+    items_1 = data_1.split()
+    items_2 = data_2.split()
+    list_1 = [int(i) for i in items_1]
+    list_2 = [round(float(j), 2) for j in items_2]
+    return list_1, list_2
+
+
+def generate_graph(file_path):
+    """
+    This function generates a directed graph based on the input file and saves it as an PNG image.
+    """
+    ini_list_1, ini_list_2 = read_data(file_path)
 
     # generate a directed graph
     graph = graphviz.Digraph()
-    graph.attr('node', fontname='Arial')  
+    graph.attr('node', fontname='Arial')
     graph.attr('edge', fontname='Arial')
     graph.attr(rankdir='LR')
     graph.attr('node', shape='rectangle')
     index = 1
     graph.edge('Feed',
-               'Unit ' + str(list[0]),
+               'Unit ' + str(ini_list_1[0]),
                color='blue',
                headport='w',
                tailport='e',
                arrowhead='normal')
-
+    
+    # input to the feed
+    graph.node('80 kg/s of the waste material',
+               shape='none',
+               width='0',
+               height='0')
+    graph.edge('80 kg/s of the waste material',
+               'Feed', len='0.5',
+               color='black',
+               headport='w',
+               tailport='e',
+               arrowhead='normal')
+    graph.node('12 kg/s of Gormanium material', shape='none', width='0', height='0')
+    graph.edge('12 kg/s of Gormanium material',
+               'Feed', 
+               color='black',
+               headport='w',
+               tailport='e',
+               arrowhead='normal')
+    graph.node('8 kg/s of Palusznium material', shape='none', width='0', height='0')
+    graph.edge('8 kg/s of Palusznium material',
+               'Feed', 
+               color='black',
+               headport='w',
+               tailport='e',
+               arrowhead='normal')
     graph.edge('Feed',
-               'Unit ' + str(list[0]),
+               'Unit ' + str(ini_list_1[0]),
                color='black', len='0.5',
                headport='w',
                tailport='e',
                arrowhead='normal')
 
     # Get the largest, second largest and third largets values in list
-    copy_list = list.copy()
-    largest = max(copy_list)
-    copy_list.remove(largest)
-    second_largest = max(copy_list)
+    copy_list_1 = ini_list_1.copy()
+    largest = max(copy_list_1)
+    copy_list_1.remove(largest)
+    second_largest = max(copy_list_1)
     while (second_largest == largest):
-        copy_list.remove(second_largest)
-        second_largest = max(copy_list)
-    copy_list.remove(second_largest)
-    third_largest = max(copy_list)
+        copy_list_1.remove(second_largest)
+        second_largest = max(copy_list_1)
+    copy_list_1.remove(second_largest)
+    third_largest = max(copy_list_1)
     while (third_largest == second_largest):
-        copy_list.remove(third_largest)
-        third_largest = max(copy_list)
+        copy_list_1.remove(third_largest)
+        third_largest = max(copy_list_1)
 
-    for i in range(int(len(list) / 2)):
+    for i in range(int(len(ini_list_1) / 2)):
         node_name = 'Unit ' + str(i)
-        if list[index] == largest:
+        if ini_list_1[index] == largest:
             end_node = 'Tailing'
-        elif list[index] == second_largest:
+        elif ini_list_1[index] == second_largest:
             end_node = 'Gormanium'
-        elif list[index] == third_largest:
+        elif ini_list_1[index] == third_largest:
             end_node = 'Palusznium'
         else:
-            end_node = 'Unit ' + str(list[index])
+            end_node = 'Unit ' + str(ini_list_1[index])
 
         graph.edge(node_name,
                    end_node,
+                   label=str(ini_list_2[index-1]),
                    color='blue',
                    arrowhead='normal')
 
-        if list[index + 1] == largest:
+        if ini_list_1[index + 1] == largest:
             end_node = 'Tailing'
-        elif list[index + 1] == second_largest:
+        elif ini_list_1[index + 1] == second_largest:
             end_node = 'Gormanium'
-        elif list[index + 1] == third_largest:
+        elif ini_list_1[index + 1] == third_largest:
             end_node = 'Palusznium'
         else:
-            end_node = 'Unit ' + str(list[index + 1])
+            end_node = 'Unit ' + str(ini_list_1[index + 1])
 
         graph.edge(node_name,
                    end_node,
+                   label=str(ini_list_2[index]),
                    color='red',
                    arrowhead='normal')
 
         index += 2
          
-    str_list = [str(num) for num in list]
+    str_list = [str(num) for num in ini_list_1]
     vec = ", ".join(str_list)
     vec = "[" + vec + "]"
     graph.node("vector = " + vec, shape='none', width='0', height='0')
     graph.node('', shape='none', width='0', height='0')
-    graph.node('Concentrate flow with path',
+    graph.node('Concentrate flow',
                shape='none',
                width='0',
                height='0')
     graph.edge('',
-               'Concentrate flow with path',
+               'Concentrate flow',
                label='Concentrate flow rate (kg/s)',
                color='blue',
-               len='0.5')
+               len='0.3')
 
     graph.node(' ', shape='none', width='0', height='0')
-    graph.node('Tailing flow with path', shape='none', width='0', height='0')
+    graph.node('Tailing flow', shape='none', width='0', height='0')
     graph.edge(' ',
-               'Tailing flow with path',
+               'Tailing flow',
                label='Tailing flow rate (kg/s)',
                color='red',
-               len='0.5')
+               len='0.3')
     
     file = graph.render(str('output/flowchart'), cleanup=True, format='png')
     return file
@@ -129,7 +174,7 @@ def calculate_font_size(
     return font_size
 
 def create_table_image(
-    list, start_x=0, start_y=0, image_size=(600, 400),
+    file_path, start_x=0, start_y=0, image_size=(600, 400),
     table_size=(300, 200)
 ):
     """
@@ -137,6 +182,7 @@ def create_table_image(
     in the specified format.
     """
     try:
+        list, ini_list_2 = read_data(file_path)
         image = Image.new("RGB", image_size, "white")
         draw = ImageDraw.Draw(image)
 
@@ -274,8 +320,6 @@ def create_table_image(
         return image
     except Exception as e:
         return image
-        #logging.error(f"An error occurred while creating the table image: {e}")
-
 
 
 def get_concat_v(im1, im2):
@@ -284,19 +328,52 @@ def get_concat_v(im1, im2):
     dst.paste(im2, (0, im1.height))
     return dst
 
-
-
-def main():
-    ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
-    file = generate_graph(ini_list)
+def generate_flow_chart(list):
+    """
+    Call the function to do circuit visualization
+    """
+    file = generate_graph(list)
     image = Image.open(file)
-    table = create_table_image(ini_list,
+    table = create_table_image(list,
                                start_x=image.width // 7,
                                start_y=20,
                                image_size=(image.width, 150),
                                table_size=(4 * image.width // 7, 150),)
     image = get_concat_v(image, table)
     image.save(file)
+    return
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Generate a flowchart diagram from a list of integers.\n"
+                    "Use -f to generate a flowchart diagram of circuit.\n"
+                    "Use -u to generate a Time vs Units graph.",
+        formatter_class=argparse.RawTextHelpFormatter
+    )
+
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-f", "--flowchart",
+        action="store_true",
+        help="Visualize the circuit"
+    )
+    group.add_argument(
+        "-u", "--unitgraph",
+        action="store_true",
+        help="Generate a Time vs Units graph"
+    )
+
+    args = parser.parse_args()
+
+    file_path = 'src/circuit_results.csv'
+    if args.flowchart:
+        #ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
+        generate_flow_chart(file_path)
+    elif args.unitgraph:
+        print("Unit graph")
+        # generate_time_vs_units_graph()
+    
 
 
 
