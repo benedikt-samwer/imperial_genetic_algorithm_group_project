@@ -1,10 +1,10 @@
 project(tests)
 
 # Find CUnit package
-find_library(CUNIT_LIBRARY NAMES cunit libcunit)
-if(NOT CUNIT_LIBRARY)
-    message(FATAL_ERROR "CUnit library not found")
-endif()
+# find_library(CUNIT_LIBRARY NAMES cunit libcunit)
+# if(NOT CUNIT_LIBRARY)
+#     message(FATAL_ERROR "CUnit library not found")
+# endif()
 
 list(APPEND Tests test_circuit_simulator
                   test_genetic_algorithm
