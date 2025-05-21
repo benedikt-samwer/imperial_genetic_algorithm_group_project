@@ -46,6 +46,10 @@
 
 #include "CSimulator.h"
 
+#include <vector>
+#include <string>
+#include <utility>
+
 void run_test_case(const std::string& label, const std::vector<int>& circuit_vector) {
     std::cout << "\n=== Test Case: " << label << " ===\n";
     std::cout << "Circuit Vector: ";

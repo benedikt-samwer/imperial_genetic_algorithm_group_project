@@ -41,6 +41,7 @@ enum CircuitDestination {
 
 class Circuit {
   public:
+  
     // Constructor that takes the number of units in the circuit
     Circuit(int num_units);
     
@@ -72,14 +73,36 @@ class Circuit {
     
     // Export the circuit to a dot file for visualization
     bool export_to_dot(const std::string& filename) const;
-
-    // Check if mass balance converges
-    bool mass_balance_converges(double tol = Constants::Simulation::DEFAULT_TOLERANCE,
-                            int    maxIter = Constants::Simulation::DEFAULT_MAX_ITERATIONS) const;
     
+    
+
+    /** 
+     * @brief Save all units to a CSV file.
+     * @param filename The name of the output CSV file.
+     * @return true if save is successful, false otherwise
+     */                   
+    bool save_all_units_to_csv(const std::string& filename);
+
+    /**
+     * @brief Save a vector to a CSV file.
+     * @param filename The name of the output CSV file.
+     * @return true if save is successful, false otherwise
+     */
+    bool save_vector_to_csv(const std::string& filename);
+    
+    /**
+     * @brief Save the circuit data to a CSV file.
+     * @param filename The name of the output CSV file.
+     * @return true if save is successful, false otherwise
+     */
+    bool save_output_info(const std::string& filename);
+
   private:
     // The array of units in the circuit
     std::vector<CUnit> units;
+    
+    // Circuit vector (for output)
+    const int* circuit_vector;
 
     /* --------- volume information --------- */
     double *beta; // Array of beta values for unit volumes
