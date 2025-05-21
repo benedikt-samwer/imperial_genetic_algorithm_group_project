@@ -125,20 +125,20 @@ def generate_graph(file_path):
     vec = "[" + vec + "]"
     graph.node("vector = " + vec, shape='none', width='0', height='0')
     graph.node('', shape='none', width='0', height='0')
-    graph.node('Concentrate flow with path',
+    graph.node('Concentrate flow',
                shape='none',
                width='0',
                height='0')
     graph.edge('',
-               'Concentrate flow with path',
+               'Concentrate flow',
                label='Concentrate flow rate (kg/s)',
                color='blue',
                len='0.5')
 
     graph.node(' ', shape='none', width='0', height='0')
-    graph.node('Tailing flow with path', shape='none', width='0', height='0')
+    graph.node('Tailing flow', shape='none', width='0', height='0')
     graph.edge(' ',
-               'Tailing flow with path',
+               'Tailing flow',
                label='Tailing flow rate (kg/s)',
                color='red',
                len='0.5')
