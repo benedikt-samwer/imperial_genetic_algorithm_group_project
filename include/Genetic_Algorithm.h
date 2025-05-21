@@ -11,6 +11,7 @@
 // Structure to hold genetic algorithm parameters
 struct Algorithm_Parameters {
   // General parameters
+  int random_seed = -1;
   int max_iterations = 1000; // Maximum number of generations
   int population_size = 100; // Number of individuals in the population
   int elite_count = 1;       // Number of best individuals to keep unchanged
@@ -65,7 +66,6 @@ int optimize(
     std::function<double(int, double *)> func,
     std::function<bool(int, double *)> validity = all_true_reals,
     Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
-
 
 // Optimization function for mixed discrete-continuous vector
 int optimize(
