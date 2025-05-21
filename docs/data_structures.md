@@ -7,14 +7,13 @@ This document details the data structures and circuit representation methods use
 Circuits are represented using integer vectors in the following format:
 
 ```
-[feed_unit, unit0_high, unit0_inter, unit0_tail, unit1_high, unit1_inter, unit1_tail, ...]
+[feed_unit, unit0_conc, unit0_waste, unit1_conc, unit1_waste, ...]
 ```
 
 Where:
 - `feed_unit`: Index of the unit receiving the circuit feed (0 to num_units-1)
-- `unitX_high`: Destination of the high-grade concentrate stream from unit X
-- `unitX_inter`: Destination of the intermediate stream from unit X
-- `unitX_tail`: Destination of the tailings stream from unit X
+- `unitX_conc`: Destination of the concentrate stream from unit X
+- `unitX_waste`: Destination of the waste stream from unit X
 
 Destinations can be:
 - `0` to `num_units-1`: Index of the unit receiving the stream
@@ -26,20 +25,17 @@ Destinations can be:
 
 For a circuit with 3 units, a vector might be:
 ```
-[0, 1, 2, -3, -1, -2, -3, 0, -1, -2]
+[0, 1, -3, -1, 2, 0, -2]
 ```
 
 This represents:
 - Feed enters unit 0
-- High-grade stream from unit 0 goes to unit 1
-- Intermediate stream from unit 0 goes to unit 2
-- Tailings stream from unit 0 goes to tailings output
-- High-grade stream from unit 1 goes to Palusznium product
-- Intermediate stream from unit 1 goes to Gormanium product
-- Tailings stream from unit 1 goes to tailings output
-- High-grade stream from unit 2 goes back to unit 0
-- Intermediate stream from unit 2 goes to Palusznium product
-- Tailings stream from unit 2 goes to Gormanium product
+- Concentrate stream from unit 0 goes to unit 1
+- Waste stream from unit 0 goes to tailings output
+- Concentrate stream from unit 1 goes to Palusznium product
+- Waste stream from unit 1 goes to unit 2
+- Concentrate stream from unit 2 goes to unit 0
+- Waste stream from unit 2 goes to Gormanium product
 
 #### Visual Representation
 
@@ -57,17 +53,14 @@ graph TD;
     %% Define connections
     Feed -->|Feed| Unit0
     
-    Unit0 -->|High-grade| Unit1
-    Unit0 -->|Intermediate| Unit2
-    Unit0 -->|Tailings| Tailings
+    Unit0 -->|Concentrate| Unit1
+    Unit0 -->|Waste| Tailings
     
-    Unit1 -->|High-grade| Palusznium
-    Unit1 -->|Intermediate| Gormanium
-    Unit1 -->|Tailings| Tailings
+    Unit1 -->|Concentrate| Palusznium
+    Unit1 -->|Waste| Unit2
     
-    Unit2 -->|High-grade| Unit0
-    Unit2 -->|Intermediate| Palusznium
-    Unit2 -->|Tailings| Gormanium
+    Unit2 -->|Concentrate| Unit0
+    Unit2 -->|Waste| Gormanium
     
     %% Styling
     classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
@@ -88,15 +81,14 @@ graph TD;
 The `CUnit` class represents a single separation unit, containing the following key properties:
 
 - Connection properties:
-  - `conc_num`: Unit connected to high-grade concentrate stream
-  - `inter_num`: Unit connected to intermediate stream
-  - `tails_num`: Unit connected to tailings stream
+  - `conc_num`: Unit connected to concentrate stream
+  - `tails_num`: Unit connected to waste stream
   - `mark`: Boolean flag used during graph traversal
 
 - Physical properties:
   - `volume`: Unit volume (m³)
   - Feed flow rates: `feed_palusznium`, `feed_gormanium`, `feed_waste`
-  - Separation constants: `k_palusznium_high`, `k_palusznium_inter`, `k_gormanium_high`, `k_gormanium_inter`, `k_waste_high`, `k_waste_inter`
+  - Separation constants: `k_palusznium`, `k_gormanium`, `k_waste`
 
 ### 2.2 Circuit (Circuit)
 
@@ -115,7 +107,7 @@ The `Simulator_Parameters` structure contains all parameters needed for simulati
 
 - Convergence parameters: `tolerance`, `max_iterations`
 - Material properties: `material_density`, `solids_content`
-- Separation constants
+- Separation constants: `k_palusznium`, `k_gormanium`, `k_waste`
 - Feed flow rates
 - Economic parameters
 - Unit volume parameters
@@ -182,52 +174,17 @@ All global constants are defined in `constants.h`, including:
 Valid circuits must satisfy the following conditions:
 
 1. Every unit must be accessible from the feed
-2. Every unit must have a path to at least two outlet product streams
+2. Every unit must have a path to at least one outlet product stream
 3. No self-recycling (a unit's output cannot connect directly back to itself)
-4. All products from a unit should not point to the same destination
+4. Concentrate and waste from a unit should not point to the same destination
 
 Circuits that violate these conditions may fail to converge or be physically unreasonable. 
 
 ## Appendix A: Common Circuit Configurations
 
-### A.1 Two-Stage Simple Circuit
+### A.1 Simple Series Circuit
 
-Vector: `[0, 2, 1, -3, -1, -2, -3]`
-
-```mermaid
-graph TD;
-    Feed([Circuit Feed])
-    Unit0[Unit 0]
-    Unit1[Unit 1]
-    Unit2[Unit 2]
-    Palusznium[Palusznium Product]
-    Gormanium[Gormanium Product]
-    Tailings[Tailings Output]
-    
-    Feed -->|Feed| Unit0
-    
-    Unit0 -->|High-grade| Unit2
-    Unit0 -->|Intermediate| Unit1
-    Unit0 -->|Tailings| Tailings
-    
-    Unit1 -->|High-grade| Palusznium
-    Unit1 -->|Intermediate| Gormanium
-    Unit1 -->|Tailings| Tailings
-    
-    classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef product fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef feed fill:#bfb,stroke:#333,stroke-width:2px;
-    classDef tailings fill:#fbb,stroke:#333,stroke-width:2px;
-    
-    class Unit0,Unit1,Unit2 unit;
-    class Palusznium,Gormanium product;
-    class Feed feed;
-    class Tailings tailings;
-```
-
-### A.2 Circuit with Recycle
-
-Vector: `[0, 1, -3, -2, 0, -1, -3]`
+Vector: `[0, 1, -3, -1, -2]`
 
 ```mermaid
 graph TD;
@@ -240,13 +197,11 @@ graph TD;
     
     Feed -->|Feed| Unit0
     
-    Unit0 -->|High-grade| Unit1
-    Unit0 -->|Intermediate| Tailings
-    Unit0 -->|Tailings| Gormanium
+    Unit0 -->|Concentrate| Unit1
+    Unit0 -->|Waste| Tailings
     
-    Unit1 -->|High-grade| Unit0
-    Unit1 -->|Intermediate| Palusznium
-    Unit1 -->|Tailings| Tailings
+    Unit1 -->|Concentrate| Palusznium
+    Unit1 -->|Waste| Gormanium
     
     classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
     classDef product fill:#bbf,stroke:#333,stroke-width:2px;
@@ -259,9 +214,40 @@ graph TD;
     class Tailings tailings;
 ```
 
+### A.2 Circuit with Recycle
+
+Vector: `[0, 1, -3, 0, -1]`
+
+```mermaid
+graph TD;
+    Feed([Circuit Feed])
+    Unit0[Unit 0]
+    Unit1[Unit 1]
+    Palusznium[Palusznium Product]
+    Tailings[Tailings Output]
+    
+    Feed -->|Feed| Unit0
+    
+    Unit0 -->|Concentrate| Unit1
+    Unit0 -->|Waste| Tailings
+    
+    Unit1 -->|Concentrate| Unit0
+    Unit1 -->|Waste| Palusznium
+    
+    classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef product fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef feed fill:#bfb,stroke:#333,stroke-width:2px;
+    classDef tailings fill:#fbb,stroke:#333,stroke-width:2px;
+    
+    class Unit0,Unit1 unit;
+    class Palusznium product;
+    class Feed feed;
+    class Tailings tailings;
+```
+
 ### A.3 Invalid Circuit (Self-Recycle)
 
-Vector: `[0, 0, 1, -3, -1, -2, -3]`
+Vector: `[0, 0, -3, -1, -2]`
 
 ```mermaid
 graph TD;
@@ -274,13 +260,11 @@ graph TD;
     
     Feed -->|Feed| Unit0
     
-    Unit0 -->|High-grade| Unit0
-    Unit0 -->|Intermediate| Unit1
-    Unit0 -->|Tailings| Tailings
+    Unit0 -->|Concentrate| Unit0
+    Unit0 -->|Waste| Tailings
     
-    Unit1 -->|High-grade| Palusznium
-    Unit1 -->|Intermediate| Gormanium
-    Unit1 -->|Tailings| Tailings
+    Unit1 -->|Concentrate| Palusznium
+    Unit1 -->|Waste| Gormanium
     
     classDef unit fill:#f9f,stroke:#333,stroke-width:2px;
     classDef product fill:#bbf,stroke:#333,stroke-width:2px;
@@ -295,4 +279,4 @@ graph TD;
     class Tailings tailings;
 ```
 
-Note: This circuit is invalid because Unit 0 has a self-recycle connection (high-grade stream feeds back to itself). 
+Note: This circuit is invalid because Unit 0 has a self-recycle connection (concentrate stream feeds back to itself). 
