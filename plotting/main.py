@@ -133,7 +133,7 @@ def generate_graph(file_path):
                'Concentrate flow',
                label='Concentrate flow rate (kg/s)',
                color='blue',
-               len='0.5')
+               len='0.3')
 
     graph.node(' ', shape='none', width='0', height='0')
     graph.node('Tailing flow', shape='none', width='0', height='0')
@@ -141,7 +141,7 @@ def generate_graph(file_path):
                'Tailing flow',
                label='Tailing flow rate (kg/s)',
                color='red',
-               len='0.5')
+               len='0.3')
     
     file = graph.render(str('output/flowchart'), cleanup=True, format='png')
     return file
@@ -366,7 +366,7 @@ def main():
 
     args = parser.parse_args()
 
-    file_path = 'test.csv'
+    file_path = 'src/circuit_results.csv'
     if args.flowchart:
         #ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
         generate_flow_chart(file_path)
