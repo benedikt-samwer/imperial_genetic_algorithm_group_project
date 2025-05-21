@@ -161,7 +161,7 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
     }
 
     // the length of the continuous parameters must be exactly = n units
-    if (num_parameters != n) {
+    if (unit_parameters_size != n) {
         //std::cout << "false P0 (parameter length)" << std::endl;
         return false;
     }
