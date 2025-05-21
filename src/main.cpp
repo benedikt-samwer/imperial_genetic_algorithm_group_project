@@ -43,7 +43,9 @@ int main() {
     // Define validity function for discrete optimization
     auto validity = [num_units](int size, int* vector) -> bool {
         Circuit c(num_units);
-        return c.check_validity(size, vector);
+        c.initialize_from_vector(size, vector);
+        // return c.check_validity(size, const_cast<const int*>(vector), num_units, nullptr);
+        return c.check_validity(size, const_cast<const int*>(vector));
     };
     
     std::cout << "Starting optimization for " << num_units << " unit circuit...\n";

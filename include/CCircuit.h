@@ -54,7 +54,7 @@ class Circuit {
     // Check validity of a circuit vector
     bool check_validity(int vector_size, const int* circuit_vector);
     bool check_validity(int vector_size, const int* circuit_vector,
-                              int unit_parameters_size, const double* unit_parameters);
+                              int unit_parameters_size, double* unit_parameters);
     
     // Run a mass balance calculation on the circuit
     bool run_mass_balance(double tolerance = 1e-6, int max_iterations = 1000);
