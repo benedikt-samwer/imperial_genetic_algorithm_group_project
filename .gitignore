@@ -13,3 +13,4 @@ test_ga
 build/
 build 2/
 
+.vscode/
