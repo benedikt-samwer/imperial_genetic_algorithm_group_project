@@ -41,6 +41,7 @@ enum CircuitDestination {
 
 class Circuit {
   public:
+  
     // Constructor that takes the number of units in the circuit
     Circuit(int num_units);
     
@@ -103,6 +104,9 @@ class Circuit {
   private:
     // The array of units in the circuit
     std::vector<CUnit> units;
+    
+    // Circuit vector (for output)
+    const int* circuit_vector;
 
     /* --------- volume information --------- */
     double *beta; // Array of beta values for unit volumes
