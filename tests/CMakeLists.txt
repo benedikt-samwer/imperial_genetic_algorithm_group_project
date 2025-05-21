@@ -6,8 +6,8 @@ project(tests)
 #     message(FATAL_ERROR "CUnit library not found")
 # endif()
  
-set(CUNIT_INCLUDE_DIR "/opt/homebrew/opt/cunit/include")
-set(CUNIT_LIBRARY "/opt/homebrew/opt/cunit/lib/libcunit.dylib")
+# set(CUNIT_INCLUDE_DIR "/opt/homebrew/opt/cunit/include")
+# set(CUNIT_LIBRARY "/opt/homebrew/opt/cunit/lib/libcunit.dylib")
  
  
 list(APPEND Tests test_circuit_simulator

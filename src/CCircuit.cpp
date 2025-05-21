@@ -100,44 +100,9 @@ bool Circuit::check_validity(int vector_size, const int* vec)
         int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
         //{ std::cout << "false 07\n"; return false; }
     }
-
-    // R6 detect cycle of length ≥2 (self-loop is prohibited)
-    // 0 = white, 1 = gray, 2 = black （white: not visited，gray: visited but not explored，black: visited and explored）
-    // std::vector<char> color(n, 0);
-
-
-    // auto has_cycle = [&](auto&& self, int u) -> bool
-    // {
-    //     // visit the gray node again, it means this node along the descendants back to itself, forming a cycle
-    //     if (color[u] == 1) {
-    //       std::cout << "false 08" << std::endl;
-    //       return true;
-    //     } 
-    //     // the node has been fully explored, no cycle in the subtree
-    //     if (color[u] == 2) {
-    //       return false;
-    //     }
-    //     color[u] = 1; // mark as gray
-    //     // recursively check the subtree, along conc and tail recursively call, and find a cycle through its some descendant
-    //     if (dest[u].conc < n && self(self, dest[u].conc)) {
-    //       std::cout << "false 09" << std::endl;
-    //       return true;
-    //     }
-    //     if (dest[u].tail < n && self(self, dest[u].tail)) {
-    //       std::cout << "false 11" << std::endl;
-    //       return true;
-    //     }
-    //     color[u] = 2;                     // mark black
-    //     return false;
-    // };
-
-    // for (int i = 0; i < n; ++i)
-    //     if (has_cycle(has_cycle, i)) {
-    //       return false;
-    //     }
     
     // check mass balance convergence
-    if (!mass_balance_converges(1e-6, 2000)) {
+    if (!run_mass_balance(1e-6, 100)) {
         //std::cout << "false 99 (mass-balance diverge)\n";
         return false;
     }
@@ -161,7 +126,7 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
     }
 
     // the length of the continuous parameters must be exactly = n units
-    if (num_parameters != n) {
+    if (unit_parameters_size != n) {
         //std::cout << "false P0 (parameter length)" << std::endl;
         return false;
     }
@@ -203,106 +168,6 @@ void Circuit::mark_units(int unit_num) {
   } else {
     // ...Potentially do something to indicate that you have seen an exit
   }
-}
-
-bool Circuit::mass_balance_converges(double tol, int maxIter) const
-{
-    using namespace Constants;
-    
-    // physical constants & rate constants
-    const double rho = Physical::MATERIAL_DENSITY;    // ρ = 3000 kg/m³
-    const double phi = Physical::SOLIDS_CONTENT;      // φ = 0.10
-    const double V = Constants::Circuit::DEFAULT_UNIT_VOLUME; // V = 10 m³
-    
-    const double kP  = Physical::K_PALUSZNIUM;  // 0.008 s⁻¹
-    const double kG  = Physical::K_GORMANIUM;   // 0.004 s⁻¹
-    const double kW  = Physical::K_WASTE;       // 0.0005 s⁻¹
-
-    // default tolerance & max iterations
-    if (tol     <= 0.0) tol     = Simulation::DEFAULT_TOLERANCE;
-    if (maxIter <= 0  ) maxIter = Simulation::DEFAULT_MAX_ITERATIONS;
-    
-    // index convention
-    const int NS = n + 3;                // n units + 3 terminals
-    
-    // initialize flow rates (kg/s)
-    std::vector<double> FP(NS, 0.0), FW(NS, 0.0), FG(NS, 0.0);   // current iteration
-    std::vector<double> FPn(NS, 0.0), FWn(NS, 0.0), FGn(NS, 0.0); // next iteration
-    
-    FP[feed_dest] = Feed::DEFAULT_PALUSZNIUM_FEED;   // 8 kg/s
-    FG[feed_dest] = Feed::DEFAULT_GORMANIUM_FEED;    // 12 kg/s
-    FW[feed_dest] = Feed::DEFAULT_WASTE_FEED;       // 80 kg/s
-    
-    // mass balance iteration
-    for (int it = 0; it < maxIter; ++it)
-    {
-        // Reset next iteration flow rates
-        std::fill(FPn.begin(), FPn.end(), 0.0);
-        std::fill(FWn.begin(), FWn.end(), 0.0);
-        std::fill(FGn.begin(), FGn.end(), 0.0);
-        
-        for (int u = 0; u < n; ++u)
-        {
-            double FP_in = FP[u];
-            double FG_in = FG[u];
-            double FW_in = FW[u];
-            
-            // Skip if no material entering this unit
-            if (FP_in == 0.0 && FG_in == 0.0 && FW_in == 0.0) continue;
-            
-            // calculate residence time τ
-            double total_solids = FP_in + FG_in + FW_in;
-            double Qv = total_solids / rho / phi;      // m³/s
-            if (Qv < 1e-12) Qv = 1e-12;               // avoid division by zero
-            double tau = V / Qv;                      // s
-            
-            // first-order kinetics recovery
-            double RP = (kP * tau) / (1.0 + kP * tau);    // Palusznium recovery
-            double RG = (kG * tau) / (1.0 + kG * tau);    // Gormanium recovery
-            double RW = (kW * tau) / (1.0 + kW * tau);    // Waste recovery
-            
-            // flow rate allocation to conc / tail
-            double FPc = FP_in * RP;
-            double FPt = FP_in - FPc;
-            
-            double FGc = FG_in * RG;
-            double FGt = FG_in - FGc;
-            
-            double FWc = FW_in * RW;
-            double FWt = FW_in - FWc;
-            
-            int dstC = units[u].conc_num;   // destination of concentrate stream
-            int dstT = units[u].tails_num;  // destination of tailings stream
-            
-            // Update flow rates for next iteration
-            FPn[dstC] += FPc; 
-            FGn[dstC] += FGc;
-            FWn[dstC] += FWc;
-            
-            FPn[dstT] += FPt;
-            FGn[dstT] += FGt;
-            FWn[dstT] += FWt;
-        }
-        
-        // convergence criterion: check all three components
-        double err = 0.0;
-        for (int idx = 0; idx < n; ++idx) {
-            err = std::max(err, std::fabs(FPn[idx] - FP[idx]));
-            err = std::max(err, std::fabs(FGn[idx] - FG[idx]));
-            err = std::max(err, std::fabs(FWn[idx] - FW[idx]));
-        }
-        if (err < tol) {
-          //std::cout << "iteration: " << it << std::endl;
-          //std::cout << "err: " << err << std::endl;
-          return true; 
-        }     // converged
-        
-        // Prepare for next iteration
-        FP.swap(FPn);
-        FG.swap(FGn);
-        FW.swap(FWn);
-    }
-    return false;                        // not converged after maxIter
 }
 
 Circuit::Circuit(int num_units,double *beta)

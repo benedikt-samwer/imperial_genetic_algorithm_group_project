@@ -72,10 +72,6 @@ class Circuit {
     
     // Export the circuit to a dot file for visualization
     bool export_to_dot(const std::string& filename) const;
-
-    // Check if mass balance converges
-    bool mass_balance_converges(double tol = Constants::Simulation::DEFAULT_TOLERANCE,
-                            int    maxIter = Constants::Simulation::DEFAULT_MAX_ITERATIONS) const;
     
   private:
     // The array of units in the circuit
