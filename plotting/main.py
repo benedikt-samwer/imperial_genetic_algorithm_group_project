@@ -83,20 +83,20 @@ def generate_graph(list):
     vec = "[" + vec + "]"
     graph.node("vector = " + vec, shape='none', width='0', height='0')
     graph.node('', shape='none', width='0', height='0')
-    graph.node('Concentrate flow with path',
+    graph.node('Concentrate flow',
                shape='none',
                width='0',
                height='0')
     graph.edge('',
-               'Concentrate flow with path',
+               'Concentrate flow',
                label='Concentrate flow rate (kg/s)',
                color='blue',
                len='0.5')
 
     graph.node(' ', shape='none', width='0', height='0')
-    graph.node('Tailing flow with path', shape='none', width='0', height='0')
+    graph.node('Tailing flow', shape='none', width='0', height='0')
     graph.edge(' ',
-               'Tailing flow with path',
+               'Tailing flow',
                label='Tailing flow rate (kg/s)',
                color='red',
                len='0.5')
@@ -290,6 +290,9 @@ def get_concat_v(im1, im2):
     return dst
 
 def generate_flow_chart(list):
+    """
+    Call the function to do circuit visualization
+    """
     file = generate_graph(list)
     image = Image.open(file)
     table = create_table_image(list,
