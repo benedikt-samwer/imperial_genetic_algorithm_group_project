@@ -678,3 +678,59 @@ uint8_t Circuit::term_mask(int start) const {
     return mask;
 }
 
+
+bool Circuit::save_all_units_to_csv(const std::string& filename) {
+    std::ofstream ofs(filename, std::ios::app);
+    if (!ofs.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return false;
+    }
+
+    // output in a single line
+    ofs << std::fixed << std::setprecision(2);
+
+    for (size_t i = 0; i < units.size(); ++i) {
+        const CUnit& unit = units[i];
+
+        ofs << unit.conc_palusznium+unit.conc_gormanium+unit.conc_waste << ","
+            << unit.tails_palusznium+unit.tails_gormanium +unit.tails_waste ;
+
+        if (i < units.size() - 1) {
+            ofs << ",";
+        }
+    }
+    ofs << "\n";
+
+    ofs.close();
+    return true;
+}
+
+bool Circuit::save_vector_to_csv(const std::string& filename) {
+    std::ofstream ofs(filename, std::ios::app);
+    if (!ofs.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return false;
+    }
+
+    int length = static_cast<int>(units.size()) * 2 + 1;
+
+    for (int i = 0; i < length; ++i) {
+        ofs << circuit_vector[i];
+        if (i < length - 1) {
+            ofs << ",";
+        }
+    }
+    ofs << "\n";
+
+    ofs.close();
+    return true;
+}
+
+bool Circuit::save_output_info(const std::string& filename) {
+    if(!filename.empty()) {
+         // Clear the file if it exists
+        std::ofstream ofs(filename, std::ios::trunc);
+        ofs.close();
+    }
+    return save_vector_to_csv(filename) && save_all_units_to_csv(filename);
+}

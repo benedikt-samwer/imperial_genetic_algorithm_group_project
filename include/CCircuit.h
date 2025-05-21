@@ -77,6 +77,29 @@ class Circuit {
     bool mass_balance_converges(double tol = Constants::Simulation::DEFAULT_TOLERANCE,
                             int    maxIter = Constants::Simulation::DEFAULT_MAX_ITERATIONS) const;
     
+    
+
+    /** 
+     * @brief Save all units to a CSV file.
+     * @param filename The name of the output CSV file.
+     * @return true if save is successful, false otherwise
+     */                   
+    bool save_all_units_to_csv(const std::string& filename);
+
+    /**
+     * @brief Save a vector to a CSV file.
+     * @param filename The name of the output CSV file.
+     * @return true if save is successful, false otherwise
+     */
+    bool save_vector_to_csv(const std::string& filename);
+    
+    /**
+     * @brief Save the circuit data to a CSV file.
+     * @param filename The name of the output CSV file.
+     * @return true if save is successful, false otherwise
+     */
+    bool save_output_info(const std::string& filename);
+
   private:
     // The array of units in the circuit
     std::vector<CUnit> units;
