@@ -366,7 +366,7 @@ def main():
 
     args = parser.parse_args()
 
-    file_path = 'src/circuit_results.csv'
+    file_path = '../build/circuit_results.csv'
     if args.flowchart:
         #ini_list = [0, 1, 2, 8, 5, 3, 5, 8, 6, 6, 12, 6, 4, 7, 11, 8, 6, 9, 3, 10, 7]
         generate_flow_chart(file_path)
