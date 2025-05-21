@@ -1,10 +1,12 @@
-#include <iostream>
-#include <iomanip>
-#include <vector>
 #include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <vector>
 #include <fstream>
+
 #include "CCircuit.h"
 #include "CSimulator.h"
+#include "Config.h" // <— your new loader
 #include "Genetic_Algorithm.h"
  
 int main() {
@@ -15,6 +17,37 @@ int main() {
     std::ofstream null_stream("/dev/null");
    
     std::cout << "=== Palusznium Rush Circuit Optimizer ===\n\n";
+  
+    // load GA & random‐seed settings from parameters.txt
+  Algorithm_Parameters params;
+  load_parameters("parameters.txt", params);
+
+  // Optionally fix the RNG for reproducibility
+  if (params.random_seed >= 0) {
+    set_random_seed(params.random_seed);
+    std::cout << "* Using fixed seed: " << params.random_seed << "\n";
+  }
+
+  // Print to see
+  std::cout << "GA parameters:\n"
+            << "  population_size        = " << params.population_size << "\n"
+            << "  max_iterations         = " << params.max_iterations << "\n"
+            << "  tournament_size        = " << params.tournament_size << "\n"
+            << "  crossover_probability  = " << params.crossover_probability
+            << "\n"
+            << "  mutation_probability   = " << params.mutation_probability
+            << "\n"
+            << "  mutation_step_size     = " << params.mutation_step_size
+            << "\n"
+            << "  use_inversion          = " << std::boolalpha
+            << params.use_inversion << "\n"
+            << "  inversion_probability  = " << params.inversion_probability
+            << "\n"
+            << "  convergence_threshold  = " << params.convergence_threshold
+            << "\n"
+            << "  stall_generations      = " << params.stall_generations
+            << "\n\n";
+
    
     // Set number of units
     constexpr int num_units = 10;
@@ -26,21 +59,6 @@ int main() {
     for (int i = 0; i < num_units; i++) {
         volume_params[i] = 0.5; // Initialize at middle of range
     }
-   
-    // Set up genetic algorithm parameters
-    Algorithm_Parameters params;
-    params.verbose = true;
-    params.population_size = 100;        // Larger population
-    params.mutation_probability = 0.01;  // Low mutation rate
-    params.crossover_probability = 0.9;  // High crossover rate
-    params.max_iterations = 200;         // More generations
-    params.stall_generations = 50;       // More patience
-    params.tournament_size = 3;
-    params.mutation_step_size = 1;       // For discrete
-   
-    // Set fixed random seed for reproducibility
-    set_random_seed(42);  // Any fixed value works
-    std::cout << "Using fixed random seed: 42\n";
    
     std::cout << "Running hybrid optimization (connections + volumes)...\n";
    
@@ -170,7 +188,3 @@ int main() {
    
     return 0;
 }
- 
-
-
-
