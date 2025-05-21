@@ -45,8 +45,8 @@ bool test_feed_points_to_terminal()
 // conc out of range
 bool test_conc_out_of_range()
 {
-    Circuit c(4);
-    std::vector<int> v = {0,7,5, 1,5, 2,5, 3,5, 4,5};
+    Circuit c(5);
+    std::vector<int> v = {0, 1,2, 3,4, 5,6, 7,8, 9,10};
     c.initialize_from_vector((int)v.size(), v.data());
     return !c.check_validity((int)v.size(), v.data());
 }
@@ -54,7 +54,7 @@ bool test_conc_out_of_range()
 // self-loop
 bool test_invalid_self_loop()
 {
-    Circuit c(4);
+    Circuit c(5);
     std::vector<int> v = {0,0,5, 1,5, 2,5, 3,5, 4,5};
     c.initialize_from_vector((int)v.size(), v.data());
     return !c.check_validity((int)v.size(), v.data());
@@ -63,7 +63,7 @@ bool test_invalid_self_loop()
 // conc == tail
 bool test_invalid_same_destination()
 {
-    Circuit c(4);
+    Circuit c(5);
     std::vector<int> v = {0,1,1, 2,5, 3,5, 4,5, 5,6};
     c.initialize_from_vector((int)v.size(), v.data());
     return !c.check_validity((int)v.size(), v.data());
@@ -73,29 +73,19 @@ bool test_invalid_same_destination()
 bool test_unreachable_unit()
 {
     Circuit c(5);
-    std::vector<int> v = {0, 1,5, 5,6, 5,6, 5,6, 5,6, 5,6};
+    std::vector<int> v = {0,7,5, 2,5, 3,5, 4,5, 6,5};
     c.initialize_from_vector((int)v.size(), v.data());
     return !c.check_validity((int)v.size(), v.data());
 }
 
-// only one terminal
-bool test_only_one_terminal()
+// two terminals check
+bool test_two_terminals_check()
 {
     Circuit c(3);
-    std::vector<int> v = {0, 1,3, 2,3, 3,3};
-    c.initialize_from_vector((int)v.size(), v.data());
-    return !c.check_validity((int)v.size(), v.data());
-}
-
-// R2 condition: unit0 can only reach the same terminal
-bool test_R2_condition()
-{
-    Circuit c(10);
-    std::vector<int> v = {
-        0, 10,10,
-        10,11, 10,11, 10,11, 10,11,
-        10,11, 10,11, 10,11, 10,11, 10,11
-    };
+    std::vector<int> v = {0,
+    /* unit0 conc,tail */ 1, 2,
+    /* unit1 conc,tail */ 0, 3,
+    /* unit2 conc,tail */ 0, 3};
     c.initialize_from_vector((int)v.size(), v.data());
     return !c.check_validity((int)v.size(), v.data());
 }
@@ -103,8 +93,10 @@ bool test_R2_condition()
 // two-node cycle
 bool test_two_node_cycle()
 {
-    Circuit c(3);
-    std::vector<int> v = {0, 1,3, 0,4, 3,4};
+    Circuit c(2);
+    std::vector<int> v = {   0,
+        /* u0 */   1, 2,
+        /* u1 */   0, 3};
     c.initialize_from_vector((int)v.size(), v.data());
     return !c.check_validity((int)v.size(), v.data());
 }
@@ -192,8 +184,7 @@ int main()
         {"self-loop",                             test_invalid_self_loop},
         {"conc == tail",                          test_invalid_same_destination},
         {"unreachable unit",                      test_unreachable_unit},
-        {"only one terminal",                     test_only_one_terminal},
-        {"R2 condition",                          test_R2_condition},
+        {"two terminals check",                   test_two_terminals_check},
         {"two-node cycle",                        test_two_node_cycle},
         {"basic valid (n=10)",                    test_basic_valid},
         {"small valid (n=4)",                     test_small_valid},

@@ -25,6 +25,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <queue> 
 
 // Constants for the circuit outlet destinations
 // These values will be used in the circuit vector to indicate the final product streams
@@ -153,6 +154,10 @@ class Circuit {
     int feed_dest       = 0;
     uint8_t outlet_mask(int unit_idx, std::vector<int8_t>& cache) const;
     uint8_t term_mask(int start) const;
+    void process_destination(int dest, uint8_t& mask, 
+                                 std::vector<bool>& visited,
+                                 std::queue<int>& q) const;
+    
     
     inline int OUT_P1() const { return n;     }   // palusznium
     inline int OUT_P2() const { return n + 1; }   // gormanium
