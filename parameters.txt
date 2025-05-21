@@ -1,0 +1,35 @@
+# Genetic Algorithm parameters
+
+# Otimisation Type
+mode=c     # options: discrete -> d, continuous -> c, hybrid -> h
+
+# General
+max_iterations=200
+population_size=500
+elite_count=2
+
+# Selection
+tournament_size=3
+
+# Crossover
+crossover_probability=0.9
+
+# Mutation (creep)
+mutation_probability=0.08
+mutation_step_size=3
+
+# Inversion
+use_inversion=true
+inversion_probability=0.2
+
+# Termination
+convergence_threshold=1e-8
+stall_generations=50
+
+# Logging
+verbose=true
+log_results=false
+log_file=ga_run.log
+
+# Reproducibility
+random_seed=43

@@ -1,0 +1,16 @@
+
+*.png
+*.dot
+*.sh
+**/build/
+**/lib/
+**/bin/
+
+test_ga
+
+.DS_Store
+
+build/
+build 2/
+
+.vscode/
