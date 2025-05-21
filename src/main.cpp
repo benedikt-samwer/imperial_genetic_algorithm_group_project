@@ -1,16 +1,12 @@
-// main.cpp
-
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <vector>
 
-
 #include "CCircuit.h"
 #include "CSimulator.h"
 #include "Config.h" // <— your new loader
 #include "Genetic_Algorithm.h"
-
 
 int main() {
   std::cout << "=== Palusznium Rush Circuit Optimizer ===\n\n";

@@ -2,7 +2,7 @@
 
 # General
 max_iterations=200
-population_size=50
+population_size=500
 elite_count=2
 
 # Selection
@@ -27,3 +27,6 @@ stall_generations=20
 verbose=true
 log_results=false
 log_file=ga_run.log
+
+# Reproducibility
+random_seed=42
