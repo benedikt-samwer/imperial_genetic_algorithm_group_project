@@ -13,25 +13,34 @@ Circuit::Circuit(int num_units){
   this->units.resize(num_units);
 }
 
-
+// 1. length check: length must be 2*n+1
+// 2. feed check: feed cannot directly feed to terminal
+// 3. index check: conc must be in (0, n+2), tail must be in (0, n+2)
+// 4. no self-loop: conc cannot be equal to i, tail cannot be equal to i
+// 5. same output: conc cannot be equal to tail
+// 6. reachability check: all units must be reachable from feed
+// 7. two terminals check: each unit must reach at least 2 different terminals
+// 8. final terminal check: P1/P2, TA must be present
+// 9. mass balance check: mass balance must converge
 bool Circuit::check_validity(int vector_size, const int* vec)
-
 {
-    // length must be 2*n+1
+    // 1. length must be 2*n+1
     int expected = 2 * n + 1;
     if (vector_size != expected) {
-      std::cout << "false 00" << std::endl;
+      // std::cout << "false 00" << std::endl;
       return false;
     }
 
-    // parse feed
+
+    // 2. feed check
     feed_dest = vec[0];                      // feed points to the unit
     // feed cannot directly feed to terminal
     if (feed_dest < 0 || feed_dest >= n){
-      std::cout << "false 01" << std::endl;
+      // std::cout << "false 01" << std::endl;
       return false;
     }
-        
+
+          
     // read each unit's conc and tail and do static check
     struct Dest { int conc; int tail; };
     std::vector<Dest> dest(n);
@@ -42,25 +51,25 @@ bool Circuit::check_validity(int vector_size, const int* vec)
       int conc = vec[1 + 2*i];                 // conc points to the unit
       int tail = vec[2 + 2*i];                 // tail points to the unit
 
-      // R5 vector elements must be in (0, n+2)
+      // 3. index check 
       if (conc < 0 || conc > max_idx) {
-        std::cout << "false 02" << std::endl;
+        // std::cout << "false 02" << std::endl;
         return false;
       }
       if (tail < 0 || tail > max_idx) {
-        std::cout << "false 03" << std::endl;
+        // std::cout << "false 03" << std::endl;
         return false;
       }
 
-      // R3 no self-loop
+      // 4. no self-loop
       if (conc == i || tail == i) {
-        std::cout << "false 04" << std::endl;
+        // std::cout << "false 04" << std::endl;
         return false;
       }
 
-      // R4 all outputs point to the same element
+      // 5. same output
       if (conc == tail) {
-        std::cout << "false 05" << std::endl;
+        // std::cout << "false 05" << std::endl;
         return false;
       }
 
@@ -71,63 +80,44 @@ bool Circuit::check_validity(int vector_size, const int* vec)
       units[i].mark      = false;
   }
 
-    // R1 reachability check
-    mark_units(feed_dest);
+    // 6. unit reachability check
+    this->mark_units(feed_dest);
 
     for (int i = 0; i < n; ++i) {
         if (!units[i].mark) {         // R1 trigger
-            std::cout << "false 06\n";
+            // std::cout << "false 06\n";
             return false;
         }
     }
 
-    // R2 each unit must reach at least 2 different terminals
+    // 7. two terminals check
     std::vector<int8_t> cache(n, -1);
+    uint8_t global_mask = 0; 
     for (int i = 0; i < n; ++i) {
         // uint8_t mask = outlet_mask(i, cache); 
-        uint8_t mask = term_mask(i);
+        uint8_t mask = this->term_mask(i);
+        global_mask |= mask; 
         int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
-        if (cnt < 2) { std::cout << "false 07\n"; return false; }
+        if (cnt < 2) { 
+          // std::cout << "false 07\n"; 
+          return false; 
+        } // not reaching at least 2 different terminals
     }
 
-    // R6 detect cycle of length ≥2 (self-loop is prohibited)
-    // 0 = white, 1 = gray, 2 = black （white: not visited，gray: visited but not explored，black: visited and explored）
-    // std::vector<char> color(n, 0);
+    // 8. final terminal check
+    if ( !(global_mask & 0b011) ) {            // no P1 or P2
+        // std::cout << "false 07a (no P1/P2)\n";
+        return false;
+    }
+    if ( !(global_mask & 0b100) ) {            // no TA
+        // std::cout << "false 07b (no TA)\n";
+        return false;
+    }
 
-
-    // auto has_cycle = [&](auto&& self, int u) -> bool
-    // {
-    //     // visit the gray node again, it means this node along the descendants back to itself, forming a cycle
-    //     if (color[u] == 1) {
-    //       std::cout << "false 08" << std::endl;
-    //       return true;
-    //     } 
-    //     // the node has been fully explored, no cycle in the subtree
-    //     if (color[u] == 2) {
-    //       return false;
-    //     }
-    //     color[u] = 1; // mark as gray
-    //     // recursively check the subtree, along conc and tail recursively call, and find a cycle through its some descendant
-    //     if (dest[u].conc < n && self(self, dest[u].conc)) {
-    //       std::cout << "false 09" << std::endl;
-    //       return true;
-    //     }
-    //     if (dest[u].tail < n && self(self, dest[u].tail)) {
-    //       std::cout << "false 11" << std::endl;
-    //       return true;
-    //     }
-    //     color[u] = 2;                     // mark black
-    //     return false;
-    // };
-
-    // for (int i = 0; i < n; ++i)
-    //     if (has_cycle(has_cycle, i)) {
-    //       return false;
-    //     }
     
-    // check mass balance convergence
-    if (!mass_balance_converges(1e-6, 2000)) {
-        std::cout << "false 99 (mass-balance diverge)\n";
+    // 9. check mass balance conversgence
+    if (!this->run_mass_balance(1e-6, 100)) {
+        // std::cout << "false 99 (mass-balance diverge)\n";
         return false;
     }
 
@@ -135,159 +125,103 @@ bool Circuit::check_validity(int vector_size, const int* vec)
 }
 
 bool Circuit::check_validity(int vector_size, const int *circuit_vector,
-                              int num_parameters, const double *parameters)
+                              int unit_parameters_size, double *unit_parameters)
                               
 {
+    bool valid = check_validity(vector_size, circuit_vector);
     // check the validity of the circuit vector
-    if (!check_validity(vector_size,
-                        static_cast<const int*>(circuit_vector)))
+    if (!valid){
+        // std::cout<<"false 00"<<std::endl;
         return false;
+    }
 
-    // the length of the continuous parameters must be exactly = n units
-    if (num_parameters != n) {
-        std::cout << "false P0 (parameter length)" << std::endl;
+    if (unit_parameters == nullptr) {
+        return valid;
+    }
+
+    // If parameters are provided, check their size and values
+    if (unit_parameters_size != n) {
+        // std::cout << "false P0 (parameter length mismatch)" << std::endl;
         return false;
     }
 
     // each parameter must be in [0,1] (or other physical range)
-    for (int i = 0; i < num_parameters; ++i) {
-        double beta = parameters[i];
+    for (int i = 0; i < unit_parameters_size; ++i) {
+        double beta = unit_parameters[i];
         if (beta < 0.0 || beta > 1.0 || std::isnan(beta)) {
-            std::cout << "false P1 (β out of range)" << std::endl;
+            // std::cout << "false P1 (β out of range)" << std::endl;
             return false;
         }
     }
+    std::cout<<"check_validity 4"<<std::endl;
 
     return true;          // legal
 
 }
 
+// void Circuit::mark_units(int unit_num) {
 
+//   if (this->units[unit_num].mark) return;
 
+//   this->units[unit_num].mark = true;
 
-void Circuit::mark_units(int unit_num) {
+//   //If we have seen this unit already exit
+//   //Mark that we have now seen the unit
 
-  if (this->units[unit_num].mark) return;
-
-  this->units[unit_num].mark = true;
-
-  //If we have seen this unit already exit
-  //Mark that we have now seen the unit
-
-  //If conc_num does not point at a circuit outlet recursively call the function
-  if (this->units[unit_num].conc_num<this->units.size()) {
-    mark_units(this->units[unit_num].conc_num);
-  } else {
-    // ...Potentially do something to indicate that you have seen an exit
-  }
+//   //If conc_num does not point at a circuit outlet recursively call the function
+//   if (this->units[unit_num].conc_num<this->units.size()) {
+//     mark_units(this->units[unit_num].conc_num);
+//   } else {
+//     // ...Potentially do something to indicate that you have seen an exit
+//   }
   
-  //If tails_num does not point at a circuit outletrecursively call the function 
+//   //If tails_num does not point at a circuit outletrecursively call the function 
 
-  if (this->units[unit_num].tails_num<this->units.size()) {
-    mark_units(this->units[unit_num].tails_num); 
-  } else {
-    // ...Potentially do something to indicate that you have seen an exit
-  }
-}
+//   if (this->units[unit_num].tails_num<this->units.size()) {
+//     mark_units(this->units[unit_num].tails_num); 
+//   } else {
+//     // ...Potentially do something to indicate that you have seen an exit
+//   }
+// }
 
-bool Circuit::mass_balance_converges(double tol, int maxIter) const
-{
-    using namespace Constants;
-    
-    // physical constants & rate constants
-    const double rho = Physical::MATERIAL_DENSITY;    // ρ = 3000 kg/m³
-    const double phi = Physical::SOLIDS_CONTENT;      // φ = 0.10
-    const double V = Constants::Circuit::DEFAULT_UNIT_VOLUME; // V = 10 m³
-    
-    const double kP  = Physical::K_PALUSZNIUM;  // 0.008 s⁻¹
-    const double kG  = Physical::K_GORMANIUM;   // 0.004 s⁻¹
-    const double kW  = Physical::K_WASTE;       // 0.0005 s⁻¹
-
-    // default tolerance & max iterations
-    if (tol     <= 0.0) tol     = Simulation::DEFAULT_TOLERANCE;
-    if (maxIter <= 0  ) maxIter = Simulation::DEFAULT_MAX_ITERATIONS;
-    
-    // index convention
-    const int NS = n + 3;                // n units + 3 terminals
-    
-    // initialize flow rates (kg/s)
-    std::vector<double> FP(NS, 0.0), FW(NS, 0.0), FG(NS, 0.0);   // current iteration
-    std::vector<double> FPn(NS, 0.0), FWn(NS, 0.0), FGn(NS, 0.0); // next iteration
-    
-    FP[feed_dest] = Feed::DEFAULT_PALUSZNIUM_FEED;   // 8 kg/s
-    FG[feed_dest] = Feed::DEFAULT_GORMANIUM_FEED;    // 12 kg/s
-    FW[feed_dest] = Feed::DEFAULT_WASTE_FEED;       // 80 kg/s
-    
-    // mass balance iteration
-    for (int it = 0; it < maxIter; ++it)
-    {
-        // Reset next iteration flow rates
-        std::fill(FPn.begin(), FPn.end(), 0.0);
-        std::fill(FWn.begin(), FWn.end(), 0.0);
-        std::fill(FGn.begin(), FGn.end(), 0.0);
-        
-        for (int u = 0; u < n; ++u)
-        {
-            double FP_in = FP[u];
-            double FG_in = FG[u];
-            double FW_in = FW[u];
-            
-            // Skip if no material entering this unit
-            if (FP_in == 0.0 && FG_in == 0.0 && FW_in == 0.0) continue;
-            
-            // calculate residence time τ
-            double total_solids = FP_in + FG_in + FW_in;
-            double Qv = total_solids / rho / phi;      // m³/s
-            if (Qv < 1e-12) Qv = 1e-12;               // avoid division by zero
-            double tau = V / Qv;                      // s
-            
-            // first-order kinetics recovery
-            double RP = (kP * tau) / (1.0 + kP * tau);    // Palusznium recovery
-            double RG = (kG * tau) / (1.0 + kG * tau);    // Gormanium recovery
-            double RW = (kW * tau) / (1.0 + kW * tau);    // Waste recovery
-            
-            // flow rate allocation to conc / tail
-            double FPc = FP_in * RP;
-            double FPt = FP_in - FPc;
-            
-            double FGc = FG_in * RG;
-            double FGt = FG_in - FGc;
-            
-            double FWc = FW_in * RW;
-            double FWt = FW_in - FWc;
-            
-            int dstC = units[u].conc_num;   // destination of concentrate stream
-            int dstT = units[u].tails_num;  // destination of tailings stream
-            
-            // Update flow rates for next iteration
-            FPn[dstC] += FPc; 
-            FGn[dstC] += FGc;
-            FWn[dstC] += FWc;
-            
-            FPn[dstT] += FPt;
-            FGn[dstT] += FGt;
-            FWn[dstT] += FWt;
-        }
-        
-        // convergence criterion: check all three components
-        double err = 0.0;
-        for (int idx = 0; idx < n; ++idx) {
-            err = std::max(err, std::fabs(FPn[idx] - FP[idx]));
-            err = std::max(err, std::fabs(FGn[idx] - FG[idx]));
-            err = std::max(err, std::fabs(FWn[idx] - FW[idx]));
-        }
-        if (err < tol) {
-          std::cout << "iteration: " << it << std::endl;
-          std::cout << "err: " << err << std::endl;
-          return true; 
-        }     // converged
-        
-        // Prepare for next iteration
-        FP.swap(FPn);
-        FG.swap(FGn);
-        FW.swap(FWn);
+void Circuit::mark_units(int start_unit) {
+    // 重置所有标记（必须在每次调用前执行）
+    for (auto& unit : units) {
+        unit.mark = false;
     }
-    return false;                        // not converged after maxIter
+
+    // 使用栈实现迭代式DFS（避免递归深度限制）
+    std::stack<int> to_visit;
+    to_visit.push(start_unit);
+
+    while (!to_visit.empty()) {
+        int u = to_visit.top();
+        to_visit.pop();
+
+        // 跳过已处理或无效单元
+        if (u < 0 || u >= units.size() || units[u].mark) {
+            continue;
+        }
+
+        // 标记当前单元
+        units[u].mark = true;
+
+        // 处理 conc 路径（仅限有效单元）
+        int conc_dest = units[u].conc_num;
+        if (conc_dest >= 0 && conc_dest < units.size()) {
+            if (!units[conc_dest].mark) {
+                to_visit.push(conc_dest);
+            }
+        }
+
+        // 处理 tail 路径（仅限有效单元）
+        int tail_dest = units[u].tails_num;
+        if (tail_dest >= 0 && tail_dest < units.size()) {
+            if (!units[tail_dest].mark) {
+                to_visit.push(tail_dest);
+            }
+        }
+    }
 }
 
 Circuit::Circuit(int num_units,double *beta)
@@ -311,6 +245,10 @@ Circuit::Circuit(int num_units,double *beta)
       waste_penalty_palusznium(Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
       waste_penalty_gormanium(Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM)
 {}
+
+bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector) {
+    return initialize_from_vector(vector_size, circuit_vector, nullptr);
+}
 
 // Initialize the circuit from a circuit vector
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta) {
@@ -365,7 +303,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
     std::vector<double> last_feed_p(units.size(), 0.0);
     std::vector<double> last_feed_g(units.size(), 0.0);
     std::vector<double> last_feed_w(units.size(), 0.0);
-    std::cout << "Unit number: " << units.size() << std::endl;
+    // std::cout << "Unit number: " << units.size() << std::endl;
 
     for (int iter = 0; iter < max_iterations; ++iter) {
         // std::cout << "\n==========Iteration" << iter + 1 << "==========\n\n";
@@ -613,6 +551,7 @@ bool Circuit::export_to_dot(const std::string& filename) const {
     ofs << "}\n";
     return true;
 }
+
 uint8_t Circuit::term_mask(int start) const {
     uint8_t mask = 0;
     std::vector<bool> visited(n, false);
