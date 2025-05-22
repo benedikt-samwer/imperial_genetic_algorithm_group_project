@@ -46,7 +46,7 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
     // 1. length must be 2*n+1
     int expected = 2 * n + 1;
     if (vector_size != expected) {
-        std::cout << "❌[Validity] Length mismatch: expected " << expected << ", got " << vector_size << std::endl;
+        // std::cout << "❌[Validity] Length mismatch: expected " << expected << ", got " << vector_size << std::endl;
         return false;
     }
 
@@ -54,7 +54,7 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
     feed_dest = vec[0]; // feed points to the unit
     // feed cannot directly feed to terminal
     if (feed_dest < 0 || feed_dest >= n) {
-        std::cout << "❌[Validity] Feed destination " << feed_dest << " is invalid (must be 0 to " << (n-1) << ")" << std::endl;
+        // std::cout << "❌[Validity] Feed destination " << feed_dest << " is invalid (must be 0 to " << (n-1) << ")" << std::endl;
         return false;
     }
 
@@ -73,23 +73,23 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
 
         // 3. index check
         if (conc < 0 || conc > max_idx) {
-            std::cout << "❌[Validity] Unit " << i << " concentrate destination " << conc << " is out of range" << std::endl;
+            // std::cout << "❌[Validity] Unit " << i << " concentrate destination " << conc << " is out of range" << std::endl;
             return false;
         }
         if (tail < 0 || tail > max_idx) {
-            std::cout << "❌[Validity] Unit " << i << " tailings destination " << tail << " is out of range" << std::endl;
+            // std::cout << "❌[Validity] Unit " << i << " tailings destination " << tail << " is out of range" << std::endl;
             return false;
         }
 
         // 4. no self-loop
         if (conc == i || tail == i) {
-            std::cout << "❌[Validity] Unit " << i << " has self-loop" << std::endl;
+            // std::cout << "❌[Validity] Unit " << i << " has self-loop" << std::endl;
             return false;
         }
 
         // 5. same output
         if (conc == tail) {
-            std::cout << "❌[Validity] Unit " << i << " has same concentrate and tailings destination" << std::endl;
+            // std::cout << "❌[Validity] Unit " << i << " has same concentrate and tailings destination" << std::endl;
             return false;
         }
 
@@ -105,7 +105,7 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
 
     for (int i = 0; i < n; ++i) {
         if (!units[i].mark) {
-            std::cout << "❌[Validity] Unit " << i << " is not reachable from feed" << std::endl;
+            // std::cout << "❌[Validity] Unit " << i << " is not reachable from feed" << std::endl;
             return false;
         }
     }
@@ -118,29 +118,29 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
         global_mask |= mask;
         int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
         if (cnt < 2) {
-            std::cout << "❌[Validity] Unit " << i << " does not reach at least 2 different terminals" << std::endl;
+            // std::cout << "❌[Validity] Unit " << i << " does not reach at least 2 different terminals" << std::endl;
             return false;
         }
     }
 
     // 8. final terminal check: P1/P2, TA must be present
     if ((global_mask & (0b001 | 0b010)) == 0) {
-        std::cout << "❌[Validity] Circuit does not reach any product streams (P1 or P2)" << std::endl;
+        // std::cout << "❌[Validity] Circuit does not reach any product streams (P1 or P2)" << std::endl;
         return false;
     }
     
     if ((global_mask & 0b100) == 0) {
-        std::cout << "❌[Validity] Circuit does not reach tailings stream" << std::endl;
+        // std::cout << "❌[Validity] Circuit does not reach tailings stream" << std::endl;
         return false;
     }
 
     // check mass balance convergence
     if (!run_mass_balance(1e-6, 100)) {
-        std::cout << "❌[Validity] Mass balance did not converge" << std::endl;
+        // std::cout << "❌[Validity] Mass balance did not converge" << std::endl;
         return false;
     }
 
-    std::cout << "✅[Validity] Circuit passed all validity checks" << std::endl;
+    // std::cout << "✅[Validity] Circuit passed all validity checks" << std::endl;
     return true;
 }
 bool Circuit::check_validity(int vector_size, const int *circuit_vector,
@@ -149,18 +149,18 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
   bool valid = check_validity(vector_size, circuit_vector);
   // check the validity of the circuit vector
   if (!valid) {
-    std::cout << "❌[Validity] Circuit vector is invalid" << std::endl;
+    // std::cout << "❌[Validity] Circuit vector is invalid" << std::endl;
     return false;
   }
 
   if (unit_parameters == nullptr) {
-    std::cout << "✅[Validity] Circuit vector is valid, no parameters to check" << std::endl;
+    // std::cout << "✅[Validity] Circuit vector is valid, no parameters to check" << std::endl;
     return valid;
   }
 
   // the length of the continuous parameters must be exactly = n units
   if (unit_parameters_size != n) {
-    std::cout << "❌[Parameters] Parameter length mismatch: expected " << n << ", got " << unit_parameters_size << std::endl;
+    // std::cout << "❌[Parameters] Parameter length mismatch: expected " << n << ", got " << unit_parameters_size << std::endl;
     return false;
   }
 
@@ -168,12 +168,12 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
   for (int i = 0; i < unit_parameters_size; ++i) {
     double beta = unit_parameters[i];
     if (beta < 0.0 || beta > 1.0 || std::isnan(beta)) {
-      std::cout << "❌[Parameters] β" << i << " = " << beta << " is out of range [0,1]" << std::endl;
+      // std::cout << "❌[Parameters] β" << i << " = " << beta << " is out of range [0,1]" << std::endl;
       return false;
     }
   }
 
-  std::cout << "✅[Validity] Circuit vector and parameters are valid" << std::endl;
+  // std::cout << "✅[Validity] Circuit vector and parameters are valid" << std::endl;
   return true; // legal
 }
 
