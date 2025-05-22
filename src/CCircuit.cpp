@@ -265,12 +265,6 @@ Circuit::Circuit(int num_units, double *beta, bool testFlag)
             }
           }
 
-Circuit::Circuit(int num_units)
-    : Circuit(num_units)  // Call the other constructor first
-{
-    this->beta = beta;
-}
-
 bool Circuit::initialize_from_vector(int vector_size,
                                      const int *circuit_vector) {
   return initialize_from_vector(vector_size, circuit_vector, nullptr, false);
