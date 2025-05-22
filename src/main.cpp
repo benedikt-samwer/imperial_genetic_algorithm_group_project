@@ -187,7 +187,7 @@ int main() {
       unit_volumes[i] = 10.0;
     }
     total_volume += unit_volumes[i];
-  }
+    }
 
   double operating_cost = 5.0 * std::pow(total_volume, 2.0 / 3.0);
   if (total_volume >= 150.0) {
@@ -282,7 +282,7 @@ int main() {
             << performance << "/s\n";
 
   // Save raw circuit data into a CSV:
-  const std::string out_csv = "circuit_results.csv";
+  const std::string out_csv = "../plotting/circuit_results.csv";
   if (circuit.save_output_info(out_csv)) {
     std::cout << "\n Saved detailed circuit info to " << out_csv << "\n";
   } else {
