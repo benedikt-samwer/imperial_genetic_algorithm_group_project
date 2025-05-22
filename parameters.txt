@@ -4,12 +4,12 @@
 mode = h     # options: discrete -> d, continuous -> c, hybrid -> h
 
 # General
-max_iterations = 200
-population_size = 500
-elite_count = 3
+max_iterations = 100
+population_size = 600
+elite_count = 2
 
 # Selection
-tournament_size = 5
+tournament_size = 3
 
 # Crossover
 crossover_probability = 0.9
@@ -23,13 +23,13 @@ use_inversion = true
 inversion_probability = 0.2
 
 # Scale Mutation
-use_scaling_mutation = true
-scaling_mutation_prob = 0.5
+use_scaling_mutation = false
+scaling_mutation_prob = 0.3
 scaling_mutation_min = 0.7
 scaling_mutation_max = 1.3
 
 # Termination
-convergence_threshold = 1e-8
+convergence_threshold = 0.1
 stall_generations = 50
 
 # Logging

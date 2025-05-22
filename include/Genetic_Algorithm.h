@@ -36,7 +36,7 @@ struct Algorithm_Parameters {
   bool use_inversion = true;           // turn inversion on/off
   double inversion_probability = 0.05; // chance to invert per child
 
-  // Scaling-mutatuon parameters
+  // Scaling-mutation parameters
   bool use_scaling_mutation = true;
   double scaling_mutation_prob = 0.2; // how often to apply a scale mutation
   double scaling_mutation_min = 0.8;  // lower bound on the scale factor
