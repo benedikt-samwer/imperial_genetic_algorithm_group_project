@@ -10,6 +10,9 @@
 
 // Structure to hold genetic algorithm parameters
 struct Algorithm_Parameters {
+  // Number of units
+  int num_units = 10;
+
   // Optimization mode: : "d", "c", or "h"
   std::string mode = "h";
 
