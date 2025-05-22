@@ -140,21 +140,19 @@ bool Circuit::check_validity(int vector_size, const int *vec) {
         return false;
     }
 
-    std::cout << "✅[Validity] Circuit passed all validity checks" << std::endl;
     return true;
 }
+
 bool Circuit::check_validity(int vector_size, const int *circuit_vector,
                              int unit_parameters_size, double *unit_parameters)
 {
   bool valid = check_validity(vector_size, circuit_vector);
   // check the validity of the circuit vector
   if (!valid) {
-    std::cout << "❌[Validity] Circuit vector is invalid" << std::endl;
     return false;
   }
 
   if (unit_parameters == nullptr) {
-    std::cout << "✅[Validity] Circuit vector is valid, no parameters to check" << std::endl;
     return valid;
   }
 
@@ -173,7 +171,6 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
     }
   }
 
-  std::cout << "✅[Validity] Circuit vector and parameters are valid" << std::endl;
   return true; // legal
 }
 
