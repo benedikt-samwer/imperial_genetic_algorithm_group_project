@@ -27,3 +27,7 @@ cmake --build . -- -j$(getconf _NPROCESSORS_ONLN)
 echo "Running executable..."
 # Replace 'Circuit_Optimizer' with your actual executable name if different:
 ./bin/Circuit_Optimizer
+
+echo "Visualising..."
+cd ../plotting
+python3 main.py -f
