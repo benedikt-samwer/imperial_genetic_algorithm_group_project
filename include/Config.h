@@ -64,6 +64,14 @@ inline void load_parameters(const std::string &file, Algorithm_Parameters &p) {
         p.use_inversion = (val == "true" || val == "1");
       else if (key == "inversion_probability")
         p.inversion_probability = std::stod(val);
+      else if (key == "use_scaling_mutation")
+        p.use_scaling_mutation = (val == "true" || val == "1");
+      else if (key == "scaling_mutation_prob")
+        p.scaling_mutation_prob = std::stod(val);
+      else if (key == "scaling_mutation_min")
+        p.scaling_mutation_min = std::stod(val);
+      else if (key == "scaling_mutation_max")
+        p.scaling_mutation_max = std::stod(val);
       else if (key == "convergence_threshold")
         p.convergence_threshold = std::stod(val);
       else if (key == "stall_generations")
