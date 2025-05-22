@@ -38,6 +38,8 @@ inline void load_parameters(const std::string &file, Algorithm_Parameters &p) {
     try {
       if (key == "random_seed")
         p.random_seed = std::stoi(val);
+      else if (key == "mode")
+        p.mode = val; // d, c, or h
       else if (key == "max_iterations")
         p.max_iterations = std::stoi(val);
       else if (key == "population_size")

@@ -10,6 +10,9 @@
 
 // Structure to hold genetic algorithm parameters
 struct Algorithm_Parameters {
+  // Optimization mode: : "d", "c", or "h"
+  std::string mode = "h";
+
   // General parameters
   int random_seed = -1;
   int max_iterations = 1000; // Maximum number of generations

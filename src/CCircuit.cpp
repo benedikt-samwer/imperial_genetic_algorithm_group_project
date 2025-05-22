@@ -23,91 +23,109 @@ Circuit::Circuit(int num_units) {
 // 8. final terminal check: P1/P2, TA must be present
 // 9. mass balance check: mass balance must converge
 bool Circuit::check_validity(int vector_size, const int *vec) {
-  // 1. length must be 2*n+1
-  int expected = 2 * n + 1;
-  if (vector_size != expected) {
-    // std::cout << "false 00" << std::endl;
-    return false;
-  }
-
-  // 2. feed check
-  feed_dest = vec[0]; // feed points to the unit
-  // feed cannot directly feed to terminal
-  if (feed_dest < 0 || feed_dest >= n) {
-    // std::cout << "false 01" << std::endl;
-    return false;
-  }
-
-  // read each unit's conc and tail and do static check
-  struct Dest {
-    int conc;
-    int tail;
-  };
-  std::vector<Dest> dest(n);
-
-  int max_idx = n + 2; // the last valid index
-
-  for (int i = 0; i < n; ++i) {
-    int conc = vec[1 + 2 * i]; // conc points to the unit
-    int tail = vec[2 + 2 * i]; // tail points to the unit
-
-    // 3. index check
-    if (conc < 0 || conc > max_idx) {
-      // std::cout << "false 02" << std::endl;
-      return false;
-    }
-    if (tail < 0 || tail > max_idx) {
-      // std::cout << "false 03" << std::endl;
-      return false;
+    // 1. length must be 2*n+1
+    int expected = 2 * n + 1;
+    if (vector_size != expected) {
+        // std::cout << "false 00" << std::endl;
+        return false;
     }
 
-    // 4. no self-loop
-    if (conc == i || tail == i) {
-      // std::cout << "false 04" << std::endl;
-      return false;
+    // 2. feed check
+    feed_dest = vec[0]; // feed points to the unit
+    // feed cannot directly feed to terminal
+    if (feed_dest < 0 || feed_dest >= n) {
+        // std::cout << "false 01" << std::endl;
+        return false;
     }
 
-    // 5. same output
-    if (conc == tail) {
-      // std::cout << "false 05" << std::endl;
-      return false;
+    // read each unit's conc and tail and do static check
+    struct Dest {
+        int conc;
+        int tail;
+    };
+    std::vector<Dest> dest(n);
+
+    int max_idx = n + 2; // the last valid index
+
+    for (int i = 0; i < n; ++i) {
+        int conc = vec[1 + 2 * i]; // conc points to the unit
+        int tail = vec[2 + 2 * i]; // tail points to the unit
+
+        // 3. index check
+        if (conc < 0 || conc > max_idx) {
+            // std::cout << "false 02" << std::endl;
+            return false;
+        }
+        if (tail < 0 || tail > max_idx) {
+            // std::cout << "false 03" << std::endl;
+            return false;
+        }
+
+        // 4. no self-loop
+        if (conc == i || tail == i) {
+            // std::cout << "false 04" << std::endl;
+            return false;
+        }
+
+        // 5. same output
+        if (conc == tail) {
+            // std::cout << "false 05" << std::endl;
+            return false;
+        }
+
+        dest[i] = {conc, tail};
+
+        units[i].conc_num = conc;
+        units[i].tails_num = tail;
+        units[i].mark = false;
     }
 
-    dest[i] = {conc, tail};
+    // 6. unit reachability check
+    this->mark_units(feed_dest);
 
-    units[i].conc_num = conc;
-    units[i].tails_num = tail;
-    units[i].mark = false;
-  }
-
-  // 6. unit reachability check
-  this->mark_units(feed_dest);
-
-  for (int i = 0; i < n; ++i) {
-    if (!units[i].mark) { // R1 trigger
-      // std::cout << "false 06\n";
-      return false;
+    for (int i = 0; i < n; ++i) {
+        if (!units[i].mark) { // R1 trigger
+            // std::cout << "false 06\n";
+            return false;
+        }
     }
-  }
 
-  // 7. two terminals check
-  std::vector<int8_t> cache(n, -1);
-  uint8_t global_mask = 0;
-  for (int i = 0; i < n; ++i) {
-    // uint8_t mask = outlet_mask(i, cache);
-    uint8_t mask = this->term_mask(i);
-    global_mask |= mask;
-    int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
-    //{ std::cout << "false 07\n"; return false; }
-  }
+    // 7. two terminals check
+    std::vector<int8_t> cache(n, -1);
+    uint8_t global_mask = 0;
+    for (int i = 0; i < n; ++i) {
+        // uint8_t mask = outlet_mask(i, cache);
+        uint8_t mask = this->term_mask(i);
+        global_mask |= mask;
+        int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
+        if (cnt < 2) {
+            // std::cout << "mask: " << static_cast<int>(mask) << std::endl;
+            // std::cout << "cnt: " << cnt << std::endl;
+            // std::cout << "false 07\n";
+            return false;
+        }
+    }
+    // std::cout << "global_mask: " << static_cast<int>(global_mask) << std::endl;
 
-  // check mass balance convergence
-  if (!run_mass_balance(1e-6, 100)) {
-    // std::cout << "false 99 (mass-balance diverge)\n";
-    return false;
-  }
+    // 8. final terminal check: P1/P2, TA must be present
+    if ((global_mask & (0b001 | 0b010)) == 0) {
+        // std::cout << " false 08" << std::endl;
+        return false;
+    }
 
-  return true; // legal
+    
+    if ((global_mask & 0b100) == 0) {
+        // std::cout << "false 09" << std::endl;
+        return false;
+    }
+
+    // check mass balance convergence
+    if (!run_mass_balance(1e-6, 100)) {
+        // std::cout << "false 99 (mass-balance diverge)\n";
+        return false;
+    }
+
+    return true; // legal
 }
 
 bool Circuit::check_validity(int vector_size, const int *circuit_vector,
@@ -139,7 +157,7 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
       return false;
     }
   }
-  std::cout << "check_validity 4" << std::endl;
+//   std::cout << "check_validity 4" << std::endl;
 
   return true; // legal
 }
@@ -545,30 +563,36 @@ uint8_t Circuit::term_mask(int start) const {
   visited[start] = true;
 
   while (!q.empty()) {
-    int current = q.front();
-    q.pop();
+        int current = q.front();
+        q.pop();
 
-    // Check outputs of current unit
-    int conc_dest = units[current].conc_num;
-    int tails_dest = units[current].tails_num;
+        const int conc_dest = units[current].conc_num;
+        const int tail_dest = units[current].tails_num;
 
-    // Check concentrate output
-    if (conc_dest >= n) {
-      // Terminal output
-      if (conc_dest == OUT_P1())
-        mask |= 1; // Palusznium product
-      else if (conc_dest == OUT_P2())
-        mask |= 2; // Gormanium product
-      else if (conc_dest == OUT_TA())
-        mask |= 4; // Tailings
-    } else if (!visited[conc_dest]) {
-      // Continue search
-      visited[conc_dest] = true;
-      q.push(conc_dest);
+        process_destination(conc_dest, mask, visited, q);
+        process_destination(tail_dest, mask, visited, q);
+
+        if ((mask & (mask-1)) >= 3) break;
     }
-  }
-  return mask;
+
+    return mask;
 }
+
+void Circuit::process_destination(int dest, uint8_t& mask, 
+                                 std::vector<bool>& visited,
+                                 std::queue<int>& q) const {
+    if (dest >= n) {
+        if (dest == OUT_P1()) mask |= 0b001;
+        else if (dest == OUT_P2()) mask |= 0b010;
+        else if (dest == OUT_TA()) mask |= 0b100;
+    } else {
+        if (!visited[dest]) {
+            visited[dest] = true;
+            q.push(dest);
+        }
+    }
+}
+
 
 bool Circuit::save_all_units_to_csv(const std::string &filename) {
   std::ofstream ofs(filename, std::ios::app);
