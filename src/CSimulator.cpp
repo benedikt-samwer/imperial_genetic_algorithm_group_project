@@ -53,15 +53,10 @@ double circuit_performance(int vector_size, int* circuit_vector,
 
 double circuit_performance(int vector_size, int* circuit_vector){
     int num_parameters = (vector_size-1)/2;
-    double *parameters = new double[num_parameters];
-    for (int i=0; i<num_parameters; i++) {
-        parameters[i] = 1.0;
-    }
     double result = circuit_performance(vector_size, circuit_vector, 
                             num_parameters, nullptr,
                             default_simulator_parameters, false);
 
-    delete[] parameters;
     return result;
 }
 
