@@ -9,6 +9,10 @@
 #include "Config.h" // <— your new loader
 #include "Genetic_Algorithm.h"
 
+static constexpr int DEFAULT_UNITS = 10;
+static const int hard_circuit_10[2 * DEFAULT_UNITS + 1] = {
+    1, 2, 4, 3, 5, 3, 0, 8, 11, 7, 12, 7, 0, 7, 11, 8, 6, 9, 7, 10, 3};
+
 int main() {
   // Save original cout buffer before we start
   std::streambuf *original_cout_buffer = std::cout.rdbuf();
@@ -33,6 +37,7 @@ int main() {
       << "GA parameters:\n"
       << "  mode                        = " << params.mode << "\n"
       << "  random_seed                 = " << params.random_seed << "\n\n"
+      << "  num_units                   = " << params.num_units << "\n\n"
 
       << "  population_size             = " << params.population_size << "\n"
       << "  elite_count                 = " << params.elite_count << "\n"
@@ -82,15 +87,13 @@ int main() {
   std::cout << "Mode: " << mode << "\n";
 
   // Set number of units
-  constexpr int num_units = 10;
-  constexpr int vector_size = 2 * num_units + 1;
+  int num_units = params.num_units;
+  int vector_size = 2 * num_units + 1;
 
   // Create vectors to hold the optimization results
-  int circuit_vector[vector_size] = {0};
-  double volume_params[num_units];
-  for (int i = 0; i < num_units; i++) {
-    volume_params[i] = 0.5; // Initialize at middle of range
-  }
+  std::vector<int> circuit_vector(vector_size, 0);
+  std::vector<double> volume_params(num_units, 0.5);
+
   if (mode == "d") {
     std::cout << "Running DISCRETE optimization...\n";
 
@@ -108,8 +111,8 @@ int main() {
       return c.check_validity(size, vec);
     };
 
-    optimize(vector_size, circuit_vector, discrete_fitness, discrete_validity,
-             params);
+    optimize(vector_size, circuit_vector.data(), discrete_fitness,
+             discrete_validity, params);
   }
 
   else if (mode == "c") {
@@ -118,21 +121,27 @@ int main() {
     // std::cout.rdbuf(null_stream.rdbuf());
 
     // Known-valid discrete circuit (hardcoded)
-    const int fixed_circuit[vector_size] = {1, 2, 4, 3,  5, 3, 0, 8, 11, 7, 12,
-                                            7, 0, 7, 11, 8, 6, 9, 7, 10, 3};
-    std::copy(fixed_circuit, fixed_circuit + vector_size, circuit_vector);
+    if (mode == "c" && params.num_units != DEFAULT_UNITS) {
+      std::cerr << "Error: continuous mode only supports " << DEFAULT_UNITS
+                << " units in this build.\n";
+      return 1;
+    }
+    std::copy(hard_circuit_10, hard_circuit_10 + vector_size,
+              circuit_vector.begin());
 
     auto cont_fitness = [&](int r_size, double *rvec) -> double {
-      return circuit_performance(vector_size, circuit_vector, r_size, rvec);
+      return circuit_performance(vector_size, circuit_vector.data(), r_size,
+                                 rvec);
     };
 
     auto cont_validity = [&](int r_size, double *rvec) -> bool {
       Circuit c(num_units, rvec); // use volume constructor!
-      c.initialize_from_vector(vector_size, circuit_vector, rvec);
-      return c.check_validity(vector_size, circuit_vector, r_size, rvec);
+      c.initialize_from_vector(vector_size, circuit_vector.data(), rvec);
+      return c.check_validity(vector_size, circuit_vector.data(), r_size, rvec);
     };
 
-    optimize(num_units, volume_params, cont_fitness, cont_validity, params);
+    optimize(num_units, volume_params.data(), cont_fitness, cont_validity,
+             params);
   }
 
   else {
@@ -155,17 +164,18 @@ int main() {
     };
 
     // Run hybrid optimization (cout is redirected, so no debug output)
-    optimize(vector_size, circuit_vector, num_units, volume_params,
-             hybrid_fitness, hybrid_validity, params);
+    optimize(vector_size, circuit_vector.data(), num_units,
+             volume_params.data(), hybrid_fitness, hybrid_validity, params);
   }
 
   // Calculate performance with optimized values (still silent)
-  double performance = circuit_performance(vector_size, circuit_vector,
-                                           num_units, volume_params);
+  double performance = circuit_performance(vector_size, circuit_vector.data(),
+                                           num_units, volume_params.data());
 
   // Create a circuit object for detailed analysis, still silent
-  Circuit circuit(num_units, volume_params);
-  circuit.initialize_from_vector(vector_size, circuit_vector, volume_params);
+  Circuit circuit(num_units, volume_params.data());
+  circuit.initialize_from_vector(vector_size, circuit_vector.data(),
+                                 volume_params.data());
   circuit.run_mass_balance();
 
   // Extract important metrics before restoring cout
