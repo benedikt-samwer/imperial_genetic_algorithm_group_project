@@ -9,75 +9,194 @@
 #include "Config.h" // <— your new loader
 #include "Genetic_Algorithm.h"
 
-int main()
-{
-    // Save original cout buffer before we start
-    std::streambuf* original_cout_buffer = std::cout.rdbuf();
+static constexpr int DEFAULT_UNITS = 10;
+static const int hard_circuit_10[2 * DEFAULT_UNITS + 1] = {
+    1, 2, 4, 3, 5, 3, 0, 8, 11, 7, 12, 7, 0, 7, 11, 8, 6, 9, 7, 10, 3};
 
-    // Create null stream to discard output
-    std::ofstream null_stream("/dev/null");
+int main() {
+  // Save original cout buffer before we start
+  std::streambuf *original_cout_buffer = std::cout.rdbuf();
 
-    std::cout << "=== Palusznium Rush Circuit Optimizer ===\n\n";
+  // Create null stream to discard output
+  std::ofstream null_stream("/dev/null");
 
-    // load GA & random‐seed settings from parameters.txt
-    Algorithm_Parameters params;
-    load_parameters("parameters.txt", params);
+  std::cout << "=== Palusznium Rush Circuit Optimizer ===\n\n";
 
-    // Optionally fix the RNG for reproducibility
-    if (params.random_seed >= 0)
-    {
-        set_random_seed(params.random_seed);
-        std::cout << "* Using fixed seed: " << params.random_seed << "\n";
+  // load GA & random‐seed settings from parameters.txt
+  Algorithm_Parameters params;
+  load_parameters("parameters.txt", params);
+
+  // Optionally fix the RNG for reproducibility
+  if (params.random_seed >= 0) {
+    set_random_seed(params.random_seed);
+    std::cout << "* Using fixed seed: " << params.random_seed << "\n";
+  }
+
+  // Print to see
+  std::cout
+      << "GA parameters:\n"
+      << "  mode                        = " << params.mode << "\n"
+      << "  random_seed                 = " << params.random_seed << "\n\n"
+      << "  num_units                   = " << params.num_units << "\n\n"
+
+      << "  population_size             = " << params.population_size << "\n"
+      << "  elite_count                 = " << params.elite_count << "\n"
+      << "  max_iterations              = " << params.max_iterations << "\n\n"
+
+      << "  tournament_size             = " << params.tournament_size << "\n"
+      << "  selection_pressure          = " << params.selection_pressure
+      << "\n\n"
+
+      << "  crossover_probability       = " << params.crossover_probability
+      << "\n"
+      << "  crossover_points            = " << params.crossover_points << "\n\n"
+
+      << "  mutation_probability        = " << params.mutation_probability
+      << "\n"
+      << "  mutation_step_size          = " << params.mutation_step_size << "\n"
+      << "  allow_mutation_wrapping     = " << std::boolalpha
+      << params.allow_mutation_wrapping << "\n\n"
+
+      << "  use_inversion               = " << std::boolalpha
+      << params.use_inversion << "\n"
+      << "  inversion_probability       = " << params.inversion_probability
+      << "\n\n"
+
+      << "  use_scaling_mutation        = " << std::boolalpha
+      << params.use_scaling_mutation << "\n"
+      << "  scaling_mutation_prob       = " << params.scaling_mutation_prob
+      << "\n"
+      << "  scaling_mutation_min        = " << params.scaling_mutation_min
+      << "\n"
+      << "  scaling_mutation_max        = " << params.scaling_mutation_max
+      << "\n\n"
+
+      << "  convergence_threshold       = " << params.convergence_threshold
+      << "\n"
+      << "  stall_generations           = " << params.stall_generations
+      << "\n\n"
+
+      << "  verbose                     = " << std::boolalpha << params.verbose
+      << "\n"
+      << "  log_results                 = " << std::boolalpha
+      << params.log_results << "\n"
+      << "  log_file                    = " << params.log_file << "\n\n";
+
+  // Optimisation mode
+  auto mode = params.mode; // "d", "c" or "h" from parameters.txt
+  std::cout << "Mode: " << mode << "\n";
+
+  // Set number of units
+  int num_units = params.num_units;
+  int vector_size = 2 * num_units + 1;
+
+  // Create vectors to hold the optimization results
+  std::vector<int> circuit_vector(vector_size, 0);
+  std::vector<double> volume_params(num_units, 0.5);
+
+  if (mode == "d") {
+    std::cout << "Running DISCRETE optimization...\n";
+
+    // std::cout.rdbuf(null_stream.rdbuf());
+
+    auto discrete_fitness = [](int size, int *vec) -> double {
+      // Discrete-only overload
+      return circuit_performance(size, vec);
+    };
+
+    auto discrete_validity = [](int size, int *vec) -> bool {
+      // Discrete-only constructor and validity
+      Circuit c(size / 2); // (2n + 1 → n units)
+      c.initialize_from_vector(size, vec);
+      return c.check_validity(size, vec);
+    };
+
+    optimize(vector_size, circuit_vector.data(), discrete_fitness,
+             discrete_validity, params);
+  }
+
+  else if (mode == "c") {
+    std::cout << "Running CONTINUOUS optimization...\n";
+
+    // std::cout.rdbuf(null_stream.rdbuf());
+
+    // Known-valid discrete circuit (hardcoded)
+    if (mode == "c" && params.num_units != DEFAULT_UNITS) {
+      std::cerr << "Error: continuous mode only supports " << DEFAULT_UNITS
+                << " units in this build.\n";
+      return 1;
     }
+    std::copy(hard_circuit_10, hard_circuit_10 + vector_size,
+              circuit_vector.begin());
 
-    // Print to see
-    std::cout << "GA parameters:\n"
-              << "  mode                        = " << params.mode << "\n"
-              << "  random_seed                 = " << params.random_seed << "\n\n"
+    auto cont_fitness = [&](int r_size, double *rvec) -> double {
+      return circuit_performance(vector_size, circuit_vector.data(), r_size,
+                                 rvec);
+    };
 
-              << "  population_size             = " << params.population_size << "\n"
-              << "  elite_count                 = " << params.elite_count << "\n"
-              << "  max_iterations              = " << params.max_iterations << "\n\n"
+    auto cont_validity = [&](int r_size, double *rvec) -> bool {
+      Circuit c(num_units, rvec); // use volume constructor!
+      c.initialize_from_vector(vector_size, circuit_vector.data(), rvec);
+      return c.check_validity(vector_size, circuit_vector.data(), r_size, rvec);
+    };
 
-              << "  tournament_size             = " << params.tournament_size << "\n"
-              << "  selection_pressure          = " << params.selection_pressure << "\n\n"
+    optimize(num_units, volume_params.data(), cont_fitness, cont_validity,
+             params);
+  }
 
-              << "  crossover_probability       = " << params.crossover_probability << "\n"
-              << "  crossover_points            = " << params.crossover_points << "\n\n"
+  else {
+    std::cout << "Running hybrid optimization (connections + volumes)...\n";
 
-              << "  mutation_probability        = " << params.mutation_probability << "\n"
-              << "  mutation_step_size          = " << params.mutation_step_size << "\n"
-              << "  allow_mutation_wrapping     = " << std::boolalpha << params.allow_mutation_wrapping << "\n\n"
+    // Redirect cout to null stream to silence debug output
+    // std::cout.rdbuf(null_stream.rdbuf());
 
-              << "  use_inversion               = " << std::boolalpha << params.use_inversion << "\n"
-              << "  inversion_probability       = " << params.inversion_probability << "\n\n"
+    // Define hybrid fitness and validity functions
+    auto hybrid_fitness = [](int i_size, int *i_vec, int r_size,
+                             double *r_vec) -> double {
+      return circuit_performance(i_size, i_vec, r_size, r_vec);
+    };
 
-              << "  use_scaling_mutation        = " << std::boolalpha << params.use_scaling_mutation << "\n"
-              << "  scaling_mutation_prob       = " << params.scaling_mutation_prob << "\n"
-              << "  scaling_mutation_min        = " << params.scaling_mutation_min << "\n"
-              << "  scaling_mutation_max        = " << params.scaling_mutation_max << "\n\n"
+    auto hybrid_validity = [num_units](int i_size, int *i_vec, int r_size,
+                                       double *r_vec) -> bool {
+      Circuit c(num_units);
+      c.initialize_from_vector(i_size, i_vec);
+      return c.check_validity(i_size, i_vec, r_size, r_vec);
+    };
 
-              << "  convergence_threshold       = " << params.convergence_threshold << "\n"
-              << "  stall_generations           = " << params.stall_generations << "\n\n"
+    // Run hybrid optimization (cout is redirected, so no debug output)
+    optimize(vector_size, circuit_vector.data(), num_units,
+             volume_params.data(), hybrid_fitness, hybrid_validity, params);
+  }
 
-              << "  verbose                     = " << std::boolalpha << params.verbose << "\n"
-              << "  log_results                 = " << std::boolalpha << params.log_results << "\n"
-              << "  log_file                    = " << params.log_file << "\n\n";
+  // Calculate performance with optimized values (still silent)
+  double performance = circuit_performance(vector_size, circuit_vector.data(),
+                                           num_units, volume_params.data());
 
-    // Optimisation mode
-    auto mode = params.mode; // "d", "c" or "h" from parameters.txt
-    std::cout << "Mode: " << mode << "\n";
+  // Create a circuit object for detailed analysis, still silent
+  Circuit circuit(num_units, volume_params.data());
+  circuit.initialize_from_vector(vector_size, circuit_vector.data(),
+                                 volume_params.data());
+  circuit.run_mass_balance();
 
-    // Set number of units
-    constexpr int num_units = 10;
-    constexpr int vector_size = 2 * num_units + 1;
+  // Extract important metrics before restoring cout
+  double palusznium_recovery = circuit.get_palusznium_recovery() * 100;
+  double palusznium_grade = circuit.get_palusznium_grade() * 100;
+  double gormanium_recovery = circuit.get_gormanium_recovery() * 100;
+  double gormanium_grade = circuit.get_gormanium_grade() * 100;
 
-    // Create vectors to hold the optimization results
-    int circuit_vector[vector_size] = {0};
-    double volume_params[num_units];
-    for (int i = 0; i < num_units; i++)
-    {
-        volume_params[i] = 0.5; // Initialize at middle of range
+  // Calculate volumes and costs while still silent
+  double total_volume = 0.0;
+  double unit_volumes[num_units];
+  for (int i = 0; i < num_units; i++) {
+    if (mode == "h" || mode == "c") {
+      // Use scaled volumes
+      double min_volume = 2.5;
+      double max_volume = 20.0;
+      unit_volumes[i] =
+          min_volume + (max_volume - min_volume) * volume_params[i];
+    } else {
+      // Discrete mode: use fixed volume
+      unit_volumes[i] = 10.0;
     }
     if (mode == "d")
     {
