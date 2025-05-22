@@ -3,6 +3,10 @@ name: run-tests
 # Only run this when the branch changes
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
+      - 'hooks/**'
+      - 'README.md'
 
 # This job installs dependencies, builds the code and runs the hand rolled Python test framework
 jobs:

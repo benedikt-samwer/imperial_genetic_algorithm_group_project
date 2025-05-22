@@ -1,5 +1,8 @@
 # Genetic Algorithm parameters
 
+# Otimisation Type
+mode=c     # options: discrete -> d, continuous -> c, hybrid -> h
+
 # General
 max_iterations=200
 population_size=500
