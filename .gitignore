@@ -1047,7 +1047,6 @@ dkms.conf
 
 *.png
 *.dot
-*.sh
 **/build/
 **/lib/
 **/bin/
