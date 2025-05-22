@@ -26,25 +26,31 @@ jobs:
       with:
         python-version: 3.11
 
-    # Install dependencies
-    - name: Install dependencies
+    - name: Install build dependencies
       run: |
           sudo apt-get update
-          sudo apt-get install -y libopenmpi-dev build-essential libcunit1-dev
+          sudo apt-get install -y libopenmpi-dev build-essential cmake ninja-build
+          # libcunit1-dev is likely no longer needed if all tests move to GTest
+          # sudo apt-get install -y libcunit1-dev 
 
-    - name: Configure the code
+    - name: Configure CMake
       run: |
-          cmake .
+          # Using Ninja for potentially faster builds
+          cmake -B build -S . -G Ninja
       
-    - name: Build the GA library
+    - name: Build all targets (including tests)
       run: |
-          make geneticAlgorithm
+          cmake --build build --parallel
 
-    - name: Build the circuit optimizer
-      run: |
-          make Circuit_Optimizer
+    # - name: Build the GA library (Handled by 'Build all targets')
+    #   run: |
+    #       make geneticAlgorithm
 
-    - name: Run the tests
+    # - name: Build the circuit optimizer (Handled by 'Build all targets')
+    #   run: |
+    #       make Circuit_Optimizer
+
+    - name: Run tests with CTest
+      working-directory: build # CTest should usually be run from the build directory
       run: |
-          make all
-          ctest -VV
+          ctest -VV --output-on-failure

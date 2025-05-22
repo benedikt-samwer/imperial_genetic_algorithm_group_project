@@ -8,9 +8,29 @@
 #include <iostream>
 #include <stdio.h>
 
-Circuit::Circuit(int num_units) {
-  n = num_units;
-  this->units.resize(num_units);
+Circuit::Circuit(int num_units) 
+    : units(num_units), 
+      feed_unit(0),
+      feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
+      feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
+      feed_waste_rate(Constants::Feed::DEFAULT_WASTE_FEED),
+      palusznium_product_palusznium(0.0), 
+      palusznium_product_gormanium(0.0),
+      palusznium_product_waste(0.0), 
+      gormanium_product_palusznium(0.0),
+      gormanium_product_gormanium(0.0),
+      gormanium_product_waste(0.0),
+      tailings_palusznium(0.0),
+      tailings_gormanium(0.0),
+      tailings_waste(0.0),
+      palusznium_value(Constants::Economic::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM),
+      gormanium_value(Constants::Economic::GORMANIUM_VALUE_IN_GORMANIUM_STREAM),
+      waste_penalty_palusznium(Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
+      waste_penalty_gormanium(Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
+      beta(nullptr),
+      circuit_vector(nullptr),
+      n(num_units)
+{
 }
 
 // 1. length check: length must be 2*n+1
@@ -191,23 +211,10 @@ void Circuit::mark_units(int unit_num) {
 }
 
 Circuit::Circuit(int num_units, double *beta)
-    : units(num_units), feed_unit(0),
-
-      feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
-      feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
-      feed_waste_rate(Constants::Feed::DEFAULT_WASTE_FEED),
-      palusznium_product_palusznium(0.0), palusznium_product_gormanium(0.0),
-      palusznium_product_waste(0.0), gormanium_product_palusznium(0.0),
-      gormanium_product_gormanium(0.0), gormanium_product_waste(0.0),
-      tailings_palusznium(0.0), tailings_gormanium(0.0), tailings_waste(0.0),
-      beta(beta),
-      palusznium_value(
-          Constants::Economic::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM),
-      gormanium_value(Constants::Economic::GORMANIUM_VALUE_IN_GORMANIUM_STREAM),
-      waste_penalty_palusznium(
-          Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
-      waste_penalty_gormanium(
-          Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM) {}
+    : Circuit(num_units)  // Call the other constructor first
+{
+    this->beta = beta;
+}
 
 bool Circuit::initialize_from_vector(int vector_size,
                                      const int *circuit_vector) {
