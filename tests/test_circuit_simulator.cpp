@@ -1,46 +1,4 @@
-// #include <cmath>
-// #include <iostream>
 
-// #include "CSimulator.h"
-
-// int main(int argc, char * argv[])
-// {
-
-//       // dummy vector. Replace in your code with the actual circuit vector.
-//       int vec1[] = {0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8}  ;
-
-//       // dummy vector. Replace in your code with the actual circuit vector.
-
-//       // int vec2[] = {0, 2, 4, 6, 0, 2, 4, 1, 3, 0, 5, 5, 3, 5, 0, 6 }  ;
-
-//       // Test value based on stub circuit_performance function.
-//       // Replace with actual performance value.
-
-//       double result = circuit_performance(13, vec1);
-//       std::cout << "circuit_performance(13, vec1) = "<< result <<"\n";
-
-//       if (std::fabs(result - 301.91)<1.0e-2) { // NOTE: change the epsilon from 1.0e-8 to 1.0e-2
-//                   std::cout << "pass\n";
-//             } else {
-// 	        std::cout << "fail\n";
-//               return 1;
-//            }
-
-//       // Test value based on stub circuit_performance function.
-//       // Replace with actual performance value.
-      
-//       // std::cout << "circuit_performance(16, vec2) close to 29300.0:\n";
-//       // result =  circuit_performance(16, vec2);
-//       // std::cout << "circuit_performance(16, vec2) = "<< result<<"\n";
-//       // if (std::fabs(result - 29300.0)<1.0e-8)
-// 	//         std::cout << "pass\n";
-//       // else
-//       //       { 
-// 	//         std::cout << "fail";
-//       //         return 1;
-//       //       }
-	
-// }
 #include <cmath>
 #include <iostream>
 
@@ -53,13 +11,16 @@
 void run_test_case(const std::string& label, const std::vector<int>& circuit_vector) {
     std::cout << "\n=== Test Case: " << label << " ===\n";
     std::cout << "Circuit Vector: ";
-    double result = circuit_performance(static_cast<int>(circuit_vector.size()), const_cast<int*>(circuit_vector.data()));
+    // double result = circuit_performance(static_cast<int>(circuit_vector.size()), const_cast<int*>(circuit_vector.data()));
+
+    double result = circuit_performance(static_cast<int>(circuit_vector.size()), const_cast<int*>(circuit_vector.data()), false);
     std::cout << "Performance: " << result << " £/s\n";
     std::cout << "============================\n";
 }
  
 int main(int argc, char * argv[]) {
     Simulator_Parameters params = default_simulator_parameters;
+ 
     params.generate_visualization = false;
  
     std::vector<std::pair<std::string, std::vector<int>>> test_cases = {

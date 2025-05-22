@@ -5,6 +5,7 @@ CUnit::CUnit()
       feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
       k_palusznium(0.008), k_gormanium(0.004), k_waste(0.0005),
       conc_palusznium(0.0), conc_gormanium(0.0), conc_waste(0.0),
+      rho(0.0), phi(0.0),
       tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0), V_min(2.5), V_max(20.0) {}
 
 CUnit::CUnit(int conc, int tails)
@@ -14,16 +15,46 @@ CUnit::CUnit(int conc, int tails)
       k_palusznium(Constants::Physical::K_PALUSZNIUM),
       k_gormanium(Constants::Physical::K_GORMANIUM),
       k_waste(Constants::Physical::K_WASTE),
+      rho(Constants::Physical::MATERIAL_DENSITY),
+      phi(Constants::Physical::SOLIDS_CONTENT),
       conc_palusznium(0.0), conc_gormanium(0.0), conc_waste(0.0),
       tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0), V_min(Constants::Circuit::MIN_UNIT_VOLUME), V_max(Constants::Circuit::MAX_UNIT_VOLUME) {}
+
+
+CUnit::CUnit(int conc, int tails, bool testFlag)
+    : conc_num(conc), tails_num(tails), mark(false),
+      volume(Constants::Circuit::DEFAULT_UNIT_VOLUME),
+      feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
+      k_palusznium(Constants::Physical::K_PALUSZNIUM),
+      k_gormanium(Constants::Physical::K_GORMANIUM),
+      k_waste(Constants::Physical::K_WASTE),
+      rho(Constants::Physical::MATERIAL_DENSITY),
+      phi(Constants::Physical::SOLIDS_CONTENT),
+      conc_palusznium(0.0), conc_gormanium(0.0), conc_waste(0.0),
+      tails_palusznium(0.0), tails_gormanium(0.0), tails_waste(0.0), V_min(Constants::Circuit::MIN_UNIT_VOLUME), V_max(Constants::Circuit::MAX_UNIT_VOLUME) {
+        if(testFlag) {
+            // std::cout<<"Here Test OPEN!!!!!!!"<<std::endl;
+            // std::cout<<"Constant: "<<Constants::Test::DEFAULT_UNIT_VOLUME<<std::endl;
+            this->k_palusznium = Constants::Test::K_PALUSZNIUM;
+            this->k_gormanium = Constants::Test::K_GORMANIUM;
+            this->k_waste = Constants::Test::K_WASTE;
+            this->rho = Constants::Test::MATERIAL_DENSITY;
+            this->phi = Constants::Test::SOLIDS_CONTENT;
+            this->V_min = Constants::Test::MIN_UNIT_VOLUME;
+            this->V_max = Constants::Test::MAX_UNIT_VOLUME;
+            this->volume = Constants::Test::DEFAULT_UNIT_VOLUME;
+            // std::cout<<"volume: "<<this->volume<<std::endl;
+        }
+      }
+
 
 
 
 void CUnit::process()
 {
     /* ----------- 1. Residence time τ ----------- */
-    constexpr double rho   = Constants::Physical::MATERIAL_DENSITY;   // 3000 kg/m³
-    constexpr double phi   = Constants::Physical::SOLIDS_CONTENT;       // 0.10
+    // constexpr double rho   = Constants::Physical::MATERIAL_DENSITY;   // 3000 kg/m³
+    // constexpr double phi   = Constants::Physical::SOLIDS_CONTENT;       // 0.10
 
     // total solids feed (kg/s)
     const double Ftot = feed_palusznium + feed_gormanium + feed_waste;

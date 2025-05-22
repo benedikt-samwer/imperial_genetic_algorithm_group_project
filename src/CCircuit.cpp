@@ -207,16 +207,74 @@ Circuit::Circuit(int num_units, double *beta)
       waste_penalty_palusznium(
           Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
       waste_penalty_gormanium(
-          Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM) {}
+          Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
+      palusznium_value_in_gormanium(Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM
+        ),
+      gormanium_value_in_palusznium(Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM)
+       {}
+
+Circuit::Circuit(int num_units, double *beta, bool testFlag)
+    : units(num_units), feed_unit(0),
+
+      feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
+      feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
+      feed_waste_rate(Constants::Feed::DEFAULT_WASTE_FEED),
+      palusznium_product_palusznium(0.0), palusznium_product_gormanium(0.0),
+      palusznium_product_waste(0.0), gormanium_product_palusznium(0.0),
+      gormanium_product_gormanium(0.0), gormanium_product_waste(0.0),
+      tailings_palusznium(0.0), tailings_gormanium(0.0), tailings_waste(0.0),
+      beta(beta),
+      palusznium_value(
+          Constants::Economic::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM),
+      gormanium_value(Constants::Economic::GORMANIUM_VALUE_IN_GORMANIUM_STREAM),
+      waste_penalty_palusznium(
+          Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
+      waste_penalty_gormanium(
+          Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
+    palusznium_value_in_gormanium(Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM
+        ),
+      gormanium_value_in_palusznium(Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM)
+           {
+            std::cout<<"testFlag: "<<testFlag<<std::endl;
+            if(testFlag) {
+                this->feed_palusznium_rate = Constants::Test::DEFAULT_PALUSZNIUM_FEED;
+                this->feed_gormanium_rate = Constants::Test::DEFAULT_GORMANIUM_FEED;
+                this->feed_waste_rate = Constants::Test::DEFAULT_WASTE_FEED;
+
+                this->palusznium_value = Constants::Test::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM;
+                this->gormanium_value = Constants::Test::GORMANIUM_VALUE_IN_GORMANIUM_STREAM;
+                this->waste_penalty_palusznium = Constants::Test::WASTE_PENALTY_IN_PALUSZNIUM_STREAM;
+                this->waste_penalty_gormanium = Constants::Test::WASTE_PENALTY_IN_GORMANIUM_STREAM;
+                this->palusznium_value_in_gormanium = Constants::Test::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM;
+                this->gormanium_value_in_palusznium = Constants::Test::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM;
+            }
+          }
+
 
 bool Circuit::initialize_from_vector(int vector_size,
                                      const int *circuit_vector) {
-  return initialize_from_vector(vector_size, circuit_vector, nullptr);
+  return initialize_from_vector(vector_size, circuit_vector, nullptr, false);
 }
+
+bool Circuit::initialize_from_vector(int vector_size,
+                                     const int *circuit_vector,
+                                     const double *beta) {
+  return initialize_from_vector(vector_size, circuit_vector, beta, false);
+}
+
+bool Circuit::initialize_from_vector(int vector_size,
+                                     const int *circuit_vector,
+                                     bool testFlag) {
+
+
+  // Initialize the circuit from the circuit vector
+  return initialize_from_vector(vector_size, circuit_vector, nullptr, testFlag);
+}
+
 
 // Initialize the circuit from a circuit vector
 bool Circuit::initialize_from_vector(int vector_size, const int *circuit_vector,
-                                     const double *beta) {
+                                     const double *beta, bool testFlag) {
   // num_units = n
   int num_units = (vector_size - 1) / 2;
   if (vector_size != 2 * num_units + 1)
@@ -249,7 +307,7 @@ bool Circuit::initialize_from_vector(int vector_size, const int *circuit_vector,
 
     // TODO: here we can set the volume of the unit through beta
     //  beta is a choosable parameter
-    units[i] = CUnit(conc, tails);
+    units[i] = CUnit(conc, tails, testFlag);
     if (beta != nullptr) {
 
       units[i].update_volume(beta[i]);
@@ -448,13 +506,15 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations) {
 // Calculate the economic value of the circuit
 double Circuit::get_economic_value() const {
   double value = 0.0;
+
   // Palusznium product
   value += palusznium_product_palusznium * palusznium_value;
-  value += palusznium_product_gormanium * -20.0;
+  value += palusznium_product_gormanium * gormanium_value_in_palusznium;
   value += palusznium_product_waste * waste_penalty_palusznium;
+
   // Gormanium product
-  value += gormanium_product_palusznium * 0.0;
   value += gormanium_product_gormanium * gormanium_value;
+  value += gormanium_product_palusznium * palusznium_value_in_gormanium;
   value += gormanium_product_waste * waste_penalty_gormanium;
 
   double total_volume = 0.0;

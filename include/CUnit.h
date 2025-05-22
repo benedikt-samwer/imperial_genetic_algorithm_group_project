@@ -61,6 +61,9 @@ class CUnit {
   double tails_palusznium;///< T_P  (kg s⁻¹)
   double tails_gormanium; ///< T_G  (kg s⁻¹)
   double tails_waste;     ///< T_W  (kg s⁻¹)
+
+  double rho;
+  double phi;
   
   /* -------------------- Computed recoveries for each component ----------- */
   double Rp, Rg, Rw; ///< Recoveries for each component
@@ -89,6 +92,9 @@ class CUnit {
    * No return value – results are written into conc_* and tails_*.
    * Caller is responsible for ensuring feed_* are populated beforehand.
    */
+
+  CUnit(int conc, int tails, bool testFlag);
+
   void process();
 
   /**

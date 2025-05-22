@@ -10,7 +10,7 @@ struct Simulator_Parameters default_simulator_parameters = {1e-6, 100};
 double circuit_performance(int vector_size, int* circuit_vector,
 
                         int unit_parameters_size, double *unit_parameters,
-                        struct Simulator_Parameters simulator_parameters) {
+                        struct Simulator_Parameters simulator_parameters, bool testFlag) {
 
     // Calculate the number of units
     int num_units = (vector_size - 1) / 2;
@@ -19,10 +19,14 @@ double circuit_performance(int vector_size, int* circuit_vector,
         // Invalid vector size
         return -1e12;
     }
+    std::cout<<testFlag<<std::endl;
+    if(testFlag){
+        std::cout<<"Here Test OPEN!!!!!!!"<<std::endl;
+    }
 
     // Initialize the circuit
-    Circuit circuit(num_units, unit_parameters);
-    if (!circuit.initialize_from_vector(vector_size, circuit_vector, unit_parameters)) {
+    Circuit circuit(num_units, unit_parameters, testFlag);
+    if (!circuit.initialize_from_vector(vector_size, circuit_vector, unit_parameters, testFlag)) {
         // Invalid structure
         return -1e12;
     }
@@ -44,8 +48,9 @@ double circuit_performance(int vector_size, int* circuit_vector,
                         int unit_parameters_size, double *unit_parameters){
     return circuit_performance(vector_size, circuit_vector,
                           unit_parameters_size, unit_parameters,
-                          default_simulator_parameters);
+                          default_simulator_parameters, false);
 }
+
 double circuit_performance(int vector_size, int* circuit_vector){
     int num_parameters = (vector_size-1)/2;
     double *parameters = new double[num_parameters];
@@ -54,8 +59,30 @@ double circuit_performance(int vector_size, int* circuit_vector){
     }
     double result = circuit_performance(vector_size, circuit_vector, 
                             num_parameters, nullptr,
-                            default_simulator_parameters);
+                            default_simulator_parameters, false);
 
     delete[] parameters;
     return result;
 }
+
+double circuit_performance(int vector_size, int* circuit_vector,
+                        int unit_parameters_size, double *unit_parameters,bool testFlag){
+    return circuit_performance(vector_size, circuit_vector,
+                          unit_parameters_size, unit_parameters,
+                          default_simulator_parameters, testFlag);
+}
+
+double circuit_performance(int vector_size, int* circuit_vector, bool testFlag){
+    int num_parameters = (vector_size-1)/2;
+    double *parameters = new double[num_parameters];
+    for (int i=0; i<num_parameters; i++) {
+        parameters[i] = 1.0;
+    }
+    double result = circuit_performance(vector_size, circuit_vector, 
+                            num_parameters, nullptr,
+                            default_simulator_parameters, testFlag);
+
+    delete[] parameters;
+    return result;
+}
+

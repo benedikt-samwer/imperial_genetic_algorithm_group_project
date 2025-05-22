@@ -69,3 +69,8 @@ double circuit_performance(int vector_size, int *circuit_vector,
 double circuit_performance(int vector_size, int *circuit_vector,
                         Simulator_Parameters simulator_parameters);
 double circuit_performance(int vector_size, int *circuit_vector);
+
+double circuit_performance(int vector_size, int *circuit_vector, bool testFlag);
+
+double circuit_performance(int vector_size, int *circuit_vector,
+                        int unit_parameters_size, double *unit_parameters, bool testFlag);

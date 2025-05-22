@@ -48,11 +48,19 @@ class Circuit {
     
     // Constructor with beta values for unit volumes
     Circuit(int num_units, double *beta);
+
+    // Test constructor with beta values and test flag
+    Circuit(int num_units, double *beta, bool testFlag);
     
     // Initialize the circuit from a circuit vector
     bool initialize_from_vector(int vector_size, const int* circuit_vector);
     bool initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta);
     
+    bool initialize_from_vector(int vector_size, const int* circuit_vector,
+                                bool testFlag);
+    bool initialize_from_vector(int vector_size, const int* circuit_vector,
+                                const double* beta, bool testFlag);
+
     // Check validity of a circuit vector
     bool check_validity(int vector_size, const int* circuit_vector);
     bool check_validity(int vector_size, const int* circuit_vector,
@@ -133,6 +141,8 @@ class Circuit {
     // Economic parameters
     double palusznium_value;      // £/kg in Palusznium stream
     double gormanium_value;       // £/kg in Gormanium stream
+    double gormanium_value_in_palusznium; // £/kg in Palusznium stream
+    double palusznium_value_in_gormanium; // £/kg in Gormanium stream
     double waste_penalty_palusznium; // £/kg waste in Palusznium stream
     double waste_penalty_gormanium;  // £/kg waste in Gormanium stream
 
