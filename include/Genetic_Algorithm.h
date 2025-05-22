@@ -9,50 +9,51 @@
 #include <vector>
 
 // Structure to hold genetic algorithm parameters
-struct Algorithm_Parameters {
-  // Number of units
-  int num_units = 10;
+struct Algorithm_Parameters
+{
+    // Number of units
+    int num_units = 10;
 
-  // Optimization mode: : "d", "c", or "h"
-  std::string mode = "h";
+    // Optimization mode: : "d", "c", or "h"
+    std::string mode = "h";
 
-  // General parameters
-  int random_seed = -1;
-  int max_iterations = 1000; // Maximum number of generations
-  int population_size = 100; // Number of individuals in the population
-  int elite_count = 1;       // Number of best individuals to keep unchanged
+    // General parameters
+    int random_seed = -1;
+    int max_iterations = 1000; // Maximum number of generations
+    int population_size = 100; // Number of individuals in the population
+    int elite_count = 1;       // Number of best individuals to keep unchanged
 
-  // Selection parameters
-  double selection_pressure = 1.5; // Linear rank selection pressure parameter
-  int tournament_size = 2;         // Number of contenders per tournament
+    // Selection parameters
+    double selection_pressure = 1.5; // Linear rank selection pressure parameter
+    int tournament_size = 2;         // Number of contenders per tournament
 
-  // Crossover parameters
-  double crossover_probability = 0.8; // Probability of crossover
-  int crossover_points = 1;           // Number of crossover points (1 or 2)
+    // Crossover parameters
+    double crossover_probability = 0.8; // Probability of crossover
+    int crossover_points = 1;           // Number of crossover points (1 or 2)
 
-  // Mutation parameters
-  double mutation_probability = 0.01; // Probability of mutation per gene
-  int mutation_step_size = 2;         // Maximum change in value during mutation
-  bool allow_mutation_wrapping = true; // Allow mutations to wrap around
+    // Mutation parameters
+    double mutation_probability = 0.01;  // Probability of mutation per gene
+    int mutation_step_size = 2;          // Maximum change in value during mutation
+    bool allow_mutation_wrapping = true; // Allow mutations to wrap around
 
-  // Inversion‐mutation parameters
-  bool use_inversion = true;           // turn inversion on/off
-  double inversion_probability = 0.05; // chance to invert per child
+    // Inversion‐mutation parameters
+    bool use_inversion = true;           // turn inversion on/off
+    double inversion_probability = 0.05; // chance to invert per child
 
-  // Scaling-mutation parameters
-  bool use_scaling_mutation = true;
-  double scaling_mutation_prob = 0.2; // how often to apply a scale mutation
-  double scaling_mutation_min = 0.8;  // lower bound on the scale factor
-  double scaling_mutation_max = 1.2;  // upper bound on the scale factor
+    // Scaling-mutation parameters
+    bool use_scaling_mutation = true;
+    double scaling_mutation_prob = 0.2; // how often to apply a scale mutation
+    double scaling_mutation_min = 0.8;  // lower bound on the scale factor
+    double scaling_mutation_max = 1.2;  // upper bound on the scale factor
 
-  // Termination criteria
-  double convergence_threshold = 1e-6; // Convergence threshold
-  int stall_generations = 50;          // Max generations with no improvement
+    // Termination criteria
+    double convergence_threshold = 1e-6; // Convergence threshold
+    int stall_generations = 50;          // Max generations with no improvement
 
-  // Debug options
-  bool verbose = false;                // Print progress information
-  bool log_results = false;            // Log results to file
-  std::string log_file = "ga_log.txt"; // Log file name
+    // Debug options
+    bool verbose = false;                // Print progress information
+    bool log_results = false;            // Log results to file
+    std::string log_file = "ga_log.txt"; // Log file name
 };
 
 // Default algorithm parameters
