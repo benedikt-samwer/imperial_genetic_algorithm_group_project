@@ -4,6 +4,7 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
+#include <omp.h> // Add OpenMP header
 #include <random>
 #include <set>
 #include <vector>
@@ -14,14 +15,14 @@ static int g_random_seed = -1; // -1 means use random seed
 // Add this function to set the seed
 void set_random_seed(int seed) { g_random_seed = seed; }
 
-// Modify the rng() function
+// Modified rng() function - now properly thread-safe
 static std::mt19937 &rng() {
   if (g_random_seed >= 0) {
-    // Deterministic mode
-    static thread_local std::mt19937 gen(g_random_seed);
+    // Deterministic mode - use thread ID to ensure different seeds per thread
+    static thread_local std::mt19937 gen(g_random_seed + omp_get_thread_num());
     return gen;
   } else {
-    // Non-deterministic mode (current behavior)
+    // Non-deterministic mode
     static thread_local std::mt19937 gen(std::random_device{}());
     return gen;
   }
@@ -230,7 +231,7 @@ static OptimizationResult last_result;
 OptimizationResult get_last_optimization_result() { return last_result; }
 
 // ********************************************************************
-// 1) Discrete-only optimize with improved initialization
+// 1) Discrete-only optimize with PARALLEL fitness evaluation
 // ********************************************************************
 int optimize(int int_vector_size, int *int_vector,
              std::function<double(int, int *)> func,
@@ -238,6 +239,10 @@ int optimize(int int_vector_size, int *int_vector,
              Algorithm_Parameters params) {
   using Clock = std::chrono::high_resolution_clock;
   auto t0 = Clock::now();
+
+  // Print OpenMP info
+  std::cout << "OpenMP: Using " << omp_get_max_threads()
+            << " threads for parallel fitness evaluation" << std::endl;
 
   // --- 1. Improved population initialization
   int n_units = (int_vector_size - 1) / 2;
@@ -247,7 +252,6 @@ int optimize(int int_vector_size, int *int_vector,
   // Generate valid initial population
   std::vector<std::vector<int>> population =
       generate_initial_population(params.population_size, n_units, validity);
-  std::cout << "Successfully generate initial population" << std::endl;
 
   // If we couldn't generate enough valid circuits, adjust population size
   if (population.size() < params.population_size) {
@@ -263,8 +267,11 @@ int optimize(int int_vector_size, int *int_vector,
 
   // --- 2. Main GA loop
   for (int gen = 0; gen < params.max_iterations; ++gen) {
-    // 2a) Evaluate fitness of each genome
+    // 2a) PARALLEL fitness evaluation - THIS IS THE KEY OPTIMIZATION!
     std::vector<double> fitnesses(population.size());
+
+// Parallel fitness evaluation using OpenMP
+#pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < population.size(); ++i) {
       int *gdata = population[i].data();
       if (!validity(int_vector_size, gdata)) {
@@ -400,24 +407,33 @@ int optimize(int int_vector_size, int *int_vector,
     if (params.verbose && gen % 10 == 0) {
       std::cout << "[GA] Gen " << gen << " best fitness "
                 << *std::max_element(fitnesses.begin(), fitnesses.end())
-                << std::endl;
+                << " (thread utilization: " << omp_get_max_threads()
+                << " cores)" << std::endl;
     }
   }
 
   // --- 3. Write best genome back into int_vector[]
-  // (Re-evaluate final fitness to find the winner)
+  // (Re-evaluate final fitness to find the winner) - Also parallel!
   double best_fit = -1e12;
-  std::vector<int> *best_genome = nullptr;
-  for (auto &g : population) {
-    double fit = func(int_vector_size, g.data());
-    if (fit > best_fit) {
-      best_fit = fit;
-      best_genome = &g;
+  size_t best_idx = 0;
+  std::vector<double> final_fitnesses(population.size());
+
+#pragma omp parallel for schedule(dynamic)
+  for (size_t i = 0; i < population.size(); ++i) {
+    final_fitnesses[i] = func(int_vector_size, population[i].data());
+  }
+
+  // Find best (sequential)
+  for (size_t i = 0; i < population.size(); ++i) {
+    if (final_fitnesses[i] > best_fit) {
+      best_fit = final_fitnesses[i];
+      best_idx = i;
     }
   }
-  if (best_genome) {
-    for (int i = 0; i < int_vector_size; ++i)
-      int_vector[i] = (*best_genome)[i];
+
+  // Copy best solution
+  for (int i = 0; i < int_vector_size; ++i) {
+    int_vector[i] = population[best_idx][i];
   }
 
   // Store optimization results
@@ -428,6 +444,7 @@ int optimize(int int_vector_size, int *int_vector,
   if (params.verbose) {
     double secs = std::chrono::duration<double>(t1 - t0).count();
     std::cout << "[GA] Completed in " << secs << "s, best_fitness=" << best_fit
+              << " (using " << omp_get_max_threads() << " parallel threads)"
               << "\n";
   }
 
@@ -435,7 +452,7 @@ int optimize(int int_vector_size, int *int_vector,
 }
 
 // ********************************************************************
-// 2) Continuous-only optimize
+// 2) Continuous-only optimize with PARALLEL fitness evaluation
 // ********************************************************************
 int optimize(int real_vector_size, double *real_vector,
              std::function<double(int, double *)> func,
@@ -443,6 +460,9 @@ int optimize(int real_vector_size, double *real_vector,
              Algorithm_Parameters params) {
   using Clock = std::chrono::high_resolution_clock;
   auto t0 = Clock::now();
+
+  std::cout << "OpenMP: Using " << omp_get_max_threads()
+            << " threads for continuous optimization" << std::endl;
 
   std::uniform_real_distribution<double> dist01(0.0, 1.0);
   std::vector<std::vector<double>> population;
@@ -463,8 +483,10 @@ int optimize(int real_vector_size, double *real_vector,
   int max_stall = params.stall_generations;
 
   for (int gen = 0; gen < params.max_iterations; ++gen) {
-    // Evaluate fitness
+    // PARALLEL fitness evaluation
     std::vector<double> fitnesses(population.size());
+
+#pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < population.size(); ++i) {
       fitnesses[i] = validity(real_vector_size, population[i].data())
                          ? func(real_vector_size, population[i].data())
@@ -537,25 +559,25 @@ int optimize(int real_vector_size, double *real_vector,
         }
       }
 
-      if (params.use_scaling_mutation &&
-          dist01(rng()) < params.scaling_mutation_prob) {
-        // pick a random gene index
-        int idx =
-            std::uniform_int_distribution<int>(0, real_vector_size - 1)(rng());
-        // pick a random scaling factor in [min…max]
-        double factor = std::uniform_real_distribution<double>(
-            params.scaling_mutation_min, params.scaling_mutation_max)(rng());
-        c1[idx] = std::clamp(c1[idx] * factor, 0.0, 1.0);
-      }
+      // Optional: scaling mutation
+      if (params.use_scaling_mutation) {
+        std::uniform_int_distribution<int> idx_dist(0, real_vector_size - 1);
+        std::uniform_real_distribution<double> scale_dist(
+            params.scaling_mutation_min, params.scaling_mutation_max);
 
-      // — same for child #2
-      if (params.use_scaling_mutation &&
-          dist01(rng()) < params.scaling_mutation_prob) {
-        int idx =
-            std::uniform_int_distribution<int>(0, real_vector_size - 1)(rng());
-        double factor = std::uniform_real_distribution<double>(
-            params.scaling_mutation_min, params.scaling_mutation_max)(rng());
-        c2[idx] = std::clamp(c2[idx] * factor, 0.0, 1.0);
+        // Child 1
+        if (dist01(rng()) < params.scaling_mutation_prob) {
+          int idx = idx_dist(rng());
+          double factor = scale_dist(rng());
+          c1[idx] = std::clamp(c1[idx] * factor, 0.0, 1.0);
+        }
+
+        // Child 2
+        if (dist01(rng()) < params.scaling_mutation_prob) {
+          int idx = idx_dist(rng());
+          double factor = scale_dist(rng());
+          c2[idx] = std::clamp(c2[idx] * factor, 0.0, 1.0);
+        }
       }
 
       next_gen.push_back(std::move(c1));
@@ -567,23 +589,32 @@ int optimize(int real_vector_size, double *real_vector,
 
     if (params.verbose && gen % (params.max_iterations / 10) == 0) {
       std::cout << "[GA-Real] Gen " << gen << " best fitness " << gen_best
+                << " (parallel threads: " << omp_get_max_threads() << ")"
                 << "\n";
     }
   }
 
-  // Copy best solution
+  // PARALLEL final evaluation
   double best_fit = -1e12;
-  std::vector<double> *best_genome = nullptr;
-  for (auto &g : population) {
-    double fit = func(real_vector_size, g.data());
-    if (fit > best_fit) {
-      best_fit = fit;
-      best_genome = &g;
+  size_t best_idx = 0;
+  std::vector<double> final_fitnesses(population.size());
+
+#pragma omp parallel for schedule(dynamic)
+  for (size_t i = 0; i < population.size(); ++i) {
+    final_fitnesses[i] = func(real_vector_size, population[i].data());
+  }
+
+  // Find best (sequential)
+  for (size_t i = 0; i < population.size(); ++i) {
+    if (final_fitnesses[i] > best_fit) {
+      best_fit = final_fitnesses[i];
+      best_idx = i;
     }
   }
-  if (best_genome) {
-    for (int i = 0; i < real_vector_size; ++i)
-      real_vector[i] = (*best_genome)[i];
+
+  // Copy best solution
+  for (int i = 0; i < real_vector_size; ++i) {
+    real_vector[i] = population[best_idx][i];
   }
 
   // Store optimization results
@@ -594,229 +625,24 @@ int optimize(int real_vector_size, double *real_vector,
   if (params.verbose) {
     double secs = std::chrono::duration<double>(t1 - t0).count();
     std::cout << "[GA-Real] Completed in " << secs
-              << "s, best_fitness=" << best_fit << "\n";
+              << "s, best_fitness=" << best_fit << " (using "
+              << omp_get_max_threads() << " parallel threads)" << "\n";
   }
 
   return 0;
 }
-/*
+
 // ********************************************************************
-// 3) Hybrid optimize (both discrete and continuous)
+// 3) Hybrid optimize with sequential approach but parallel evaluations
 // ********************************************************************
-int optimize(int int_vector_size, int *int_vector, int real_vector_size,
-             double *real_vector,
-             std::function<double(int, int *, int, double *)> func,
-             std::function<bool(int, int *, int, double *)> validity,
-             Algorithm_Parameters params) {
-  using Clock = std::chrono::high_resolution_clock;
-  auto t0 = Clock::now();
-
-  std::uniform_real_distribution<double> u01(0.0, 1.0);
-  std::uniform_real_distribution<double>
-mutation_step_dist(-params.mutation_step_size, params.mutation_step_size);
-  std::uniform_int_distribution<int> int_step_dist(-params.mutation_step_size,
-                                                   params.mutation_step_size);
-
-  int n_units = (int_vector_size - 1) / 2;
-  int min_gene = 0; // Changed from -3 to match circuit vector layout
-  int max_gene = n_units + 2;
-  int gene_range = max_gene - min_gene + 1;
-  std::uniform_int_distribution<int> gene_dist(min_gene, max_gene);
-
-  // --- Initialize population using improved initialization
-  std::vector<std::pair<std::vector<int>, std::vector<double>>> population;
-
-  // We'll use the improved discrete initialization for the integer part
-  auto validity_int_only = [&](int size, int* ivec) {
-      // Create a dummy volume vector for validity check
-      std::vector<double> dummy_vol(real_vector_size, 0.5);
-      return validity(size, ivec, real_vector_size, dummy_vol.data());
-  };
-
-  // Generate valid circuit templates
-  auto int_templates = generate_initial_population(params.population_size,
-n_units, validity_int_only);
-
-  // Now create population with both int and real parts
-  while (population.size() < params.population_size && !int_templates.empty()) {
-      // Get a valid integer vector
-      std::vector<int> int_part = int_templates.back();
-      int_templates.pop_back();
-
-      // Create random real vector
-      std::vector<double> real_part(real_vector_size);
-      for (double &x : real_part) x = u01(rng());
-
-      // Check combined validity
-      if (validity(int_vector_size, int_part.data(),
-                  real_vector_size, real_part.data())) {
-          population.emplace_back(std::move(int_part), std::move(real_part));
-      }
-  }
-
-  // If we couldn't generate enough valid individuals, adjust population size
-  if (population.size() < params.population_size) {
-      std::cout << "Warning: Could only generate " << population.size()
-                << " valid combined circuits, adjusting population size" <<
-std::endl; params.population_size = population.size();
-  }
-
-  double best_overall = -1e300;
-  int stall_count = 0;
-
-  for (int gen = 0; gen < params.max_iterations; ++gen) {
-    // Evaluate fitness
-    std::vector<double> fitnesses(population.size());
-    for (size_t i = 0; i < population.size(); ++i) {
-      auto &[i_part, r_part] = population[i];
-      fitnesses[i] = validity(int_vector_size, i_part.data(),
-                              real_vector_size, r_part.data())
-                         ? func(int_vector_size, i_part.data(),
-                                real_vector_size, r_part.data())
-                         : -1e9;
-    }
-
-    double gen_best = *std::max_element(fitnesses.begin(), fitnesses.end());
-    if (gen_best > best_overall + params.convergence_threshold) {
-      best_overall = gen_best;
-      stall_count = 0;
-    } else {
-      stall_count++;
-    }
-    if (stall_count >= params.stall_generations) break;
-
-    // Elitism
-    std::vector<std::pair<std::vector<int>, std::vector<double>>> next_gen;
-    {
-      auto best_it = std::max_element(fitnesses.begin(), fitnesses.end());
-      size_t best_idx = std::distance(fitnesses.begin(), best_it);
-      next_gen.push_back(population[best_idx]);
-    }
-
-    // Tournament selection
-    int k = params.tournament_size > 0 ? params.tournament_size : 2;
-    std::uniform_int_distribution<size_t> pop_dist(0, population.size() - 1);
-    auto pick_parent = [&]() {
-      size_t best = pop_dist(rng());
-      double best_fit = fitnesses[best];
-      for (int i = 1; i < k; ++i) {
-        size_t idx = pop_dist(rng());
-        if (fitnesses[idx] > best_fit) {
-          best = idx;
-          best_fit = fitnesses[idx];
-        }
-      }
-      return population[best];
-    };
-
-    // Fill rest of population
-    while (next_gen.size() < population.size()) {
-      auto [p1_int, p1_real] = pick_parent();
-      auto [p2_int, p2_real] = pick_parent();
-
-      std::vector<int> c1_int = p1_int, c2_int = p2_int;
-      std::vector<double> c1_real = p1_real, c2_real = p2_real;
-
-      // Crossover (discrete)
-      if (u01(rng()) < params.crossover_probability) {
-        int cut = std::uniform_int_distribution<int>(1, int_vector_size -
-1)(rng()); for (int j = cut; j < int_vector_size; ++j) std::swap(c1_int[j],
-c2_int[j]);
-      }
-
-      // Crossover (real-valued uniform)
-      if (u01(rng()) < params.crossover_probability) {
-        for (int j = 0; j < real_vector_size; ++j) {
-          if (u01(rng()) < 0.5)
-            std::swap(c1_real[j], c2_real[j]);
-        }
-      }
-
-      // Mutation (discrete with wrapping)
-      for (int j = 0; j < int_vector_size; ++j) {
-        if (u01(rng()) < params.mutation_probability) {
-          int step = int_step_dist(rng());
-          int val = c1_int[j] + step;
-          val = min_gene + ((val - min_gene) % gene_range + gene_range) %
-gene_range; c1_int[j] = val;
-        }
-        if (u01(rng()) < params.mutation_probability) {
-          int step = int_step_dist(rng());
-          int val = c2_int[j] + step;
-          val = min_gene + ((val - min_gene) % gene_range + gene_range) %
-gene_range; c2_int[j] = val;
-        }
-      }
-
-      // Mutation (real bounded in [0, 1])
-      for (int j = 0; j < real_vector_size; ++j) {
-        if (u01(rng()) < params.mutation_probability) {
-          c1_real[j] = std::clamp(c1_real[j] + mutation_step_dist(rng()),
-0.0, 1.0);
-        }
-        if (u01(rng()) < params.mutation_probability) {
-          c2_real[j] = std::clamp(c2_real[j] + mutation_step_dist(rng()),
-0.0, 1.0);
-        }
-      }
-
-      // Check validity of both children
-      if (validity(int_vector_size, c1_int.data(),
-                  real_vector_size, c1_real.data())) {
-          next_gen.emplace_back(std::move(c1_int), std::move(c1_real));
-      }
-
-      if (next_gen.size() < population.size() &&
-          validity(int_vector_size, c2_int.data(),
-                  real_vector_size, c2_real.data())) {
-          next_gen.emplace_back(std::move(c2_int), std::move(c2_real));
-      }
-    }
-
-    population.swap(next_gen);
-
-    if (params.verbose && gen % 10 == 0) {
-      std::cout << "[GA-Mixed] Gen " << gen << " best fitness " << gen_best <<
-"\n";
-    }
-  }
-
-  // Copy best solution
-  double best_fit = -1e12;
-  const std::pair<std::vector<int>, std::vector<double>>* best = nullptr;
-  for (auto &g : population) {
-    double fit = func(int_vector_size, g.first.data(),
-                      real_vector_size, g.second.data());
-    if (fit > best_fit) {
-      best_fit = fit;
-      best = &g;
-    }
-  }
-
-  if (best) {
-    std::copy(best->first.begin(), best->first.end(), int_vector);
-    std::copy(best->second.begin(), best->second.end(), real_vector);
-  }
-
-  // Store optimization results
-  last_result.best_fitness = best_fit;
-  last_result.generations = params.max_iterations - stall_count;
-
-  auto t1 = Clock::now();
-  if (params.verbose) {
-    double secs = std::chrono::duration<double>(t1 - t0).count();
-    std::cout << "[GA-Mixed] Completed in " << secs
-              << "s, best_fitness=" << best_fit << "\n";
-  }
-
-  return 0;
-}*/
-
 int optimize(int int_vector_size, int *int_vector, int real_vector_size,
              double *real_vector,
              std::function<double(int, int *, int, double *)> hybrid_func,
              std::function<bool(int, int *, int, double *)> hybrid_validity,
              Algorithm_Parameters params) {
+
+  std::cout << "OpenMP: Using " << omp_get_max_threads()
+            << " threads for hybrid optimization" << std::endl;
 
   // Discrete step: optimize only int vector
   auto wrapped_func_int = [&](int n, int *v) {
