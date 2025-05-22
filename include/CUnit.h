@@ -21,50 +21,51 @@
 
 #pragma once
 
-#include <vector>
+#include "constants.h" // contains default k‑values, density, φ, etc.
 #include <iostream>
-#include "constants.h"   // contains default k‑values, density, φ, etc.
+#include <vector>
 
 /* ------------------------------------------------------------------ */
 /*                         Separation‑unit class                       */
 /* ------------------------------------------------------------------ */
 class CUnit {
- public:
-  // Index of the unit to which this unit's concentrate stream is connected 
+public:
+  // Index of the unit to which this unit's concentrate stream is connected
   int conc_num;
   // Index of the unit to which this unit's tailings stream is connected
   int tails_num;
-  // A Boolean that is changed to true if the unit has been seen during graph traversal
+  // A Boolean that is changed to true if the unit has been seen during graph
+  // traversal
   bool mark;
 
   /* ---------------- Physical / kinetic parameters ----------------------- */
-  double volume;          ///< Unit volume V  (m³) – default 10 m³
-  double V_min;          ///< Minimum volume (m³) – default 2.5 m³
-  double V_max;          ///< Maximum volume (m³) – default 20 m³
-  
+  double volume; ///< Unit volume V  (m³) – default 10 m³
+  double V_min;  ///< Minimum volume (m³) – default 2.5 m³
+  double V_max;  ///< Maximum volume (m³) – default 20 m³
+
   // Material flow rates (kg/s)
-  double feed_palusznium;       // Palusznium in feed
-  double feed_gormanium;        // Gormanium in feed  
-  double feed_waste;            // Waste material in feed
-  
+  double feed_palusznium; // Palusznium in feed
+  double feed_gormanium;  // Gormanium in feed
+  double feed_waste;      // Waste material in feed
+
   // Rate constants for separation (s⁻¹)
-  double k_palusznium;          // Rate constant for Palusznium
-  double k_gormanium;           // Rate constant for Gormanium
-  double k_waste;               // Rate constant for Waste
-  
+  double k_palusznium; // Rate constant for Palusznium
+  double k_gormanium;  // Rate constant for Gormanium
+  double k_waste;      // Rate constant for Waste
+
   /* -------------------- Computed outlet mass flowrates ------------------ */
   // Concentrate stream
   double conc_palusznium; ///< C_P  (kg s⁻¹)
   double conc_gormanium;  ///< C_G  (kg s⁻¹)
   double conc_waste;      ///< C_W  (kg s⁻¹)
   // Tails stream
-  double tails_palusznium;///< T_P  (kg s⁻¹)
-  double tails_gormanium; ///< T_G  (kg s⁻¹)
-  double tails_waste;     ///< T_W  (kg s⁻¹)
+  double tails_palusznium; ///< T_P  (kg s⁻¹)
+  double tails_gormanium;  ///< T_G  (kg s⁻¹)
+  double tails_waste;      ///< T_W  (kg s⁻¹)
 
   double rho;
   double phi;
-  
+
   /* -------------------- Computed recoveries for each component ----------- */
   double Rp, Rg, Rw; ///< Recoveries for each component
 

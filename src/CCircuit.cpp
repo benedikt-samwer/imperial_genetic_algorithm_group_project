@@ -8,30 +8,23 @@
 #include <iostream>
 #include <stdio.h>
 
-Circuit::Circuit(int num_units) 
-    : units(num_units), 
-      feed_unit(0),
+Circuit::Circuit(int num_units)
+    : units(num_units), feed_unit(0),
       feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
       feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
       feed_waste_rate(Constants::Feed::DEFAULT_WASTE_FEED),
-      palusznium_product_palusznium(0.0), 
-      palusznium_product_gormanium(0.0),
-      palusznium_product_waste(0.0), 
-      gormanium_product_palusznium(0.0),
-      gormanium_product_gormanium(0.0),
-      gormanium_product_waste(0.0),
-      tailings_palusznium(0.0),
-      tailings_gormanium(0.0),
-      tailings_waste(0.0),
-      palusznium_value(Constants::Economic::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM),
+      palusznium_product_palusznium(0.0), palusznium_product_gormanium(0.0),
+      palusznium_product_waste(0.0), gormanium_product_palusznium(0.0),
+      gormanium_product_gormanium(0.0), gormanium_product_waste(0.0),
+      tailings_palusznium(0.0), tailings_gormanium(0.0), tailings_waste(0.0),
+      palusznium_value(
+          Constants::Economic::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM),
       gormanium_value(Constants::Economic::GORMANIUM_VALUE_IN_GORMANIUM_STREAM),
-      waste_penalty_palusznium(Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
-      waste_penalty_gormanium(Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
-      beta(nullptr),
-      circuit_vector(nullptr),
-      n(num_units)
-{
-}
+      waste_penalty_palusznium(
+          Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
+      waste_penalty_gormanium(
+          Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
+      beta(nullptr), circuit_vector(nullptr), n(num_units) {}
 
 // 1. length check: length must be 2*n+1
 // 2. feed check: feed cannot directly feed to terminal
@@ -43,109 +36,120 @@ Circuit::Circuit(int num_units)
 // 8. final terminal check: P1/P2, TA must be present
 // 9. mass balance check: mass balance must converge
 bool Circuit::check_validity(int vector_size, const int *vec) {
-    // 1. length must be 2*n+1
-    int expected = 2 * n + 1;
-    if (vector_size != expected) {
-        // std::cout << "❌[Validity] Length mismatch: expected " << expected << ", got " << vector_size << std::endl;
-        return false;
+  // 1. length must be 2*n+1
+  int expected = 2 * n + 1;
+  if (vector_size != expected) {
+    // std::cout << "❌[Validity] Length mismatch: expected " << expected << ",
+    // got " << vector_size << std::endl;
+    return false;
+  }
+
+  // 2. feed check
+  feed_dest = vec[0]; // feed points to the unit
+  // feed cannot directly feed to terminal
+  if (feed_dest < 0 || feed_dest >= n) {
+    // std::cout << "❌[Validity] Feed destination " << feed_dest << " is
+    // invalid (must be 0 to " << (n-1) << ")" << std::endl;
+    return false;
+  }
+
+  // read each unit's conc and tail and do static check
+  struct Dest {
+    int conc;
+    int tail;
+  };
+  std::vector<Dest> dest(n);
+
+  int max_idx = n + 2; // the last valid index
+
+  for (int i = 0; i < n; ++i) {
+    int conc = vec[1 + 2 * i]; // conc points to the unit
+    int tail = vec[2 + 2 * i]; // tail points to the unit
+
+    // 3. index check
+    if (conc < 0 || conc > max_idx) {
+      // std::cout << "❌[Validity] Unit " << i << " concentrate destination "
+      // << conc << " is out of range" << std::endl;
+      return false;
+    }
+    if (tail < 0 || tail > max_idx) {
+      // std::cout << "❌[Validity] Unit " << i << " tailings destination " <<
+      // tail << " is out of range" << std::endl;
+      return false;
     }
 
-    // 2. feed check
-    feed_dest = vec[0]; // feed points to the unit
-    // feed cannot directly feed to terminal
-    if (feed_dest < 0 || feed_dest >= n) {
-        // std::cout << "❌[Validity] Feed destination " << feed_dest << " is invalid (must be 0 to " << (n-1) << ")" << std::endl;
-        return false;
+    // 4. no self-loop
+    if (conc == i || tail == i) {
+      // std::cout << "❌[Validity] Unit " << i << " has self-loop" <<
+      // std::endl;
+      return false;
     }
 
-    // read each unit's conc and tail and do static check
-    struct Dest {
-        int conc;
-        int tail;
-    };
-    std::vector<Dest> dest(n);
-
-    int max_idx = n + 2; // the last valid index
-
-    for (int i = 0; i < n; ++i) {
-        int conc = vec[1 + 2 * i]; // conc points to the unit
-        int tail = vec[2 + 2 * i]; // tail points to the unit
-
-        // 3. index check
-        if (conc < 0 || conc > max_idx) {
-            // std::cout << "❌[Validity] Unit " << i << " concentrate destination " << conc << " is out of range" << std::endl;
-            return false;
-        }
-        if (tail < 0 || tail > max_idx) {
-            // std::cout << "❌[Validity] Unit " << i << " tailings destination " << tail << " is out of range" << std::endl;
-            return false;
-        }
-
-        // 4. no self-loop
-        if (conc == i || tail == i) {
-            // std::cout << "❌[Validity] Unit " << i << " has self-loop" << std::endl;
-            return false;
-        }
-
-        // 5. same output
-        if (conc == tail) {
-            // std::cout << "❌[Validity] Unit " << i << " has same concentrate and tailings destination" << std::endl;
-            return false;
-        }
-
-        dest[i] = {conc, tail};
-
-        units[i].conc_num = conc;
-        units[i].tails_num = tail;
-        units[i].mark = false;
+    // 5. same output
+    if (conc == tail) {
+      // std::cout << "❌[Validity] Unit " << i << " has same concentrate and
+      // tailings destination" << std::endl;
+      return false;
     }
 
-    // 6. unit reachability check
-    this->mark_units(feed_dest);
+    dest[i] = {conc, tail};
 
-    for (int i = 0; i < n; ++i) {
-        if (!units[i].mark) {
-            // std::cout << "❌[Validity] Unit " << i << " is not reachable from feed" << std::endl;
-            return false;
-        }
-    }
+    units[i].conc_num = conc;
+    units[i].tails_num = tail;
+    units[i].mark = false;
+  }
 
-    // 7. two terminals check
-    std::vector<int8_t> cache(n, -1);
-    uint8_t global_mask = 0;
-    for (int i = 0; i < n; ++i) {
-        uint8_t mask = this->term_mask(i);
-        global_mask |= mask;
-        int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
-        if (cnt < 2) {
-            // std::cout << "❌[Validity] Unit " << i << " does not reach at least 2 different terminals" << std::endl;
-            return false;
-        }
-    }
+  // 6. unit reachability check
+  this->mark_units(feed_dest);
 
-    // 8. final terminal check: P1/P2, TA must be present
-    if ((global_mask & (0b001 | 0b010)) == 0) {
-        // std::cout << "❌[Validity] Circuit does not reach any product streams (P1 or P2)" << std::endl;
-        return false;
+  for (int i = 0; i < n; ++i) {
+    if (!units[i].mark) {
+      // std::cout << "❌[Validity] Unit " << i << " is not reachable from feed"
+      // << std::endl;
+      return false;
     }
-    
-    if ((global_mask & 0b100) == 0) {
-        // std::cout << "❌[Validity] Circuit does not reach tailings stream" << std::endl;
-        return false;
-    }
+  }
 
-    // check mass balance convergence
-    if (!run_mass_balance(1e-6, 100)) {
-        // std::cout << "❌[Validity] Mass balance did not converge" << std::endl;
-        return false;
+  // 7. two terminals check
+  std::vector<int8_t> cache(n, -1);
+  uint8_t global_mask = 0;
+  for (int i = 0; i < n; ++i) {
+    uint8_t mask = this->term_mask(i);
+    global_mask |= mask;
+    int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
+    if (cnt < 2) {
+      // std::cout << "❌[Validity] Unit " << i << " does not reach at least 2
+      // different terminals" << std::endl;
+      return false;
     }
+  }
 
-    // std::cout << "✅[Validity] Circuit passed all validity checks" << std::endl;
-    return true;
+  // 8. final terminal check: P1/P2, TA must be present
+  if ((global_mask & (0b001 | 0b010)) == 0) {
+    // std::cout << "❌[Validity] Circuit does not reach any product streams (P1
+    // or P2)" << std::endl;
+    return false;
+  }
+
+  if ((global_mask & 0b100) == 0) {
+    // std::cout << "❌[Validity] Circuit does not reach tailings stream" <<
+    // std::endl;
+    return false;
+  }
+
+  // check mass balance convergence
+  if (!run_mass_balance(1e-6, 100)) {
+    // std::cout << "❌[Validity] Mass balance did not converge" << std::endl;
+    return false;
+  }
+
+  // std::cout << "✅[Validity] Circuit passed all validity checks" <<
+  // std::endl;
+  return true;
 }
 bool Circuit::check_validity(int vector_size, const int *circuit_vector,
-                             int unit_parameters_size, double *unit_parameters)
-{
+                             int unit_parameters_size,
+                             double *unit_parameters) {
   bool valid = check_validity(vector_size, circuit_vector);
   // check the validity of the circuit vector
   if (!valid) {
@@ -154,13 +158,15 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
   }
 
   if (unit_parameters == nullptr) {
-    // std::cout << "✅[Validity] Circuit vector is valid, no parameters to check" << std::endl;
+    // std::cout << "✅[Validity] Circuit vector is valid, no parameters to
+    // check" << std::endl;
     return valid;
   }
 
   // the length of the continuous parameters must be exactly = n units
   if (unit_parameters_size != n) {
-    // std::cout << "❌[Parameters] Parameter length mismatch: expected " << n << ", got " << unit_parameters_size << std::endl;
+    // std::cout << "❌[Parameters] Parameter length mismatch: expected " << n
+    // << ", got " << unit_parameters_size << std::endl;
     return false;
   }
 
@@ -168,12 +174,14 @@ bool Circuit::check_validity(int vector_size, const int *circuit_vector,
   for (int i = 0; i < unit_parameters_size; ++i) {
     double beta = unit_parameters[i];
     if (beta < 0.0 || beta > 1.0 || std::isnan(beta)) {
-      // std::cout << "❌[Parameters] β" << i << " = " << beta << " is out of range [0,1]" << std::endl;
+      // std::cout << "❌[Parameters] β" << i << " = " << beta << " is out of
+      // range [0,1]" << std::endl;
       return false;
     }
   }
 
-  // std::cout << "✅[Validity] Circuit vector and parameters are valid" << std::endl;
+  // std::cout << "✅[Validity] Circuit vector and parameters are valid" <<
+  // std::endl;
   return true; // legal
 }
 
@@ -223,10 +231,10 @@ Circuit::Circuit(int num_units, double *beta)
           Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
       waste_penalty_gormanium(
           Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
-      palusznium_value_in_gormanium(Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM
-        ),
-      gormanium_value_in_palusznium(Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM)
-       {}
+      palusznium_value_in_gormanium(
+          Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM),
+      gormanium_value_in_palusznium(
+          Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM) {}
 
 Circuit::Circuit(int num_units, double *beta, bool testFlag)
     : units(num_units), feed_unit(0),
@@ -246,45 +254,47 @@ Circuit::Circuit(int num_units, double *beta, bool testFlag)
           Constants::Economic::WASTE_PENALTY_IN_PALUSZNIUM_STREAM),
       waste_penalty_gormanium(
           Constants::Economic::WASTE_PENALTY_IN_GORMANIUM_STREAM),
-    palusznium_value_in_gormanium(Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM
-        ),
-      gormanium_value_in_palusznium(Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM)
-           {
-            // std::cout<<"testFlag: "<<testFlag<<std::endl;
-            if(testFlag) {
-                this->feed_palusznium_rate = Constants::Test::DEFAULT_PALUSZNIUM_FEED;
-                this->feed_gormanium_rate = Constants::Test::DEFAULT_GORMANIUM_FEED;
-                this->feed_waste_rate = Constants::Test::DEFAULT_WASTE_FEED;
+      palusznium_value_in_gormanium(
+          Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM),
+      gormanium_value_in_palusznium(
+          Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM) {
+  // std::cout<<"testFlag: "<<testFlag<<std::endl;
+  if (testFlag) {
+    this->feed_palusznium_rate = Constants::Test::DEFAULT_PALUSZNIUM_FEED;
+    this->feed_gormanium_rate = Constants::Test::DEFAULT_GORMANIUM_FEED;
+    this->feed_waste_rate = Constants::Test::DEFAULT_WASTE_FEED;
 
-                this->palusznium_value = Constants::Test::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM;
-                this->gormanium_value = Constants::Test::GORMANIUM_VALUE_IN_GORMANIUM_STREAM;
-                this->waste_penalty_palusznium = Constants::Test::WASTE_PENALTY_IN_PALUSZNIUM_STREAM;
-                this->waste_penalty_gormanium = Constants::Test::WASTE_PENALTY_IN_GORMANIUM_STREAM;
-                this->palusznium_value_in_gormanium = Constants::Test::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM;
-                this->gormanium_value_in_palusznium = Constants::Test::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM;
-            }
-          }
+    this->palusznium_value =
+        Constants::Test::PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM;
+    this->gormanium_value =
+        Constants::Test::GORMANIUM_VALUE_IN_GORMANIUM_STREAM;
+    this->waste_penalty_palusznium =
+        Constants::Test::WASTE_PENALTY_IN_PALUSZNIUM_STREAM;
+    this->waste_penalty_gormanium =
+        Constants::Test::WASTE_PENALTY_IN_GORMANIUM_STREAM;
+    this->palusznium_value_in_gormanium =
+        Constants::Test::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM;
+    this->gormanium_value_in_palusznium =
+        Constants::Test::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM;
+  }
+}
 
 bool Circuit::initialize_from_vector(int vector_size,
                                      const int *circuit_vector) {
   return initialize_from_vector(vector_size, circuit_vector, nullptr, false);
 }
 
-bool Circuit::initialize_from_vector(int vector_size,
-                                     const int *circuit_vector,
+bool Circuit::initialize_from_vector(int vector_size, const int *circuit_vector,
                                      const double *beta) {
   return initialize_from_vector(vector_size, circuit_vector, beta, false);
 }
 
-bool Circuit::initialize_from_vector(int vector_size,
-                                     const int *circuit_vector,
+bool Circuit::initialize_from_vector(int vector_size, const int *circuit_vector,
                                      bool testFlag) {
-
 
   // Initialize the circuit from the circuit vector
   return initialize_from_vector(vector_size, circuit_vector, nullptr, testFlag);
 }
-
 
 // Initialize the circuit from a circuit vector
 bool Circuit::initialize_from_vector(int vector_size, const int *circuit_vector,
@@ -637,36 +647,39 @@ uint8_t Circuit::term_mask(int start) const {
   visited[start] = true;
 
   while (!q.empty()) {
-        int current = q.front();
-        q.pop();
+    int current = q.front();
+    q.pop();
 
-        const int conc_dest = units[current].conc_num;
-        const int tail_dest = units[current].tails_num;
+    const int conc_dest = units[current].conc_num;
+    const int tail_dest = units[current].tails_num;
 
-        process_destination(conc_dest, mask, visited, q);
-        process_destination(tail_dest, mask, visited, q);
+    process_destination(conc_dest, mask, visited, q);
+    process_destination(tail_dest, mask, visited, q);
 
-        if ((mask & (mask-1)) >= 3) break;
-    }
+    if ((mask & (mask - 1)) >= 3)
+      break;
+  }
 
-    return mask;
+  return mask;
 }
 
-void Circuit::process_destination(int dest, uint8_t& mask, 
-                                 std::vector<bool>& visited,
-                                 std::queue<int>& q) const {
-    if (dest >= n) {
-        if (dest == OUT_P1()) mask |= 0b001;
-        else if (dest == OUT_P2()) mask |= 0b010;
-        else if (dest == OUT_TA()) mask |= 0b100;
-    } else {
-        if (!visited[dest]) {
-            visited[dest] = true;
-            q.push(dest);
-        }
+void Circuit::process_destination(int dest, uint8_t &mask,
+                                  std::vector<bool> &visited,
+                                  std::queue<int> &q) const {
+  if (dest >= n) {
+    if (dest == OUT_P1())
+      mask |= 0b001;
+    else if (dest == OUT_P2())
+      mask |= 0b010;
+    else if (dest == OUT_TA())
+      mask |= 0b100;
+  } else {
+    if (!visited[dest]) {
+      visited[dest] = true;
+      q.push(dest);
     }
+  }
 }
-
 
 bool Circuit::save_all_units_to_csv(const std::string &filename) {
   std::ofstream ofs(filename, std::ios::app);

@@ -189,7 +189,7 @@ int main() {
       unit_volumes[i] = 10.0;
     }
     total_volume += unit_volumes[i];
-    }
+  }
 
   double operating_cost = 5.0 * std::pow(total_volume, 2.0 / 3.0);
   if (total_volume >= 150.0) {
