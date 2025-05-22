@@ -94,6 +94,8 @@ int main() {
   if (mode == "d") {
     std::cout << "Running DISCRETE optimization...\n";
 
+    std::cout.rdbuf(null_stream.rdbuf());
+
     auto discrete_fitness = [](int size, int *vec) -> double {
       // Discrete-only overload
       return circuit_performance(size, vec);
@@ -112,6 +114,8 @@ int main() {
 
   else if (mode == "c") {
     std::cout << "Running CONTINUOUS optimization...\n";
+
+    std::cout.rdbuf(null_stream.rdbuf());
 
     // Known-valid discrete circuit (hardcoded)
     const int fixed_circuit[vector_size] = {1, 2, 4, 3,  5, 3, 0, 8, 11, 7, 12,
@@ -135,7 +139,7 @@ int main() {
     std::cout << "Running hybrid optimization (connections + volumes)...\n";
 
     // Redirect cout to null stream to silence debug output
-    // std::cout.rdbuf(null_stream.rdbuf());
+    std::cout.rdbuf(null_stream.rdbuf());
 
     // Define hybrid fitness and validity functions
     auto hybrid_fitness = [](int i_size, int *i_vec, int r_size,
