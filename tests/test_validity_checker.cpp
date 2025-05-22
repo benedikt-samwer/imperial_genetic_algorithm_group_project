@@ -1,5 +1,6 @@
 // main.cpp 
 #include <vector>
+#include <cmath>  // 添加这行以获取 NAN 常量
 #include "CCircuit.h" 
 #include <gtest/gtest.h> // Include Google Test
 
