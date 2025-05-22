@@ -247,6 +247,8 @@ int optimize(int int_vector_size, int *int_vector,
   // Generate valid initial population
   std::vector<std::vector<int>> population =
       generate_initial_population(params.population_size, n_units, validity);
+      std::cout << "✅Successfully generate initial population"
+            << std::endl;
 
   // If we couldn't generate enough valid circuits, adjust population size
   if (population.size() < params.population_size) {
