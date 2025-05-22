@@ -470,7 +470,7 @@ int optimize(int int_vector_size, int* int_vector, std::function<double(int, int
         if (params.verbose && gen % 10 == 0)
         {
             std::cout << "[GA] Gen " << gen << " best fitness " << *std::max_element(fitnesses.begin(), fitnesses.end())
-                      << " (thread utilization: " << omp_get_max_threads() << " cores)" << std::endl;
+                      << " (thread utilization: " << omp_get_max_threads() << " cores)" << "\n";
         }
     }
 
@@ -511,8 +511,7 @@ int optimize(int int_vector_size, int* int_vector, std::function<double(int, int
     {
         double secs = std::chrono::duration<double>(t1 - t0).count();
         std::cout << "[GA] Completed in " << secs << "s, best_fitness=" << best_fit << " (using "
-                  << omp_get_max_threads() << " parallel threads)"
-                  << "\n";
+                  << omp_get_max_threads() << " parallel threads)" << "\n";
     }
 
     return 0;
@@ -670,8 +669,7 @@ int optimize(int real_vector_size, double* real_vector, std::function<double(int
         if (params.verbose && gen % (params.max_iterations / 10) == 0)
         {
             std::cout << "[GA-Real] Gen " << gen << " best fitness " << gen_best
-                      << " (parallel threads: " << omp_get_max_threads() << ")"
-                      << "\n";
+                      << " (parallel threads: " << omp_get_max_threads() << ")" << "\n";
         }
     }
 
