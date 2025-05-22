@@ -7,8 +7,10 @@
 
 #pragma once
 
-namespace Constants {
-namespace Test {
+namespace Constants
+{
+namespace Test
+{
 // Feed rates (kg/s)
 constexpr double DEFAULT_PALUSZNIUM_FEED = 10.0;
 constexpr double DEFAULT_GORMANIUM_FEED = 10.0;
@@ -28,9 +30,8 @@ constexpr double COST_COEFFICIENT = 5.0;
 constexpr double VOLUME_PENALTY_COEFFICIENT = 1000.0;
 
 // Material properties
-constexpr double MATERIAL_DENSITY =
-    3000.0;                            // kg/m³, density of all solid materials
-constexpr double SOLIDS_CONTENT = 0.1; // Fraction of solids by volume
+constexpr double MATERIAL_DENSITY = 3000.0; // kg/m³, density of all solid materials
+constexpr double SOLIDS_CONTENT = 0.1;      // Fraction of solids by volume
 
 // Rate constants (s⁻¹)
 constexpr double K_PALUSZNIUM = 0.008; // Rate constant for Palusznium
@@ -47,11 +48,11 @@ constexpr int DEFAULT_NUM_UNITS = 10; // Default number of units in circuit
 } // namespace Test
 
 // Physical constants
-namespace Physical {
+namespace Physical
+{
 // Material properties
-constexpr double MATERIAL_DENSITY =
-    3000.0;                            // kg/m³, density of all solid materials
-constexpr double SOLIDS_CONTENT = 0.1; // Fraction of solids by volume
+constexpr double MATERIAL_DENSITY = 3000.0; // kg/m³, density of all solid materials
+constexpr double SOLIDS_CONTENT = 0.1;      // Fraction of solids by volume
 
 // Rate constants (s⁻¹)
 constexpr double K_PALUSZNIUM = 0.008; // Rate constant for Palusznium
@@ -60,7 +61,8 @@ constexpr double K_WASTE = 0.0005;     // Rate constant for Waste
 } // namespace Physical
 
 // Economic parameters
-namespace Economic {
+namespace Economic
+{
 // Values in £/kg
 constexpr double PALUSZNIUM_VALUE_IN_PALUSZNIUM_STREAM = 120.0;
 constexpr double GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM = -20.0;
@@ -76,14 +78,16 @@ constexpr double VOLUME_PENALTY_COEFFICIENT = 1000.0;
 } // namespace Economic
 
 // Default feed rates (kg/s)
-namespace Feed {
+namespace Feed
+{
 constexpr double DEFAULT_PALUSZNIUM_FEED = 8.0;
 constexpr double DEFAULT_GORMANIUM_FEED = 12.0;
 constexpr double DEFAULT_WASTE_FEED = 80.0;
 } // namespace Feed
 
 // Circuit parameters
-namespace Circuit {
+namespace Circuit
+{
 constexpr double DEFAULT_UNIT_VOLUME = 10.0; // m³
 constexpr double MIN_UNIT_VOLUME = 2.5;      // m³ (for variable case)
 constexpr double MAX_UNIT_VOLUME = 20.0;     // m³ (for variable case)
@@ -93,15 +97,16 @@ constexpr int DEFAULT_NUM_UNITS = 10; // Default number of units in circuit
 } // namespace Circuit
 
 // Simulation parameters
-namespace Simulation {
+namespace Simulation
+{
 constexpr double DEFAULT_TOLERANCE = 1e-6;
 constexpr int DEFAULT_MAX_ITERATIONS = 1000;
-constexpr double MIN_FLOW_RATE =
-    1e-6; // Minimum flow rate to prevent numerical issues
+constexpr double MIN_FLOW_RATE = 1e-6; // Minimum flow rate to prevent numerical issues
 } // namespace Simulation
 
 // Genetic algorithm parameters
-namespace GA {
+namespace GA
+{
 constexpr int DEFAULT_POPULATION_SIZE = 100;
 constexpr int DEFAULT_MAX_GENERATIONS = 1000;
 constexpr double DEFAULT_CROSSOVER_RATE = 0.8;

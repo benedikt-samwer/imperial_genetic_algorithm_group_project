@@ -1,0 +1,48 @@
+name: Code Linting
+
+on:
+  push:
+    branches: [ main, pre-main ]
+  pull_request:
+    branches: [ main, pre-main ]
+
+jobs:
+  lint:
+    name: Code Style Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install clang-format
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang-format
+
+    - name: Check Code Formatting
+      run: |
+        # Create a list of all C/C++ files
+        files=$(find . -type f \( -name "*.cpp" -o -name "*.hpp" -o -name "*.c" -o -name "*.h" \) \
+          -not -path "./build/*" \
+          -not -path "./_deps/*" \
+          -not -path "./Testing/*")
+        
+        # Check if there are any files to format
+        if [ -z "$files" ]; then
+          echo "No C/C++ files found to check"
+          exit 0
+        fi
+        
+        # Run clang-format and store the diff
+        formatting_issues=0
+        for file in $files; do
+          diff -u <(cat "$file") <(clang-format -style=file "$file") || formatting_issues=1
+        done
+        
+        # If there were any formatting issues, fail the check
+        if [ $formatting_issues -ne 0 ]; then
+          echo "❌ Code formatting issues found. Please run 'make format' locally and commit the changes."
+          exit 1
+        else
+          echo "✅ All files are properly formatted!"
+        fi 
