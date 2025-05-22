@@ -351,6 +351,9 @@ def generate_flow_chart(list):
     )
     image = get_concat_v(image, table)
     image.save(file)
+    
+    print("The flowchart has been saved to the file: ", os.path.abspath(file))
+    
     return
 
 
