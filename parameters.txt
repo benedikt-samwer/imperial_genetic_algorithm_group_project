@@ -29,4 +29,4 @@ log_results=false
 log_file=ga_run.log
 
 # Reproducibility
-random_seed=43
+random_seed=42

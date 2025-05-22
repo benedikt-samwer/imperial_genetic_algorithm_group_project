@@ -10,6 +10,9 @@ if [ $? -eq 0 ]; then
     echo "Compile success!"
     echo "Running the program..."
     ./bin/Circuit_Optimizer
+
+    echo "Running plotting script..."
+    python ../plotting/main.py -f
 else
     echo "Compile failed!"
 fi

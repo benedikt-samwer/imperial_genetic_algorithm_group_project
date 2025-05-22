@@ -48,6 +48,9 @@ int main() {
             << "  stall_generations      = " << params.stall_generations
             << "\n\n";
 
+  std::string mode;
+  std::cout << "Select optimization mode: [d]iscrete, [c]ontinuous, [h]ybrid > ";
+  std::cin >> mode;
   // Set number of units
   constexpr int num_units = 10;
   constexpr int vector_size = 2 * num_units + 1;
@@ -58,28 +61,72 @@ int main() {
   for (int i = 0; i < num_units; i++) {
     volume_params[i] = 0.5; // Initialize at middle of range
   }
+    if (mode == "d") {
+        std::cout << "Running DISCRETE optimization...\n";
+        std::cout.rdbuf(null_stream.rdbuf()); // silence
 
-  std::cout << "Running hybrid optimization (connections + volumes)...\n";
+        auto discrete_fitness = [](int size, int *vec) -> double {
+            // Discrete-only overload
+            return circuit_performance(size, vec);
+        };
 
-  // Redirect cout to null stream to silence debug output
-  std::cout.rdbuf(null_stream.rdbuf());
+        auto discrete_validity = [](int size, int *vec) -> bool {
+            // Discrete-only constructor and validity
+            Circuit c(size / 2);  // (2n + 1 → n units)
+            c.initialize_from_vector(size, vec);
+            return c.check_validity(size, vec);
+        };
 
-  // Define hybrid fitness and validity functions
-  auto hybrid_fitness = [](int i_size, int *i_vec, int r_size,
-                           double *r_vec) -> double {
-    return circuit_performance(i_size, i_vec, r_size, r_vec);
-  };
+        optimize(vector_size, circuit_vector, discrete_fitness, discrete_validity, params);
+    }
 
-  auto hybrid_validity = [num_units](int i_size, int *i_vec, int r_size,
-                                     double *r_vec) -> bool {
-    Circuit c(num_units);
-    c.initialize_from_vector(i_size, i_vec);
-    return c.check_validity(i_size, i_vec, r_size, r_vec);
-  };
+    else if (mode == "c") {
+        std::cout << "Running CONTINUOUS optimization...\n";
+        std::cout.rdbuf(null_stream.rdbuf()); // silence
 
-  // Run hybrid optimization (cout is redirected, so no debug output)
-  optimize(vector_size, circuit_vector, num_units, volume_params,
-           hybrid_fitness, hybrid_validity, params);
+        // Known-valid discrete circuit (hardcoded)
+        const int fixed_circuit[vector_size] = {
+            1, 2, 4, 3, 5, 3, 0, 8, 11, 7, 12, 7, 0, 7, 11, 8, 6, 9, 7, 10, 3
+        };
+        std::copy(fixed_circuit, fixed_circuit + vector_size, circuit_vector);
+
+        auto cont_fitness = [&](int r_size, double *rvec) -> double {
+            return circuit_performance(vector_size, circuit_vector, r_size, rvec);
+        };
+
+        auto cont_validity = [&](int r_size, double *rvec) -> bool {
+            Circuit c(num_units, rvec);  // use volume constructor!
+            c.initialize_from_vector(vector_size, circuit_vector, rvec);
+            return c.check_validity(vector_size, circuit_vector, r_size, rvec);
+        };
+
+        optimize(num_units, volume_params, cont_fitness, cont_validity, params);
+    }
+
+    else {
+        std::cout << "Running hybrid optimization (connections + volumes)...\n";
+
+    // Redirect cout to null stream to silence debug output
+    std::cout.rdbuf(null_stream.rdbuf());
+
+    // Define hybrid fitness and validity functions
+    auto hybrid_fitness = [](int i_size, int *i_vec, int r_size,
+                            double *r_vec) -> double {
+        return circuit_performance(i_size, i_vec, r_size, r_vec);
+    };
+
+    auto hybrid_validity = [num_units](int i_size, int *i_vec, int r_size,
+                                        double *r_vec) -> bool {
+        Circuit c(num_units);
+        c.initialize_from_vector(i_size, i_vec);
+        return c.check_validity(i_size, i_vec, r_size, r_vec);
+    };
+
+    // Run hybrid optimization (cout is redirected, so no debug output)
+    optimize(vector_size, circuit_vector, num_units, volume_params,
+            hybrid_fitness, hybrid_validity, params);
+    }
+
 
   // Calculate performance with optimized values (still silent)
   double performance = circuit_performance(vector_size, circuit_vector,
@@ -100,11 +147,17 @@ int main() {
   double total_volume = 0.0;
   double unit_volumes[num_units];
   for (int i = 0; i < num_units; i++) {
-    double min_volume = 2.5;  // From constants
-    double max_volume = 20.0; // From constants
-    unit_volumes[i] = min_volume + (max_volume - min_volume) * volume_params[i];
+    if (mode == "h" || mode == "c") {
+        // Use scaled volumes
+        double min_volume = 2.5;
+        double max_volume = 20.0;
+        unit_volumes[i] = min_volume + (max_volume - min_volume) * volume_params[i];
+    } else {
+        // Discrete mode: use fixed volume
+        unit_volumes[i] = 10.0;
+    }
     total_volume += unit_volumes[i];
-  }
+    }
 
   double operating_cost = 5.0 * std::pow(total_volume, 2.0 / 3.0);
   if (total_volume >= 150.0) {
@@ -199,7 +252,7 @@ int main() {
             << performance << "/s\n";
 
   // Save raw circuit data into a CSV:
-  const std::string out_csv = "circuit_results.csv";
+  const std::string out_csv = "../plotting/circuit_results.csv";
   if (circuit.save_output_info(out_csv)) {
     std::cout << "\n Saved detailed circuit info to " << out_csv << "\n";
   } else {
