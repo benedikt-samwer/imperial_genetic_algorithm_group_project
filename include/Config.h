@@ -91,5 +91,4 @@ inline void load_parameters(const std::string &file, Algorithm_Parameters &p) {
     } catch (...) {
       std::cerr << "Warning: could not parse '" << key << "='" << val << "'\n";
     }
-  }
 }

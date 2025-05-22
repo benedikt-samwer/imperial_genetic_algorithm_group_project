@@ -56,49 +56,45 @@ struct Algorithm_Parameters {
 };
 
 // Default algorithm parameters
-#define DEFAULT_ALGORITHM_PARAMETERS                                           \
-  Algorithm_Parameters {}
+#define DEFAULT_ALGORITHM_PARAMETERS                                                                                   \
+    Algorithm_Parameters {}
 
 // Validity checking functions
-bool all_true(int int_vector_size, int *int_vector, int real_vector_size,
-              double *real_vector);
-bool all_true_ints(int int_vector_size, int *vector);
-bool all_true_reals(int real_vector_size, double *vector);
+bool all_true(int int_vector_size, int* int_vector, int real_vector_size, double* real_vector);
+bool all_true_ints(int int_vector_size, int* vector);
+bool all_true_reals(int real_vector_size, double* vector);
 void set_random_seed(int seed);
 // Optimization function for discrete vector
-int optimize(
-    int int_vector_size, int *int_vector,
-    std::function<double(int, int *)> func,
-    std::function<bool(int, int *)> validity = all_true_ints,
-    Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
+int optimize(int int_vector_size, int* int_vector, std::function<double(int, int*)> func,
+             std::function<bool(int, int*)> validity = all_true_ints,
+             Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
 
 // Optimization function for continuous vector
-int optimize(
-    int real_vector_size, double *real_vector,
-    std::function<double(int, double *)> func,
-    std::function<bool(int, double *)> validity = all_true_reals,
-    Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
+int optimize(int real_vector_size, double* real_vector, std::function<double(int, double*)> func,
+             std::function<bool(int, double*)> validity = all_true_reals,
+             Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
 
 // Optimization function for mixed discrete-continuous vector
-int optimize(
-    int int_vector_size, int *int_vector, int real_vector_size,
-    double *real_vector, std::function<double(int, int *, int, double *)> func,
-    std::function<bool(int, int *, int, double *)> validity = all_true,
-    Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
+int optimize(int int_vector_size, int* int_vector, int real_vector_size, double* real_vector,
+             std::function<double(int, int*, int, double*)> func,
+             std::function<bool(int, int*, int, double*)> validity = all_true,
+             Algorithm_Parameters algorithm_parameters = DEFAULT_ALGORITHM_PARAMETERS);
 
 // Structure to hold statistics about the optimization process
-struct OptimizationResult {
-  double best_fitness; // Best fitness value found
-  int generations;     // Number of generations run
-  double avg_fitness;  // Average fitness of final population
-  double std_fitness;  // Standard deviation of final population fitness
-  double time_taken;   // Time taken for optimization (seconds)
-  bool converged;      // Whether algorithm converged
+struct OptimizationResult
+{
+    double best_fitness; // Best fitness value found
+    int generations;     // Number of generations run
+    double avg_fitness;  // Average fitness of final population
+    double std_fitness;  // Standard deviation of final population fitness
+    double time_taken;   // Time taken for optimization (seconds)
+    bool converged;      // Whether algorithm converged
 
-  // Default constructor
-  OptimizationResult()
-      : best_fitness(0), generations(0), avg_fitness(0), std_fitness(0),
-        time_taken(0), converged(false) {}
+    // Default constructor
+    OptimizationResult()
+        : best_fitness(0), generations(0), avg_fitness(0), std_fitness(0), time_taken(0), converged(false)
+    {
+    }
 };
 
 // Get the last optimization result

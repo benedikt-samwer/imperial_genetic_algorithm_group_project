@@ -19,8 +19,8 @@
 
 */
 
-
-int main() {
+int main()
+{
 
     int count = 0;
     int n_trials = 10000000;
@@ -31,21 +31,22 @@ int main() {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    srand(time(NULL)+10*rank);
+    srand(time(NULL) + 10 * rank);
 
     int n_local_trials;
-    
+
     if (rank == 0)
     {
-        n_local_trials = n_trials/size + n_trials%size;
+        n_local_trials = n_trials / size + n_trials % size;
     }
     else
     {
-        n_local_trials = n_trials/size;
+        n_local_trials = n_trials / size;
     }
 
-    #pragma omp parallel for reduction(+:count)
-    for (int i = 0; i < n_local_trials; i++) {
+#pragma omp parallel for reduction(+ : count)
+    for (int i = 0; i < n_local_trials; i++)
+    {
         int random_number = rand() % 6 + 1;
         if (random_number % 3 == 0)
             count++;
