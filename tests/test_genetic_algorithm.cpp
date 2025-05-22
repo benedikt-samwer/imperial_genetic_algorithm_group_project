@@ -237,11 +237,13 @@ TEST_F(GeneticAlgorithmTest, OptimizeContinuousToMatchRealTestAnswerL21) {
     std::vector<double> initial_guess = ga_initial_continuous_L21_vec; // Use the L21 initial vector
     ASSERT_EQ(initial_guess.size(), L_continuous);
 
-    // Potentially more iterations needed for a longer vector to converge
-    Algorithm_Parameters current_params = params; // Copy from fixture
-    current_params.max_iterations = 500; 
-    current_params.population_size = 200;
-    current_params.mutation_probability = 0.05; // Slightly lower mutation for finer tuning towards the end
+    Algorithm_Parameters current_params = params;
+    current_params.max_iterations = 1000;
+    current_params.population_size = 500;
+    current_params.mutation_probability = 0.02;
+    current_params.mutation_step_size = 0.05;
+    current_params.convergence_threshold = 1e-6;
+    current_params.stall_generations = 50;
 
     int status = optimize(L_continuous, initial_guess.data(),
                         match_real_test_answer_fitness_adapter, 
