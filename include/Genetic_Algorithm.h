@@ -36,6 +36,12 @@ struct Algorithm_Parameters {
   bool use_inversion = true;           // turn inversion on/off
   double inversion_probability = 0.05; // chance to invert per child
 
+  // Scaling-mutatuon parameters
+  bool use_scaling_mutation = true;
+  double scaling_mutation_prob = 0.2; // how often to apply a scale mutation
+  double scaling_mutation_min = 0.8;  // lower bound on the scale factor
+  double scaling_mutation_max = 1.2;  // upper bound on the scale factor
+
   // Termination criteria
   double convergence_threshold = 1e-6; // Convergence threshold
   int stall_generations = 50;          // Max generations with no improvement

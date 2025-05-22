@@ -29,24 +29,53 @@ int main() {
   }
 
   // Print to see
-  std::cout << "GA parameters:\n"
-            << "  population_size        = " << params.population_size << "\n"
-            << "  max_iterations         = " << params.max_iterations << "\n"
-            << "  tournament_size        = " << params.tournament_size << "\n"
-            << "  crossover_probability  = " << params.crossover_probability
-            << "\n"
-            << "  mutation_probability   = " << params.mutation_probability
-            << "\n"
-            << "  mutation_step_size     = " << params.mutation_step_size
-            << "\n"
-            << "  use_inversion          = " << std::boolalpha
-            << params.use_inversion << "\n"
-            << "  inversion_probability  = " << params.inversion_probability
-            << "\n"
-            << "  convergence_threshold  = " << params.convergence_threshold
-            << "\n"
-            << "  stall_generations      = " << params.stall_generations
-            << "\n\n";
+  std::cout
+      << "GA parameters:\n"
+      << "  mode                        = " << params.mode << "\n"
+      << "  random_seed                 = " << params.random_seed << "\n\n"
+
+      << "  population_size             = " << params.population_size << "\n"
+      << "  elite_count                 = " << params.elite_count << "\n"
+      << "  max_iterations              = " << params.max_iterations << "\n\n"
+
+      << "  tournament_size             = " << params.tournament_size << "\n"
+      << "  selection_pressure          = " << params.selection_pressure
+      << "\n\n"
+
+      << "  crossover_probability       = " << params.crossover_probability
+      << "\n"
+      << "  crossover_points            = " << params.crossover_points << "\n\n"
+
+      << "  mutation_probability        = " << params.mutation_probability
+      << "\n"
+      << "  mutation_step_size          = " << params.mutation_step_size << "\n"
+      << "  allow_mutation_wrapping     = " << std::boolalpha
+      << params.allow_mutation_wrapping << "\n\n"
+
+      << "  use_inversion               = " << std::boolalpha
+      << params.use_inversion << "\n"
+      << "  inversion_probability       = " << params.inversion_probability
+      << "\n\n"
+
+      << "  use_scaling_mutation        = " << std::boolalpha
+      << params.use_scaling_mutation << "\n"
+      << "  scaling_mutation_prob       = " << params.scaling_mutation_prob
+      << "\n"
+      << "  scaling_mutation_min        = " << params.scaling_mutation_min
+      << "\n"
+      << "  scaling_mutation_max        = " << params.scaling_mutation_max
+      << "\n\n"
+
+      << "  convergence_threshold       = " << params.convergence_threshold
+      << "\n"
+      << "  stall_generations           = " << params.stall_generations
+      << "\n\n"
+
+      << "  verbose                     = " << std::boolalpha << params.verbose
+      << "\n"
+      << "  log_results                 = " << std::boolalpha
+      << params.log_results << "\n"
+      << "  log_file                    = " << params.log_file << "\n\n";
 
   // Optimisation mode
   auto mode = params.mode; // “d”, “c” or “h” from parameters.txt
