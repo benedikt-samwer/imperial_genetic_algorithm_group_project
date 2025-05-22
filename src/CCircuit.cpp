@@ -250,7 +250,7 @@ Circuit::Circuit(int num_units, double *beta, bool testFlag)
         ),
       gormanium_value_in_palusznium(Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM)
            {
-            std::cout<<"testFlag: "<<testFlag<<std::endl;
+            // std::cout<<"testFlag: "<<testFlag<<std::endl;
             if(testFlag) {
                 this->feed_palusznium_rate = Constants::Test::DEFAULT_PALUSZNIUM_FEED;
                 this->feed_gormanium_rate = Constants::Test::DEFAULT_GORMANIUM_FEED;
