@@ -2,9 +2,7 @@ name: Code Linting
 
 on:
   push:
-    branches: [ main, pre-main ]
   pull_request:
-    branches: [ main, pre-main ]
 
 jobs:
   lint:
