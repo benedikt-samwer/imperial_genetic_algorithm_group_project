@@ -39,8 +39,8 @@ jobs:
         
         # If there were any formatting issues, fail the check
         if [ $formatting_issues -ne 0 ]; then
-          echo "❌ Code formatting issues found. Please run 'make format' locally and commit the changes."
+          echo "Code formatting issues found. Please run 'make format' locally and commit the changes."
           exit 1
         else
-          echo "✅ All files are properly formatted!"
+          echo "All files are properly formatted!"
         fi 

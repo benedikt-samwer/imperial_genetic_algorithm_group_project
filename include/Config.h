@@ -98,3 +98,4 @@ inline void load_parameters(const std::string& file, Algorithm_Parameters& p)
             std::cerr << "Warning: could not parse '" << key << "='" << val << "'\n";
         }
     }
+}
