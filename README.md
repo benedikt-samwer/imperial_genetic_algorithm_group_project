@@ -9,7 +9,7 @@
 We must configure a circuit of identical separation units so that two valuable minerals—**palusznium (P)** and **gormanium (G)**—are recovered profitably while punishing waste entrainment and oversized equipment.
 The design space (both topology **and** unit volumes) is combinatorial, so we use a **genetic algorithm** (GA) to search it.
 
-Full background → *docs/Problem Statement for Genetic Algorithms Project 2025.pdf*.
+Full background → *Problem Statement for Genetic Algorithms Project 2025.pdf*.
 
 ---
 
@@ -57,45 +57,42 @@ Full background → *docs/Problem Statement for Genetic Algorithms Project�
 
 Install Python deps with `pip install -r requirements.txt` (matplotlib + pandas).
 
-### 3.2  Build  *(one‑liner)*
+### 3.2  Build
 
-Run the helper script; it creates the `build/` directory, configures CMake for a **Release** build and compiles the optimiser.
-
-```bash
-./build.sh          # → build/bin/Optimizer (plus unit‑test binaries)
-```
-
-If you need a clean rebuild:
+The project ships with a convenience **Makefile** that wraps the CMake build under the hood.
 
 ```bash
-./build.sh clean    # wipes previous build/ then recompiles
+make build      # configure + compile (Release) to build/
+make clean      # remove the build directory
 ```
+
+The first invocation generates `build/bin/Optimizer` (and unit‑test binaries).
 
 ### 3.3  Run
 
 ```bash
-./run.sh            # builds + runs optimiser, then auto‑plots results
+make run        # executes the optimiser, plots, appends CSV
 ```
 
-* Appends one line to `plotting/circuit_results.csv`.
-* Calls the Python helper `plotting/main.py -f` which reads that CSV and
-  writes a **PNG flow‑sheet diagram + vector table** to `output/flowchart.png`.
+Need more cores? → `OMP_NUM_THREADS=8 make run`
 
-Optional flags:
+Want a different GA mode? Edit **`parameters.txt`** (`mode = d | h | c`)
+– remember: *continuous‑only (`c`) is dev/test only; it will not yield profitable solutions.*
 
 ```bash
-./run.sh d          # discrete only (recommended)
-./run.sh h          # hybrid (shape + volumes)
-./run.sh c          # continuous DEV‑ONLY
+OMP_NUM_THREADS=8 make run        # force 8 OpenMP threads
+MODE=d            make run        # override mode in parameters.txt (d/h/c)
 ```
 
-> Rendering requires **Graphviz**, **Pillow** and **pandas**; install once with
-> `pip install -r plotting/requirements.txt`.
+Internally this calls the optimiser and then `plotting/main.py -f` to create `output/flowchart.png`.
 
-\-------------------------|------------|------------------|
-\| `d`  | **connections** only | explore profitable flowsheets |
-\| `c`  | **β‑volumes** only (connections frozen) – **DEV‑ONLY**.  \⚠️ This mode does *not* find profitable solutions; it is kept for unit‑testing kinetics & cost functions |
-\| `h`  | alternates *d* ↔ *c* | end‑to‑end optimisation |
+> Rendering requires **Graphviz**, **Pillow** and **pandas**; install once with `pip install -r plotting/requirements.txt`.
+
+| Mode | Search dimension treated as variable | Primary purpose |
+|------|--------------------------------------|-----------------|
+| `d`  | **connections** only                 | explore profitable flowsheets |
+| `c`  | **β-volumes** only (connections frozen) – **DEV-ONLY**. ⚠️ This mode does *not* find profitable solutions; it is kept for unit-testing kinetics & cost functions |
+| `h`  | alternates *d* ↔ *c*                 | end-to-end optimisation |
 
 ---
 
@@ -105,14 +102,14 @@ Every run-time option is in `parameters.txt` so you can tune the optimiser witho
 
 | Key                         | Type / Range      | Default      | Description                                                       |
 | --------------------------- | ----------------- | ------------ | ----------------------------------------------------------------- |
-| **num\_units**              | integer ≥ 2       | 6            | Number of separation units *(vector length = 2·n + 1)*            |
+| **num\_units**              | integer ≥ 2       | 10            | Number of separation units *(vector length = 2·n + 1)*            |
 | **mode**                    | `d` \| `c` \| `h` | `h`          | GA operating mode: discrete, continuous (**dev‑only**), or hybrid |
 | **max\_iterations**         | integer           | 100          | GA generations per optimisation call                              |
 | **population\_size**        | integer           | 600          | Individuals per generation                                        |
 | **elite\_count**            | integer           | 2            | Best genomes copied unchanged each generation                     |
 | **tournament\_size**        | integer           | 3            | k‑way tournament selection pressure                               |
-| **crossover\_probability**  | 0–1               | 0.9          | Chance two parents cross                                          |
-| **mutation\_probability**   | 0–1               | 0.08         | Per‑gene mutation chance (all modes)                              |
+| **crossover\_probability**  | 0–1               | 0.8          | Chance two parents cross                                          |
+| **mutation\_probability**   | 0–1               | 0.05         | Per‑gene mutation chance (all modes)                              |
 | **mutation\_step\_size**    | integer ≥ 1       | 3            | Max ± step for discrete "creep"                                   |
 | **use\_inversion**          | bool              | true         | Enable contiguous slice reversal (discrete)                       |
 | **inversion\_probability**  | 0–1               | 0.2          | Chance *per child* that inversion occurs                          |
@@ -161,14 +158,20 @@ Open the PNG directly, or embed it in documentation.
 * **GA extensions** – new operators live in `src/Genetic_Algorithm.cpp` (see the three `optimize` overloads).
 * **Unit tests** – add cases in `tests/`; they build and run automatically with `./build.sh test` or `ctest`.
 * **Git hooks** – `hooks/install.sh` installs clang‑format, static‑analysis and pre‑commit checks.
+---
+
+## 7. Notes
+
+The tests currently run only in the workflow for some reason in the final version they werre not run on local, but if you check the workflow they all pass! Work needed to fix that.
 
 ---
 
-## 7  Licence & citation
+## 8.  Licence & citation
 
 The code is released under the **MIT Licence** (see `LICENSE`).
-If you use it in academic work, please cite the original *Palusznium Rush 2025* coursework and this repository.
 
 ---
+
+
 
 *Happy circuit hunting!* 🚀
