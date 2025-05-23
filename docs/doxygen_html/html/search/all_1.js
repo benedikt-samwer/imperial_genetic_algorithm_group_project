@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['2  repository_20layout_0',['2  Repository layout',['../index.html#autotoc_md51',1,'']]],
+  ['2_201_20branch_20merging_20path_1',['2.1 Branch Merging Path',['../d5/d25/md_docs_2development__guide.html#autotoc_md25',1,'']]],
+  ['2_201_20separation_20unit_20cunit_2',['2.1 Separation Unit (CUnit)',['../d9/dcf/md_docs_2data__structures.html#autotoc_md5',1,'']]],
+  ['2_202_20circuit_20circuit_3',['2.2 Circuit (Circuit)',['../d9/dcf/md_docs_2data__structures.html#autotoc_md6',1,'']]],
+  ['2_202_20starting_20new_20development_4',['2.2 Starting New Development',['../d5/d25/md_docs_2development__guide.html#autotoc_md26',1,'']]],
+  ['2_203_20development_20process_5',['2.3 Development Process',['../d5/d25/md_docs_2development__guide.html#autotoc_md27',1,'']]],
+  ['2_203_20simulator_20parameters_20simulator_5fparameters_6',['2.3 Simulator Parameters (Simulator_Parameters)',['../d9/dcf/md_docs_2data__structures.html#autotoc_md7',1,'']]],
+  ['2_204_20genetic_20algorithm_20parameters_20algorithm_5fparameters_7',['2.4 Genetic Algorithm Parameters (Algorithm_Parameters)',['../d9/dcf/md_docs_2data__structures.html#autotoc_md8',1,'']]],
+  ['2_204_20synchronizing_20with_20main_20branch_8',['2.4 Synchronizing with Main Branch',['../d5/d25/md_docs_2development__guide.html#autotoc_md28',1,'']]],
+  ['2_205_20circuit_20vector_20circuitvector_9',['2.5 Circuit Vector (CircuitVector)',['../d9/dcf/md_docs_2data__structures.html#autotoc_md9',1,'']]],
+  ['2_205_20code_20review_20process_10',['2.5 Code Review Process',['../d5/d25/md_docs_2development__guide.html#autotoc_md29',1,'']]],
+  ['2_20auto‑generated_20flowchart_11',['5.2 Auto‑generated flowchart',['../index.html#autotoc_md63',1,'']]],
+  ['2_20branch_20naming_20convention_12',['1.2 Branch Naming Convention',['../d5/d25/md_docs_2development__guide.html#autotoc_md23',1,'']]],
+  ['2_20build_20one‑liner_13',['3.2  Build  *(one‑liner)*',['../index.html#autotoc_md55',1,'']]],
+  ['2_20circuit_20performance_20evaluation_14',['3.2 Circuit Performance Evaluation',['../d9/dcf/md_docs_2data__structures.html#autotoc_md12',1,'']]],
+  ['2_20circuit_20with_20recycle_15',['A.2 Circuit with Recycle',['../d9/dcf/md_docs_2data__structures.html#autotoc_md18',1,'']]],
+  ['2_20code_20style_16',['3.2 Code Style',['../d5/d25/md_docs_2development__guide.html#autotoc_md32',1,'']]],
+  ['2_20development_20workflow_17',['2. Development Workflow',['../d5/d25/md_docs_2development__guide.html#autotoc_md24',1,'']]],
+  ['2_20integration_20testing_18',['4.2 Integration Testing',['../d5/d25/md_docs_2development__guide.html#autotoc_md35',1,'']]],
+  ['2_20issue_20template_19',['7.2 Issue Template',['../d5/d25/md_docs_2development__guide.html#autotoc_md44',1,'']]],
+  ['2_20key_20data_20structures_20',['2. Key Data Structures',['../d9/dcf/md_docs_2data__structures.html#autotoc_md4',1,'']]],
+  ['2_20project_20documentation_21',['5.2 Project Documentation',['../d5/d25/md_docs_2development__guide.html#autotoc_md38',1,'']]],
+  ['2_20version_20control_22',['6.2 Version Control',['../d5/d25/md_docs_2development__guide.html#autotoc_md41',1,'']]]
+];
