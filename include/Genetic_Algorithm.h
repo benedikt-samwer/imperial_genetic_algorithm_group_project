@@ -8,6 +8,8 @@
 #include <string>
 #include <vector>
 
+std::vector<int> generate_valid_circuit_template(int num_units);
+
 // Structure to hold genetic algorithm parameters
 struct Algorithm_Parameters
 {

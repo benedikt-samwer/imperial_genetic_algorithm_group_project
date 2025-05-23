@@ -520,6 +520,7 @@ int optimize(int int_vector_size, int* int_vector, std::function<double(int, int
 // ********************************************************************
 // 2) Continuous-only optimize with PARALLEL fitness evaluation
 // ********************************************************************
+
 int optimize(int real_vector_size, double* real_vector, std::function<double(int, double*)> func,
              std::function<bool(int, double*)> validity, Algorithm_Parameters params)
 {

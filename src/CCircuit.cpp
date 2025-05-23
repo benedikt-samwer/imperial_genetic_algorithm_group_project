@@ -5,6 +5,7 @@
 #include <CCircuit.h>
 #include <CUnit.h>
 #include <cstdint>
+#include <filesystem>
 #include <iostream>
 #include <stdio.h>
 
@@ -238,7 +239,7 @@ void Circuit::mark_units(int unit_num)
 }
 
 Circuit::Circuit(int num_units, double* beta)
-    : units(num_units), feed_unit(0),
+    : units(num_units), feed_unit(0), n(num_units),
 
       feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
       feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
@@ -255,7 +256,7 @@ Circuit::Circuit(int num_units, double* beta)
 }
 
 Circuit::Circuit(int num_units, double* beta, bool testFlag)
-    : units(num_units), feed_unit(0),
+    : units(num_units), feed_unit(0), n(num_units),
 
       feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
       feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
@@ -777,11 +778,21 @@ bool Circuit::save_vector_to_csv(const std::string& filename)
 
 bool Circuit::save_output_info(const std::string& filename)
 {
-    if (!filename.empty())
+    namespace fs = std::filesystem; // If you see an error here it is because of the C++ version, it will compile fine
+    fs::path p(filename);
+
+    if (p.has_parent_path())
     {
-        // Clear the file if it exists
-        std::ofstream ofs(filename, std::ios::trunc);
-        ofs.close();
+        std::error_code ec;
+        fs::create_directories(p.parent_path(), ec); // ok if it already exists
+        if (ec)
+        {
+            std::cerr << "Cannot create directory " << p.parent_path() << " : " << ec.message() << '\n';
+            return false;
+        }
     }
+
+    // truncate the file, then append the two blocks of data
+    std::ofstream{filename, std::ios::trunc};
     return save_vector_to_csv(filename) && save_all_units_to_csv(filename);
 }

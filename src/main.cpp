@@ -9,9 +9,9 @@
 #include "Config.h" // <— your new loader
 #include "Genetic_Algorithm.h"
 
-static constexpr int DEFAULT_UNITS = 10;
-static const int hard_circuit_10[2 * DEFAULT_UNITS + 1] = {1, 2, 4, 3,  5, 3, 0, 8, 11, 7, 12,
-                                                           7, 0, 7, 11, 8, 6, 9, 7, 10, 3};
+// static constexpr int DEFAULT_UNITS = 10;
+// static const int hard_circuit_10[2 * DEFAULT_UNITS + 1] = {1, 2, 4, 3,  5, 3, 0, 8, 11, 7, 12,
+//                                                            7, 0, 7, 11, 8, 6, 9, 7, 10, 3};
 
 int main()
 {
@@ -110,14 +110,9 @@ int main()
 
         // std::cout.rdbuf(null_stream.rdbuf());
 
-        // Known-valid discrete circuit (hardcoded)
-        if (mode == "c" && params.num_units != DEFAULT_UNITS)
-        {
-            std::cerr << "Error: continuous mode only supports " << DEFAULT_UNITS << " units in this build.\n";
-            return 1;
-        }
-        std::copy(hard_circuit_10, hard_circuit_10 + vector_size, circuit_vector.begin());
-
+        // Build a simple *valid* circuit of the requested size
+        auto base = generate_valid_circuit_template(num_units); // function from Genetic_Algorithm.cpp
+        std::copy(base.begin(), base.end(), circuit_vector.begin());
         auto cont_fitness = [&](int r_size, double* rvec) -> double
         { return circuit_performance(vector_size, circuit_vector.data(), r_size, rvec); };
 
@@ -274,7 +269,7 @@ int main()
     std::cout << "- Net profit: £" << std::fixed << std::setprecision(2) << performance << "/s\n";
 
     // Save raw circuit data into a CSV:
-    const std::string out_csv = "../plotting/circuit_results.csv";
+    const std::string out_csv = "plotting/circuit_results.csv";
     if (circuit.save_output_info(out_csv))
     {
         std::cout << "\n Saved detailed circuit info to " << out_csv << "\n";
