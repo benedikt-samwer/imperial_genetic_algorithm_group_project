@@ -1,21 +1,21 @@
 # Genetic Algorithm parameters
 
 # Number of separation units in the circuit
-num_units = 6
+num_units = 10
 
 # Otimisation Type
 mode = h    # options: discrete -> d, continuous -> c, hybrid -> h
 
 # General
 max_iterations = 100
-population_size = 600
+population_size = 500
 elite_count = 2
 
 # Selection
-tournament_size = 3
+tournament_size = 5
 
 # Crossover
-crossover_probability = 0.9
+crossover_probability = 0.8
 
 # Mutation (creep)
 mutation_probability = 0.08
@@ -23,11 +23,11 @@ mutation_step_size = 3
 
 # Inversion
 use_inversion = true
-inversion_probability = 0.2
+inversion_probability = 0.5
 
 # Scale Mutation
 use_scaling_mutation = true
-scaling_mutation_prob = 0.3
+scaling_mutation_prob = 0.5
 scaling_mutation_min = 0.7
 scaling_mutation_max = 1.3
 
