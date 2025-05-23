@@ -1,4 +1,8 @@
-/** Header for the Genetic Algorithm library
+/**
+ * @file Genetic_Algorithm.h
+ * @brief Genetic Algorithm Header
+ * @author
+ * 
  * This header defines the interface for the genetic algorithm optimization
  */
 
@@ -102,5 +106,3 @@ struct OptimizationResult
 
 // Get the last optimization result
 OptimizationResult get_last_optimization_result();
-
-// Other functions and variables
