@@ -1,4 +1,4 @@
-.PHONY: all build test performance format clean install-deps install-deps-mac install-deps-linux help
+.PHONY: all build test performance format clean install-deps install-deps-mac install-deps-linux install-web-deps web help
 
 # Default target
 all: build
@@ -21,14 +21,16 @@ CLANG_TIDY := $(shell command -v clang-tidy 2> /dev/null)
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  make build        - Build the project"
-	@echo "  make run          - Run the project"
-	@echo "  make test         - Run all tests"
-	@echo "  make performance  - Run performance tests"
-	@echo "  make format       - Format code and run linter"
-	@echo "  make clean        - Clean build directory"
-	@echo "  make install-deps - Install dependencies (auto-detects OS)"
-	@echo "  make help         - Show this help message"
+	@echo "  make build           - Build the project"
+	@echo "  make run             - Run the project"
+	@echo "  make web             - Start the web interface"
+	@echo "  make install-web-deps - Install Python dependencies for web interface"
+	@echo "  make test            - Run all tests"
+	@echo "  make performance     - Run performance tests"
+	@echo "  make format          - Format code and run linter"
+	@echo "  make clean           - Clean build directory"
+	@echo "  make install-deps    - Install dependencies (auto-detects OS)"
+	@echo "  make help            - Show this help message"
 
 # Build target
 build:
@@ -37,6 +39,19 @@ build:
 # Run target
 run:
 	@bash run.sh
+
+# Install Python web dependencies
+install-web-deps:
+	@echo "[DEPS] Installing Python dependencies for web interface..."
+	@pip3 install -r plotting/requirements.txt
+	@echo "[DEPS] Python dependencies installed successfully!"
+
+# Web interface target
+web:
+	@echo "[WEB] Starting web interface..."
+	@echo "[WEB] Flask server will be available at http://127.0.0.1:5000"
+	@echo "[WEB] Press Ctrl+C to stop the server"
+	@cd plotting && python3 web.py
 
 # Test target
 test:
