@@ -158,13 +158,20 @@ Open the PNG directly, or embed it in documentation.
 * **GA extensions** – new operators live in `src/Genetic_Algorithm.cpp` (see the three `optimize` overloads).
 * **Unit tests** – add cases in `tests/`; they build and run automatically with `./build.sh test` or `ctest`.
 * **Git hooks** – `hooks/install.sh` installs clang‑format, static‑analysis and pre‑commit checks.
+---
+
+## 7. Notes
+
+The tests currently run only in the workflow for some reason in the final version they werre not run on local, but if you check the workflow they all pass! Work needed to fix that.
 
 ---
 
-## 7  Licence & citation
+## 8.  Licence & citation
 
 The code is released under the **MIT Licence** (see `LICENSE`).
 
 ---
+
+
 
 *Happy circuit hunting!* 🚀
