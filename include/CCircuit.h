@@ -155,7 +155,7 @@ private:
     bool check_not_all_same_destination() const;
 
     /* ----------  Circuit validity checking ---------- */
-    int n = 10;
+    int n;
     int feed_dest = 0;
     uint8_t outlet_mask(int unit_idx, std::vector<int8_t>& cache) const;
     uint8_t term_mask(int start) const;
