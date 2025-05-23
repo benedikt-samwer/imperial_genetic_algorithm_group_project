@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ✂️ Clean build directory
-rm -rf build
-mkdir -p build
-cd build
-
-# 🖥 Detect OS and set compilers for macOS
-if [[ "$(uname -s)" == "Darwin" ]]; then
-  echo "macOS detected: switching to Homebrew GCC-14 for OpenMP support"
-  export CC=/opt/homebrew/bin/gcc-14
-  export CXX=/opt/homebrew/bin/g++-14
-else
-  echo "Non-macOS detected: using default \$CC/\$CXX"
+# 1) Ensure build artifacts exist
+if [[ ! -d build ]]; then
+  echo "[Error] No build directory found. Run ./build.sh first."
+  exit 1
 fi
 
-# 🔧 Configure
-echo "Configuring project..."
-cmake ..
+if [[ ! -f build/bin/Circuit_Optimizer ]]; then
+  echo "[Error] Circuit_Optimizer binary not found. Run `make build` first."
+  exit 1
+fi
 
-# 📦 Build
-echo "Building project..."
-cmake --build . -- -j$(getconf _NPROCESSORS_ONLN)
+# 2) Copy parameters file so the binary can see it
+echo "[Setup] Copying parameters file..."
+cp parameters.txt build/
 
-# ▶️ Run
-echo "Running executable..."
-# Replace 'Circuit_Optimizer' with your actual executable name if different:
-./bin/Circuit_Optimizer
+# 3) Run the optimizer
+echo "[Run] Running optimizer…"
+./build/bin/Circuit_Optimizer
+
+# 4) Invoke the Python visualization
+echo "[Viz] Visualising results…"
+pushd plotting >/dev/null
+python3 main.py -f
+popd >/dev/null
+
+echo "[Done] Complete."

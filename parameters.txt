@@ -1,7 +1,10 @@
 # Genetic Algorithm parameters
 
+# Number of separation units in the circuit
+num_units = 6
+
 # Otimisation Type
-mode = h     # options: discrete -> d, continuous -> c, hybrid -> h
+mode = h    # options: discrete -> d, continuous -> c, hybrid -> h
 
 # General
 max_iterations = 100
@@ -23,7 +26,7 @@ use_inversion = true
 inversion_probability = 0.2
 
 # Scale Mutation
-use_scaling_mutation = false
+use_scaling_mutation = true
 scaling_mutation_prob = 0.3
 scaling_mutation_min = 0.7
 scaling_mutation_max = 1.3

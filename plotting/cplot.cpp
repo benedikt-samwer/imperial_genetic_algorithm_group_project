@@ -1,15 +1,15 @@
 #include <graphviz/gvc.h>
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     Agraph_t* g;
     GVC_t* gvc;
     Agedge_t *edge1, *edge2, *edge3;
     Agnode_t *node1, *node2, *node3;
 
-    char* args[4]; 
+    char* args[4];
     int i;
-  
-  
+
     args[0] = "dot";
     args[1] = "-Tpng";
     args[2] = "-o";
@@ -33,7 +33,7 @@ int main(int argc, char** argv) {
     agsafeset(edge2, "color", "blue", "");
     agsafeset(edge2, "tailport", "n", "");
     agsafeset(edge2, "headport", "w", "");
-    
+
     edge3 = agedge(g, node2, node3, 0, 1);
     agsafeset(edge3, "color", "red", "");
     agsafeset(edge3, "tailport", "s", "");
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
     gvRenderJobs(gvc, g);
 
     gvFreeLayout(gvc, g); /* library function */
-    agclose (g); /* library function */
+    agclose(g);           /* library function */
     gvFreeContext(gvc);
 
     return 0;

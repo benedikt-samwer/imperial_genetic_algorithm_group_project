@@ -29,60 +29,61 @@
  * - GORMANIUM_PRODUCT (-2): Final Gormanium concentrate product
  * - TAILINGS_OUTPUT (-3): Final tailings output
  */
-class CircuitVector {
+class CircuitVector
+{
 public:
-  // Constructor for empty circuit vector
-  CircuitVector() = default;
+    // Constructor for empty circuit vector
+    CircuitVector() = default;
 
-  // Constructor for circuit vector with specified number of units
-  CircuitVector(int num_units);
+    // Constructor for circuit vector with specified number of units
+    CircuitVector(int num_units);
 
-  // Constructor from existing circuit vector data
-  CircuitVector(int vector_size, const int *data);
+    // Constructor from existing circuit vector data
+    CircuitVector(int vector_size, const int* data);
 
-  // Get number of units in the circuit
-  int get_num_units() const;
+    // Get number of units in the circuit
+    int get_num_units() const;
 
-  // Get feed unit
-  int get_feed_unit() const;
+    // Get feed unit
+    int get_feed_unit() const;
 
-  // Set feed unit
-  void set_feed_unit(int unit);
+    // Set feed unit
+    void set_feed_unit(int unit);
 
-  // Get concentrate destination for unit
-  int get_concentrate_dest(int unit) const;
+    // Get concentrate destination for unit
+    int get_concentrate_dest(int unit) const;
 
-  // Get waste destination for unit
-  int get_waste_dest(int unit) const;
+    // Get waste destination for unit
+    int get_waste_dest(int unit) const;
 
-  // Set concentrate destination for unit
-  void set_concentrate_dest(int unit, int dest);
+    // Set concentrate destination for unit
+    void set_concentrate_dest(int unit, int dest);
 
-  // Set waste destination for unit
-  void set_waste_dest(int unit, int dest);
+    // Set waste destination for unit
+    void set_waste_dest(int unit, int dest);
 
-  // Get the raw vector data
-  const std::vector<int> &get_data() const;
+    // Get the raw vector data
+    const std::vector<int>& get_data() const;
 
-  // Convert to raw array (for compatibility with existing functions)
-  const int *data() const;
+    // Convert to raw array (for compatibility with existing functions)
+    const int* data() const;
 
-  // Get the size of the vector
-  int size() const;
+    // Get the size of the vector
+    int size() const;
 
-  // Randomize the circuit vector with valid values
-  void randomize();
+    // Randomize the circuit vector with valid values
+    void randomize();
 
-  // Print the circuit vector
-  void print(std::ostream &os = std::cout) const;
+    // Print the circuit vector
+    void print(std::ostream& os = std::cout) const;
 
-  // Save to file
-  bool save_to_file(const std::string &filename) const;
+    // Save to file
+    bool save_to_file(const std::string& filename) const;
 
-  // Load from file
-  bool load_from_file(const std::string &filename);
+    // Load from file
+    bool load_from_file(const std::string& filename);
 
 private:
-  std::vector<int> vector_data;
-  int num_units = 0;
+    std::vector<int> vector_data;
+    int num_units = 0;
 };
