@@ -1,7 +1,7 @@
 # Genetic Algorithm parameters
 
 # Number of separation units in the circuit
-num_units = 10
+num_units = 6
 
 # Otimisation Type
 mode = h    # options: discrete -> d, continuous -> c, hybrid -> h
