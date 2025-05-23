@@ -1,4 +1,4 @@
-/** 
+/**
  * @file CSimulator.h
  * @brief C++ header file for the circuit simulator
  *

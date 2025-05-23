@@ -1,12 +1,12 @@
 /**
  * @file CCircuit.cpp
  * @brief Implementation of the Circuit class
- * 
+ *
  * This file contains the implementation of the Circuit class, which represents
  * a mineral-processing circuit. The class includes methods for checking
  * the validity of the circuit, marking units, running mass balance
  * calculations, and exporting the circuit to a dot file for visualization.
- * 
+ *
  */
 #include <cmath>
 #include <queue>
@@ -21,7 +21,7 @@
 
 /**
  * @brief Constructor for the Circuit class
- * 
+ *
  */
 Circuit::Circuit(int num_units)
     : units(num_units), feed_unit(0), feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
@@ -39,158 +39,178 @@ Circuit::Circuit(int num_units)
 
 /**
  * @brief Check the validity of the circuit
- * 
+ *
  * This function checks the validity of the circuit vector by performing
  * various checks, including length check, feed check, index check,
  * self-loop check, same output check, reachability check, terminal check,
- * and mass balance convergence check. 
- * 
+ * and mass balance convergence check.
+ *
  * @param vector_size Size of the circuit vector
  * @param vec Circuit vector
- * 
+ *
  * @return true if the circuit is valid, false otherwise
- * 
+ *
  */
 bool Circuit::check_validity(int vector_size, const int* vec)
 {
-  // 1. length must be 2*n+1
-  int expected = 2 * n + 1;
-  if (vector_size != expected) {
-    return false;
-  }
-
-  // 2. feed check: feed cannot directly feed to terminal
-  feed_dest = vec[0]; // feed points to the unit
-  if (feed_dest < 0 || feed_dest >= n) {
-    return false;
-  }
-
-  // read each unit's concentrate and tailing and do static check
-  struct Dest {
-    int conc;
-    int tail;
-  };
-  std::vector<Dest> dest(n);
-
-  int max_idx = n + 2; // the last valid index
-
-  for (int i = 0; i < n; ++i) {
-    int conc = vec[1 + 2 * i]; // conc points to the unit
-    int tail = vec[2 + 2 * i]; // tail points to the unit
-
-  // 3. index check: conc must be in (0, n+2), tail must be in (0, n+2)
-    if (conc < 0 || conc > max_idx) {
-      return false;
-    }
-    if (tail < 0 || tail > max_idx) {
-      return false;
+    // 1. length must be 2*n+1
+    int expected = 2 * n + 1;
+    if (vector_size != expected)
+    {
+        return false;
     }
 
-    // 4. no self-loop: conc cannot be equal to i, tail cannot be equal to i
-    if (conc == i || tail == i) {
-      return false;
+    // 2. feed check: feed cannot directly feed to terminal
+    feed_dest = vec[0]; // feed points to the unit
+    if (feed_dest < 0 || feed_dest >= n)
+    {
+        return false;
     }
 
-    // 5. same output: conc cannot be equal to tail
-    if (conc == tail) {
-      return false;
+    // read each unit's concentrate and tailing and do static check
+    struct Dest
+    {
+        int conc;
+        int tail;
+    };
+    std::vector<Dest> dest(n);
+
+    int max_idx = n + 2; // the last valid index
+
+    for (int i = 0; i < n; ++i)
+    {
+        int conc = vec[1 + 2 * i]; // conc points to the unit
+        int tail = vec[2 + 2 * i]; // tail points to the unit
+
+        // 3. index check: conc must be in (0, n+2), tail must be in (0, n+2)
+        if (conc < 0 || conc > max_idx)
+        {
+            return false;
+        }
+        if (tail < 0 || tail > max_idx)
+        {
+            return false;
+        }
+
+        // 4. no self-loop: conc cannot be equal to i, tail cannot be equal to i
+        if (conc == i || tail == i)
+        {
+            return false;
+        }
+
+        // 5. same output: conc cannot be equal to tail
+        if (conc == tail)
+        {
+            return false;
+        }
+
+        dest[i] = {conc, tail};
+
+        units[i].conc_num = conc;
+        units[i].tails_num = tail;
+        units[i].mark = false;
     }
 
-    dest[i] = {conc, tail};
+    // 6. reachability check: all units must be reachable from feed
+    this->mark_units(feed_dest);
 
-    units[i].conc_num = conc;
-    units[i].tails_num = tail;
-    units[i].mark = false;
-  }
-
-  // 6. reachability check: all units must be reachable from feed
-  this->mark_units(feed_dest);
-
-  for (int i = 0; i < n; ++i) {
-    if (!units[i].mark) {
-      return false;
+    for (int i = 0; i < n; ++i)
+    {
+        if (!units[i].mark)
+        {
+            return false;
+        }
     }
-  }
 
-  // 7. two terminals check: each unit must reach at least 2 different terminals
-  std::vector<int8_t> cache(n, -1);
-  uint8_t global_mask = 0;
-  for (int i = 0; i < n; ++i) {
-    uint8_t mask = this->term_mask(i);
-    global_mask |= mask;
-    int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
-    if (cnt < 2) {
-      return false;
+    // 7. two terminals check: each unit must reach at least 2 different terminals
+    std::vector<int8_t> cache(n, -1);
+    uint8_t global_mask = 0;
+    for (int i = 0; i < n; ++i)
+    {
+        uint8_t mask = this->term_mask(i);
+        global_mask |= mask;
+        int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
+        if (cnt < 2)
+        {
+            return false;
+        }
     }
-  }
 
-  // 8. final terminal check: P1/P2, TA must be present
-  if ((global_mask & (0b001 | 0b010)) == 0) {
-    return false;
-  }
+    // 8. final terminal check: P1/P2, TA must be present
+    if ((global_mask & (0b001 | 0b010)) == 0)
+    {
+        return false;
+    }
 
-  if ((global_mask & 0b100) == 0) {
-    return false;
-  }
+    if ((global_mask & 0b100) == 0)
+    {
+        return false;
+    }
 
-  // 9. mass balance check: mass balance must converge
-  if (!run_mass_balance(1e-6, 100)) {
-    return false;
-  }
+    // 9. mass balance check: mass balance must converge
+    if (!run_mass_balance(1e-6, 100))
+    {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 /**
  * @brief Check the validity of the circuit vector and its parameters
- * 
+ *
  * This function checks the validity of the circuit vector and its parameters
  * by performing various checks, including length check, parameter range check,
  * and validity of the circuit vector.
- * 
+ *
  * @param vector_size Size of the circuit vector
  * @param circuit_vector Circuit vector
  * @param unit_parameters_size Size of the unit parameters
  * @param unit_parameters Unit parameters
- * 
+ *
  * @return true if the circuit vector and parameters are valid, false otherwise
  */
 bool Circuit::check_validity(int vector_size, const int* circuit_vector, int unit_parameters_size,
                              double* unit_parameters)
 {
-  bool valid = check_validity(vector_size, circuit_vector);
-  // check the validity of the circuit vector
-  if (!valid) {
-    return false;
-  }
-  // check the validity of the unit parameters
-  if (unit_parameters == nullptr) {
-    return valid;
-  }
-
-  // the length of the continuous parameters must be exactly n units
-  if (unit_parameters_size != n) {
-    return false;
-  }
-
-  // each parameter must be in [0,1] (or other physical range)
-  for (int i = 0; i < unit_parameters_size; ++i) {
-    double beta = unit_parameters[i];
-    if (beta < 0.0 || beta > 1.0 || std::isnan(beta)) {
-      return false;
+    bool valid = check_validity(vector_size, circuit_vector);
+    // check the validity of the circuit vector
+    if (!valid)
+    {
+        return false;
     }
-  }
+    // check the validity of the unit parameters
+    if (unit_parameters == nullptr)
+    {
+        return valid;
+    }
 
-  return true;
+    // the length of the continuous parameters must be exactly n units
+    if (unit_parameters_size != n)
+    {
+        return false;
+    }
+
+    // each parameter must be in [0,1] (or other physical range)
+    for (int i = 0; i < unit_parameters_size; ++i)
+    {
+        double beta = unit_parameters[i];
+        if (beta < 0.0 || beta > 1.0 || std::isnan(beta))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 /**
  * @brief Mark the units in the circuit
- * 
+ *
  * This function marks the units in the circuit as visited. It recursively
  * traverses the circuit starting from the given unit number and marks each
  * unit as visited.
- * 
+ *
  * @param unit_num The unit number to start marking from
  */
 void Circuit::mark_units(int unit_num)
@@ -222,10 +242,10 @@ void Circuit::mark_units(int unit_num)
 
 /**
  * @brief Constructor for the Circuit class
- * 
+ *
  * This constructor initializes the circuit with the given number of units
  * and a pointer to the beta array.
- * 
+ *
  * @param num_units Number of units in the circuit
  * @param beta Pointer to the beta array
  */
@@ -248,10 +268,10 @@ Circuit::Circuit(int num_units, double* beta)
 
 /**
  * @brief Constructor for the Circuit class
- * 
+ *
  * This constructor initializes the circuit with the given number of units,
  * a pointer to the beta array, and a test flag.
- * 
+ *
  * @param num_units Number of units in the circuit
  * @param beta Pointer to the beta array
  * @param testFlag Test flag to indicate whether to use test parameters
@@ -288,13 +308,13 @@ Circuit::Circuit(int num_units, double* beta, bool testFlag)
 
 /**
  * @brief Initialize the circuit from a circuit vector
- * 
+ *
  * This function initializes the circuit from a circuit vector. It takes
  * the size of the vector and the vector itself as input parameters.
- * 
+ *
  * @param vector_size Size of the circuit vector
  * @param circuit_vector Circuit vector
- * 
+ *
  * @return true if initialization is successful, false otherwise
  */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector)
@@ -304,15 +324,15 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector)
 
 /**
  * @brief Initialize the circuit from a circuit vector
- * 
+ *
  * This function initializes the circuit from a circuit vector. It takes
  * the size of the vector, the vector itself, and a pointer to the beta
  * array as input parameters.
- * 
+ *
  * @param vector_size Size of the circuit vector
  * @param circuit_vector Circuit vector
  * @param beta Pointer to the beta array
- * 
+ *
  * @return true if initialization is successful, false otherwise
  */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta)
@@ -322,17 +342,17 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
 
 /**
  * @brief Initialize the circuit from a circuit vector
- * 
+ *
  * This function initializes the circuit from a circuit vector. It takes
  * the size of the vector, the vector itself, and a test flag as input
  * parameters.
- * 
+ *
  * @param vector_size Size of the circuit vector
  * @param circuit_vector Circuit vector
  * @param testFlag Test flag to indicate whether to use test parameters
- * 
+ *
  * @return true if initialization is successful, false otherwise
- * 
+ *
  */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, bool testFlag)
 {
@@ -343,16 +363,16 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
 
 /**
  * @brief Initialize the circuit from a circuit vector
- * 
+ *
  * This function initializes the circuit from a circuit vector. It takes
  * the size of the vector, the vector itself, a pointer to the beta array,
  * and a test flag as input parameters.
- * 
+ *
  * @param vector_size Size of the circuit vector
  * @param circuit_vector Circuit vector
  * @param beta Pointer to the beta array
  * @param testFlag Test flag to indicate whether to use test parameters
- * 
+ *
  * @return true if initialization is successful, false otherwise
  */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta, bool testFlag)
@@ -388,7 +408,6 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
         else if (tails == num_units + 2)
             tails = TAILINGS_OUTPUT;
 
-       
         units[i] = CUnit(conc, tails, testFlag);
         if (beta != nullptr)
         {
@@ -401,13 +420,13 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
 
 /**
  * @brief Run mass balance calculations for the circuit
- * 
+ *
  * This function runs mass balance calculations for the circuit. It takes
  * a tolerance and a maximum number of iterations as input parameters.
- * 
+ *
  * @param tolerance Tolerance for convergence
  * @param max_iterations Maximum number of iterations
- * 
+ *
  * @return true if mass balance converges, false otherwise
  */
 bool Circuit::run_mass_balance(double tolerance, int max_iterations)
@@ -528,7 +547,6 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
                 gormanium_product_palusznium += units[i].tails_palusznium;
                 gormanium_product_gormanium += units[i].tails_gormanium;
                 gormanium_product_waste += units[i].tails_waste;
-
             }
             else if (tailsDest == TAILINGS_OUTPUT)
             {
@@ -549,7 +567,6 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
                 units[tailsDest].feed_palusznium += units[i].tails_palusznium;
                 units[tailsDest].feed_gormanium += units[i].tails_gormanium;
                 units[tailsDest].feed_waste += units[i].tails_waste;
-
             }
         }
 
@@ -571,12 +588,12 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
 
 /**
  * @brief Get the economic value of the circuit
- * 
+ *
  * This function calculates the economic value of the circuit based on
  * the product flow rates and the values of the materials.
- * 
+ *
  * @return The economic value of the circuit
- * 
+ *
  */
 double Circuit::get_economic_value() const
 {
@@ -606,12 +623,12 @@ double Circuit::get_economic_value() const
 
 /**
  * @brief Get the recovery of valuable materials
- * 
+ *
  * This function calculates the recovery of valuable materials in the
  * circuit based on the product flow rates and the feed rates.
- * 
+ *
  * @return The recovery of valuable materials
- * 
+ *
  */
 double Circuit::get_palusznium_recovery() const
 {
@@ -625,12 +642,12 @@ double Circuit::get_palusznium_recovery() const
 
 /**
  * @brief Get the recovery of gormanium
- * 
+ *
  * This function calculates the recovery of gormanium in the circuit
  * based on the product flow rates and the feed rates.
- * 
+ *
  * @return The recovery of gormanium
- * 
+ *
  */
 double Circuit::get_gormanium_recovery() const
 {
@@ -643,12 +660,12 @@ double Circuit::get_gormanium_recovery() const
 
 /**
  * @brief Get the grade of palusznium
- * 
+ *
  * This function calculates the grade of palusznium in the circuit
  * based on the product flow rates.
- * 
+ *
  * @return The grade of palusznium
- * 
+ *
  */
 double Circuit::get_palusznium_grade() const
 {
@@ -658,12 +675,12 @@ double Circuit::get_palusznium_grade() const
 
 /**
  * @brief Get the grade of gormanium
- * 
+ *
  * This function calculates the grade of gormanium in the circuit
  * based on the product flow rates.
- * 
+ *
  * @return The grade of gormanium
- * 
+ *
  */
 double Circuit::get_gormanium_grade() const
 {
@@ -673,11 +690,11 @@ double Circuit::get_gormanium_grade() const
 
 /**
  * @brief Export the circuit to a DOT file
- * 
+ *
  * This function exports the circuit to a DOT file for visualization.
- * 
+ *
  * @param filename The name of the output DOT file
- * 
+ *
  * @return true if export is successful, false otherwise
  */
 bool Circuit::export_to_dot(const std::string& filename) const
@@ -717,12 +734,12 @@ bool Circuit::export_to_dot(const std::string& filename) const
 
 /**
  * @brief Get the terminal mask for a given unit
- * 
+ *
  * This function calculates the terminal mask for a given unit. It uses
  * breadth-first search to traverse the circuit and find the terminals.
- * 
+ *
  * @param start The starting unit number
- * 
+ *
  * @return The terminal mask
  */
 uint8_t Circuit::term_mask(int start) const
@@ -755,11 +772,11 @@ uint8_t Circuit::term_mask(int start) const
 
 /**
  * @brief Process the destination unit
- * 
+ *
  * This function processes the destination unit and updates the mask
  * accordingly. It also adds the destination unit to the queue for further
  * processing.
- * 
+ *
  * @param dest The destination unit number
  * @param mask The terminal mask
  * @param visited Vector to keep track of visited units
@@ -788,12 +805,12 @@ void Circuit::process_destination(int dest, uint8_t& mask, std::vector<bool>& vi
 
 /**
  * @brief Save the circuit output information to a CSV file
- * 
+ *
  * This function saves the circuit output information to a CSV file.
  * It appends the data to the file if it already exists.
- * 
+ *
  * @param filename The name of the output CSV file
- * 
+ *
  * @return true if saving is successful, false otherwise
  */
 bool Circuit::save_all_units_to_csv(const std::string& filename)
@@ -828,12 +845,12 @@ bool Circuit::save_all_units_to_csv(const std::string& filename)
 
 /**
  * @brief Save the circuit output information to a CSV file
- * 
+ *
  * This function saves the circuit output information to a CSV file.
  * It appends the data to the file if it already exists.
- * 
+ *
  * @param filename The name of the output CSV file
- * 
+ *
  * @return true if saving is successful, false otherwise
  */
 bool Circuit::save_vector_to_csv(const std::string& filename)
@@ -863,12 +880,12 @@ bool Circuit::save_vector_to_csv(const std::string& filename)
 
 /**
  * @brief Save the circuit output information to a CSV file
- * 
+ *
  * This function saves the circuit output information to a CSV file.
  * It appends the data to the file if it already exists.
- * 
+ *
  * @param filename The name of the output CSV file
- * 
+ *
  * @return true if saving is successful, false otherwise
  */
 bool Circuit::save_output_info(const std::string& filename)

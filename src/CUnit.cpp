@@ -1,18 +1,18 @@
 /**
  * @file CUnit.cpp
  * @brief Implementation of the CUnit class
- * 
+ *
  * This file contains the implementation of the CUnit class, which represents
  * a single separation unit in a mineral-processing circuit. The class
  * includes methods for processing the unit, updating its volume, and
  * calculating recoveries for different components.
- * 
+ *
  */
 #include "CUnit.h"
 
 /**
  * @brief Constructors for the CUnit class
- * 
+ *
  */
 CUnit::CUnit()
     : conc_num(0), tails_num(0), mark(false), volume(10.0), feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
@@ -54,12 +54,12 @@ CUnit::CUnit(int conc, int tails, bool testFlag)
     }
 }
 
-/** 
+/**
  * @brief Process the unit
- * 
+ *
  * This function processes the unit by calculating the residence time,
  * recoveries, and splitting the feed into products.
- * 
+ *
  */
 void CUnit::process()
 {
@@ -92,12 +92,12 @@ void CUnit::process()
 
 /**
  * @brief Update the volume of the unit
- * 
+ *
  * This function updates the volume of the unit based on the given beta
  * value.
- * 
+ *
  * @param beta The beta value to update the volume
- * 
+ *
  */
 void CUnit::update_volume(double beta)
 {

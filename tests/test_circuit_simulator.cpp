@@ -1,10 +1,10 @@
 /**
  * @file test_circuit_simulator.cpp
  * @brief Unit tests for the circuit simulator.
- * 
+ *
  * This file contains unit tests for the circuit simulator, including
  * performance tests and validity checks.
- * 
+ *
  */
 #include <cmath>
 #include <iostream>
@@ -18,7 +18,7 @@
 
 /**
  * @brief Class for testing the circuit simulator.
- * 
+ *
  * This class contains unit tests for the circuit simulator, including
  * performance tests and validity checks.
  */
@@ -37,7 +37,7 @@ protected:
         // Basic checks for any circuit performance call
         ASSERT_FALSE(std::isnan(performance)) << "Performance should not be NaN.";
         // Depending on the circuit, performance could be negative (costs exceed
-        // revenue) 
+        // revenue)
         if (expected_performance != -1.0)
         {
             ASSERT_NEAR(performance, expected_performance, tolerance) << "Performance did not match expected value.";
@@ -55,11 +55,11 @@ protected:
 
 /**
  * @brief Test case for the original vec1 performance.
- * 
+ *
  * This test case checks the performance of a circuit defined by the
  * original vec1 vector. The expected performance is not strictly defined,
  * but it should be a valid circuit.
- * 
+ *
  */
 TEST_F(CircuitSimulatorTest, OriginalVec1Performance)
 {
@@ -75,13 +75,13 @@ TEST_F(CircuitSimulatorTest, OriginalVec1Performance)
     double performance = circuit_performance(static_cast<int>(vec1.size()), const_cast<int*>(vec1.data()));
     ASSERT_FALSE(std::isnan(performance));
     // It's reasonable to expect negative performance if all valuable material is
-    // lost. 
+    // lost.
     std::cout << "OriginalVec1 Performance: " << performance << std::endl;
 }
 
 /**
  * @brief Test case for a minimal valid circuit.
- * 
+ *
  * This test case checks the performance of a minimal valid circuit
  * with n=1. The expected performance is not strictly defined,
  * but it should be a valid circuit.
@@ -96,7 +96,7 @@ TEST_F(CircuitSimulatorTest, MinimalValidCircuit)
 
 /**
  * @brief Test case for a circuit with all products to tailings.
- * 
+ *
  * This test case checks the performance of a circuit where all products
  * are routed to tailings. The expected performance is not strictly defined,
  * but it should be a valid circuit.
@@ -115,7 +115,7 @@ TEST_F(CircuitSimulatorTest, AllToTailingsN2)
 
 /**
  * @brief Test case for a circuit with misrouted products.
- * 
+ *
  * This test case checks the performance of a circuit with misrouted
  * products. The expected performance is not strictly defined, but it
  * should be a valid circuit.
@@ -132,7 +132,7 @@ TEST_F(CircuitSimulatorTest, MisroutedProductsN1)
 
 /**
  * @brief Test case for a long chain circuit.
- * 
+ *
  * This test case checks the performance of a long chain circuit
  * with 20 units. The expected performance is not strictly defined,
  * but it should be a valid circuit.
@@ -158,13 +158,12 @@ TEST_F(CircuitSimulatorTest, LongChainCircuit)
     run_performance_test(vec);
 }
 
-
 /**
  * @brief Test case for a potentially invalid loop circuit.
- * 
+ *
  * This test case checks the performance of a circuit that has
  * a potentially invalid loop.
- * 
+ *
  */
 TEST_F(CircuitSimulatorTest, PotentiallyInvalidLoopNoConvergence)
 {

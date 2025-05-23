@@ -1,7 +1,7 @@
 /**
  * @file test_genetic_algorithm.cpp
  * @brief Unit tests for the Genetic Algorithm module
- * 
+ *
  * This file contains unit tests for the Genetic Algorithm implementation
  * using the Google Test framework. The tests cover various aspects of the
  * algorithm, including optimization of discrete and continuous variables,
@@ -22,30 +22,28 @@ double last_real_error = 0.0;
 static const std::vector<double> real_test_answer = {0.8, 0.4, 0.4, 0.8, 0.0, 0.8, 0.6, 0.3, 0.5, 0.9, 0.2,
                                                      0.7, 0.8, 0.1, 0.4, 0.6, 0.3, 0.5, 0.8, 0.0, 0.7};
 
-// Initial guess for discrete variables (L=10)    
-static const std::vector<int> ga_initial_discrete_n10_vec =
-    { 
-        0, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12};
+// Initial guess for discrete variables (L=10)
+static const std::vector<int> ga_initial_discrete_n10_vec = {0,  10, 12, 10, 12, 10, 12, 10, 12, 10, 12,
+                                                             10, 12, 10, 12, 10, 12, 10, 12, 10, 12};
 
 // Initial guess for continuous variables (L=21)
 static const std::vector<double> ga_initial_continuous_L21_vec = { // L=21
     0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2};
 
-
 /**
  * @brief Fitness function for circuit performance optimization.
- * 
+ *
  * This function evaluates the performance of a circuit based on its
  * configuration and returns a fitness score. The fitness score is
  * calculated as the negative of the circuit performance, as the
  * optimization algorithm aims to maximize the fitness score.
- * 
+ *
  * @param L_discrete The length of the discrete variable array.
  * @param discrete_vars The array of discrete variables representing the
  * circuit configuration.
- * 
+ *
  * @return The fitness score of the circuit configuration.
- * 
+ *
  */
 double circuit_performance_fitness_adapter(int L_discrete, int* discrete_vars)
 {
@@ -55,22 +53,22 @@ double circuit_performance_fitness_adapter(int L_discrete, int* discrete_vars)
 /**
  * @brief Fitness function for circuit performance optimization with
  * continuous variables.
- * 
+ *
  * This function evaluates the performance of a circuit based on its
  * configuration and continuous variables (e.g., beta values) and
  * returns a fitness score. The fitness score is calculated as
  * the negative of the circuit performance, as the optimization
  * algorithm aims to maximize the fitness score.
- * 
+ *
  * @param L_discrete The length of the discrete variable array.
  * @param discrete_vars The array of discrete variables representing the
  * circuit configuration.
  * @param L_continuous The length of the continuous variable array.
  * @param continuous_vars The array of continuous variables (e.g., beta
  * values).
- * 
+ *
  * @return The fitness score of the circuit configuration.
- * 
+ *
  */
 double circuit_performance_mixed_fitness_adapter(int L_discrete, int* discrete_vars, int L_continuous,
                                                  double* continuous_vars)
@@ -118,15 +116,15 @@ double circuit_performance_mixed_fitness_adapter(int L_discrete, int* discrete_v
 
 /**
  * @brief Validity function for discrete circuit configurations.
- * 
+ *
  * This function checks if the given discrete circuit configuration is valid
  * based on the number of units and their connections. It returns true if the
  * configuration is valid, false otherwise.
- * 
+ *
  * @param L_discrete The length of the discrete variable array.
  * @param discrete_vars The array of discrete variables representing the
  * circuit configuration.
- * 
+ *
  * @return True if the configuration is valid, false otherwise.
  */
 bool actual_validity_discrete_adapter(int L_discrete, int* discrete_vars)
@@ -143,18 +141,18 @@ bool actual_validity_discrete_adapter(int L_discrete, int* discrete_vars)
 /**
  * @brief Validity function for mixed discrete-continuous circuit
  * configurations.
- * 
+ *
  * This function checks if the given mixed circuit configuration is valid
  * based on the number of units, their connections, and continuous variables.
  * It returns true if the configuration is valid, false otherwise.
- * 
+ *
  * @param L_discrete The length of the discrete variable array.
  * @param discrete_vars The array of discrete variables representing the
  * circuit configuration.
  * @param L_continuous The length of the continuous variable array.
  * @param continuous_vars The array of continuous variables (e.g., beta
  * values).
- * 
+ *
  * @return True if the configuration is valid, false otherwise.
  */
 bool actual_validity_mixed_adapter(int L_discrete, int* discrete_vars, int L_continuous, double* continuous_vars)
@@ -179,7 +177,7 @@ bool actual_validity_mixed_adapter(int L_discrete, int* discrete_vars, int L_con
 
 /**
  * @brief Test fixture for Genetic Algorithm tests.
- * 
+ *
  * This class sets up the parameters and environment for running the
  * Genetic Algorithm tests. It inherits from the Google Test framework's
  * Test class.
@@ -207,12 +205,12 @@ protected:
 
 /**
  * @brief Test for optimizing a simple valid discrete circuit.
- * 
+ *
  * This test checks if the Genetic Algorithm can successfully optimize
  * a simple valid discrete circuit configuration. It uses a known
  * valid circuit and verifies that the optimization process converges
  * to a valid solution.
- * 
+ *
  * @return void
  */
 TEST_F(GeneticAlgorithmTest, OptimizeSimpleValidDiscreteCircuit)
@@ -311,16 +309,16 @@ TEST_F(GeneticAlgorithmTest, OptimizeSimpleContinuousVariables)
 
 /**
  * @brief Fitness function for matching the real test answer.
- * 
+ *
  * This function evaluates the performance of a circuit based on its
  * configuration and returns a fitness score. The fitness score is
  * calculated as the negative of the squared error from the real test
  * answer, as the optimization algorithm aims to minimize this error.
- * 
+ *
  * @param L_continuous The length of the continuous variable array.
  * @param continuous_vars The array of continuous variables representing the
  * circuit configuration.
- * 
+ *
  * @return The fitness score of the circuit configuration.
  */
 double match_real_test_answer_fitness_adapter(int L_continuous, double* continuous_vars)
@@ -378,7 +376,7 @@ TEST_F(GeneticAlgorithmTest, OptimizeContinuousToMatchRealTestAnswerL21)
 
 /**
  * @brief Test for optimizing discrete variables for a circuit with N=10.
- * 
+ *
  * This test checks if the Genetic Algorithm can successfully optimize
  * a discrete circuit configuration with 10 units. It verifies that the
  * optimization process converges to a valid solution.
@@ -417,7 +415,7 @@ TEST_F(GeneticAlgorithmTest, OptimizeDiscreteWithN10Circuit)
 /**
  * @brief Test for optimizing mixed discrete-continuous variables for a
  * circuit with N=10.
- * 
+ *
  * This test checks if the Genetic Algorithm can successfully optimize
  * a mixed circuit configuration with 10 units. It verifies that the
  * optimization process converges to a valid solution.

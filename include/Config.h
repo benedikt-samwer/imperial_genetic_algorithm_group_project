@@ -1,10 +1,10 @@
 /**
  * @file Config.h
  * @brief Configuration file for the Genetic Algorithm
- * 
+ *
  * This file contains the definition of the Algorithm_Parameters structure
  * and the function to load parameters from a configuration file.
- * 
+ *
  * The Algorithm_Parameters structure holds various parameters for the
  * genetic algorithm.
  *
@@ -56,13 +56,13 @@ inline void load_parameters(const std::string& file, Algorithm_Parameters& p)
                 p.random_seed = std::stoi(val);
             else if (key == "num_units") // Number of units in the circuit
                 p.num_units = std::stoi(val);
-            else if (key == "mode") // Optimization mode: discrete, continuous, or hybrid
-                p.mode = val; // d, c, or h
+            else if (key == "mode")           // Optimization mode: discrete, continuous, or hybrid
+                p.mode = val;                 // d, c, or h
             else if (key == "max_iterations") // Maximum number of generations
                 p.max_iterations = std::stoi(val);
             else if (key == "population_size") // Number of individuals in the population
                 p.population_size = std::stoi(val);
-            else if (key == "elite_count")  // Number of best individuals to keep unchanged
+            else if (key == "elite_count") // Number of best individuals to keep unchanged
                 p.elite_count = std::stoi(val);
             else if (key == "tournament_size") // Number of contenders per tournament
                 p.tournament_size = std::stoi(val);

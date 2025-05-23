@@ -2,16 +2,16 @@
  * @file test_validity_checker.cpp
  * @brief Unit tests for the CCircuit class, specifically focusing on
  * validity checking of circuit configurations.
- * 
+ *
  */
 #include "CCircuit.h"
 #include <cmath>
-#include <gtest/gtest.h> 
+#include <gtest/gtest.h>
 #include <vector>
 
 /**
  * @brief Test fixture for the ValidityCheckerTest class.
- * 
+ *
  * This class sets up the test environment for testing the validity of
  * circuit configurations.
  */
@@ -24,7 +24,7 @@ protected:
 
 /**
  * @brief Test for a manually created circuit vector.
- * 
+ *
  * This test checks the validity of a circuit configuration using a manually
  * created vector.
  */
@@ -37,7 +37,7 @@ TEST_F(ValidityCheckerTest, ManualDemo)
 
 /**
  * @brief Test for an empty circuit vector.
- * 
+ *
  * This test checks the validity of an empty circuit vector.
  */
 TEST_F(ValidityCheckerTest, InvalidLength)
@@ -49,7 +49,7 @@ TEST_F(ValidityCheckerTest, InvalidLength)
 
 /**
  * @brief Test for a circuit vector with a feed unit pointing to a terminal.
- * 
+ *
  * This test checks the validity of a circuit configuration where the feed unit
  * points to a terminal.
  */
@@ -63,7 +63,7 @@ TEST_F(ValidityCheckerTest, FeedPointsToTerminal)
 
 /**
  * @brief Test for a circuit vector with an out-of-range concentration value.
- * 
+ *
  * This test checks the validity of a circuit configuration where the
  * concentration value is out of range.
  */
@@ -76,7 +76,7 @@ TEST_F(ValidityCheckerTest, ConcOutOfRange)
 
 /**
  * @brief Test for a circuit vector with an out-of-range tail value.
- * 
+ *
  * This test checks the validity of a circuit configuration where the tail
  * value is out of range.
  */
@@ -89,7 +89,7 @@ TEST_F(ValidityCheckerTest, InvalidSelfLoop)
 
 /**
  * @brief Test for a circuit vector with an invalid destination.
- * 
+ *
  * This test checks the validity of a circuit configuration where the
  * destination is invalid.
  */
@@ -102,7 +102,7 @@ TEST_F(ValidityCheckerTest, InvalidSameDestination)
 
 /**
  * @brief Test for a circuit vector with an unreachable unit.
- * 
+ *
  * This test checks the validity of a circuit configuration where a unit is
  * unreachable.
  */
@@ -115,7 +115,7 @@ TEST_F(ValidityCheckerTest, UnreachableUnit)
 
 /**
  * @brief Test for a circuit vector with two terminals.
- * 
+ *
  * This test checks the validity of a circuit configuration where there are
  * two terminals.
  */
@@ -133,7 +133,7 @@ TEST_F(ValidityCheckerTest, TwoTerminalsCheck)
 
 /**
  * @brief Test for a circuit vector with a cycle.
- * 
+ *
  * This test checks the validity of a circuit configuration where there is a
  * cycle.
  */
@@ -154,7 +154,7 @@ TEST_F(ValidityCheckerTest, TwoNodeCycle)
 
 /**
  * @brief Test for a basic valid circuit vector.
- * 
+ *
  * This test checks the validity of a basic circuit configuration.
  */
 TEST_F(ValidityCheckerTest, BasicValidN10)
@@ -166,19 +166,19 @@ TEST_F(ValidityCheckerTest, BasicValidN10)
 
 /**
  * @brief Test for a small valid circuit vector with n=4.
- * 
+ *
  * This test checks the validity of a small circuit configuration with n=4.
  */
 TEST_F(ValidityCheckerTest, SmallValidN4)
 {
-    Circuit c(4);                                     // n=4. Terminals P1=4, P2=5, T=6
-    std::vector<int> v = {1, 2, 3, 0, 3, 4, 3, 0, 6}; 
+    Circuit c(4); // n=4. Terminals P1=4, P2=5, T=6
+    std::vector<int> v = {1, 2, 3, 0, 3, 4, 3, 0, 6};
     ASSERT_TRUE(c.check_validity((int)v.size(), v.data()));
 }
 
 /**
  * @brief Test for a small valid circuit vector with n=3.
- * 
+ *
  * This test checks the validity of a small circuit configuration with n=3.
  */
 TEST_F(ValidityCheckerTest, SmallValidN3_02)
@@ -194,7 +194,7 @@ TEST_F(ValidityCheckerTest, SmallValidN3_02)
 
 /**
  * @brief Test for a small valid circuit vector with n=10.
- * 
+ *
  * This test checks the validity of a small circuit configuration with n=10.
  */
 TEST_F(ValidityCheckerTest, SmallValidN10_03)
@@ -210,7 +210,7 @@ TEST_F(ValidityCheckerTest, SmallValidN10_03)
 
 /**
  * @brief Test for a basic circuit vector with n=10.
- * 
+ *
  * This test checks the validity of a basic circuit configuration with n=10.
  */
 TEST_F(ValidityCheckerTest, BasicCircuitValidityN10)
@@ -231,7 +231,7 @@ TEST_F(ValidityCheckerTest, BasicCircuitValidityN10)
 
 /**
  * @brief Test for a mass balance convergence with a valid circuit vector.
- * 
+ *
  * This test checks the validity of a circuit configuration that is known to
  * converge for mass balance.
  * This test assumes check_validity itself doesn't run mass_balance, or we are
@@ -249,13 +249,13 @@ TEST_F(ValidityCheckerTest, DISABLED_MassBalanceConvergesValid)
 /**
  * @brief Test for a mass balance convergence failure with a valid circuit
  * vector.
- * 
+ *
  * This test checks the validity of a circuit configuration that is known to
  * fail mass balance.
  * This test assumes check_validity itself doesn't run mass_balance, or we are
  * testing a known good vector. Since check_validity *does* run mass_balance,
  * this test is essentially the same as other valid tests if the vector is good.
- * 
+ *
  */
 TEST_F(ValidityCheckerTest, DISABLED_MassBalanceNotConverge)
 {
@@ -274,7 +274,7 @@ TEST_F(ValidityCheckerTest, DISABLED_MassBalanceNotConverge)
 
 /**
  * @brief Test for a valid circuit vector with unit parameters.
- * 
+ *
  * This test checks the validity of a circuit configuration with unit
  * parameters.
  */
@@ -289,7 +289,7 @@ TEST_F(ValidityCheckerTest, ValidWithUnitParameters)
 
 /**
  * @brief Test for an invalid circuit vector with unit parameters size.
- * 
+ *
  * This test checks the validity of a circuit configuration with an incorrect
  * size of unit parameters.
  */
@@ -304,7 +304,7 @@ TEST_F(ValidityCheckerTest, InvalidUnitParametersSize)
 
 /**
  * @brief Test for an invalid circuit vector with unit parameters values.
- * 
+ *
  * This test checks the validity of a circuit configuration with invalid unit
  * parameters values.
  */
@@ -319,7 +319,7 @@ TEST_F(ValidityCheckerTest, InvalidUnitParameterValueTooLow)
 
 /**
  * @brief Test for an invalid circuit vector with unit parameters values.
- * 
+ *
  * This test checks the validity of a circuit configuration with invalid unit
  * parameters values.
  */
@@ -334,7 +334,7 @@ TEST_F(ValidityCheckerTest, InvalidUnitParameterValueTooHigh)
 
 /**
  * @brief Test for an invalid circuit vector with unit parameters NaN.
- * 
+ *
  * This test checks the validity of a circuit configuration with invalid unit
  * parameters values (NaN).
  */
@@ -349,7 +349,7 @@ TEST_F(ValidityCheckerTest, UnitParameterNaN)
 
 /**
  * @brief Test for a circuit vector with an invalid index.
- * 
+ *
  * This test checks the validity of a circuit configuration with an invalid
  * index.
  */
@@ -362,7 +362,7 @@ TEST_F(ValidityCheckerTest, IndexCheckNegativeConc)
 
 /**
  * @brief Test for a circuit vector with an invalid tail index.
- * 
+ *
  * This test checks the validity of a circuit configuration with an invalid
  * tail index.
  */
@@ -373,10 +373,9 @@ TEST_F(ValidityCheckerTest, IndexCheckNegativeTail)
     ASSERT_FALSE(c.check_validity((int)v.size(), v.data()));
 }
 
-
 /**
  * @brief Test for a circuit vector with an invalid tail index.
- * 
+ *
  * This test checks the validity of a circuit configuration with an invalid
  * tail index.
  */
@@ -389,7 +388,7 @@ TEST_F(ValidityCheckerTest, MissingAllTerminals)
 
 /**
  * @brief Test for a circuit vector with missing P1 and P2 terminals.
- * 
+ *
  * This test checks the validity of a circuit configuration with missing P1 and
  * P2 terminals.
  */
@@ -402,7 +401,7 @@ TEST_F(ValidityCheckerTest, MissingP1AndP2Terminals)
 
 /**
  * @brief Test for a circuit vector with missing tailings terminal.
- * 
+ *
  * This test checks the validity of a circuit configuration with missing
  * tailings terminal.
  */
@@ -413,4 +412,3 @@ TEST_F(ValidityCheckerTest, MissingTailingsTerminal)
     std::vector<int> v = {0, 2, 1, 2, 3};
     ASSERT_FALSE(c.check_validity((int)v.size(), v.data()));
 }
-

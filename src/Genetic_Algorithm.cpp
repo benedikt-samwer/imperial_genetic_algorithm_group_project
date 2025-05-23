@@ -1,12 +1,12 @@
 /**
  * @file Genetic_Algorithm.cpp
  * @brief Genetic Algorithm Implementation
- * 
+ *
  * This file contains the implementation of the genetic algorithm for optimizing
  * the circuit design. It includes functions for generating valid circuits,
  * evaluating fitness, and performing genetic operations such as selection,
  * crossover, and mutation.
- * 
+ *
  */
 #include "Genetic_Algorithm.h"
 #include "CCircuit.h"
@@ -14,14 +14,12 @@
 #include <chrono>
 #include <functional>
 #include <iostream>
-#include <omp.h> 
+#include <omp.h>
 #include <random>
 #include <set>
 #include <vector>
 
-
 static int g_random_seed = -1; // -1 means use random seed
-
 
 /**
  * @brief Set the random seed for the random number generator
@@ -50,12 +48,12 @@ static std::mt19937& rng()
 
 /**
  * @brief Generate a valid circuit template
- * 
+ *
  * This function generates a valid circuit template based on the number of units.
  * It creates a vector of integers representing the circuit connections.
- * 
+ *
  * @param num_units Number of units in the circuit
- * 
+ *
  * @return A vector of integers representing the circuit connections
  */
 std::vector<int> generate_valid_circuit_template(int num_units)
@@ -104,19 +102,19 @@ std::vector<int> generate_valid_circuit_template(int num_units)
 }
 
 /**
- * 
+ *
  * @brief Create a varied circuit based on a template
- * 
+ *
  * This function creates a varied circuit based on a given template vector.
  * It modifies the template by changing a few connections while ensuring
  * the circuit remains valid.
- * 
+ *
  * @param template_vec The template vector to modify
  * @param num_units Number of units in the circuit
  * @param validity_check Function to check the validity of the circuit
- * 
+ *
  * @return A vector representing the varied circuit
- * 
+ *
  */
 std::vector<int> create_varied_circuit(const std::vector<int>& template_vec, int num_units,
                                        std::function<bool(int, int*)> validity_check)
@@ -200,16 +198,16 @@ std::vector<int> create_varied_circuit(const std::vector<int>& template_vec, int
 
 /**
  * @brief Generate an initial population of valid circuits
- * 
+ *
  * This function generates an initial population of valid circuits
  * based on a set of templates.
- * 
+ *
  * @param population_size Size of the population to generate
  * @param num_units Number of units in the circuit
  * @param validity_check Function to check the validity of the circuit
- * 
+ *
  * @return A vector of vectors representing the initial population
- * 
+ *
  */
 std::vector<std::vector<int>> generate_initial_population(int population_size, int num_units,
                                                           std::function<bool(int, int*)> validity_check)
@@ -306,9 +304,9 @@ std::vector<std::vector<int>> generate_initial_population(int population_size, i
 
 /**
  * @brief Check if all values in the vector are true
- * 
+ *
  * This function checks if all values in the vector are true.
- * 
+ *
  * @param iv Size of the vector
  * @param ivs Pointer to the vector
  * @param rv Size of the real vector
@@ -331,12 +329,12 @@ static OptimizationResult last_result;
 
 /**
  * @brief Get the last optimization result
- * 
+ *
  * This function returns the last optimization result.
  * This structure holds the results of the optimization process,
  * including the best fitness, number of generations, average fitness,
  * standard deviation of fitness, time taken, and convergence status.
- * 
+ *
  * @return The last optimization result
  */
 OptimizationResult get_last_optimization_result()
@@ -350,17 +348,17 @@ OptimizationResult get_last_optimization_result()
 
 /**
  * @brief Optimize a discrete vector using a genetic algorithm
- * 
+ *
  * This function optimizes a discrete vector using a genetic algorithm.
  * It evaluates the fitness of the population in parallel and applies
  * selection, crossover, and mutation to generate new populations.
- * 
+ *
  * @param int_vector_size Size of the integer vector
  * @param int_vector Pointer to the integer vector
  * @param func Function to evaluate the fitness of the circuit
  * @param validity Function to check the validity of the circuit
  * @param params Algorithm parameters for the optimization process
- * 
+ *
  * @return The best fitness value found during optimization
  */
 int optimize(int int_vector_size, int* int_vector, std::function<double(int, int*)> func,
@@ -604,20 +602,19 @@ int optimize(int int_vector_size, int* int_vector, std::function<double(int, int
 // 2) Continuous-only optimize with PARALLEL fitness evaluation
 // ********************************************************************
 
-
 /**
  * @brief Optimize a continuous vector using a genetic algorithm
- * 
+ *
  * This function optimizes a continuous vector using a genetic algorithm.
  * It evaluates the fitness of the population in parallel and applies
  * selection, crossover, and mutation to generate new populations.
- * 
+ *
  * @param real_vector_size Size of the real vector
  * @param real_vector Pointer to the real vector
  * @param func Function to evaluate the fitness of the circuit
  * @param validity Function to check the validity of the circuit
  * @param params Algorithm parameters for the optimization process
- * 
+ *
  * @return The best fitness value found during optimization
  */
 int optimize(int real_vector_size, double* real_vector, std::function<double(int, double*)> func,
@@ -821,11 +818,11 @@ int optimize(int real_vector_size, double* real_vector, std::function<double(int
 
 /**
  * @brief Optimize a mixed discrete-continuous vector using a genetic algorithm
- * 
+ *
  * This function optimizes a mixed discrete-continuous vector using a genetic
  * algorithm. It evaluates the fitness of the population in parallel and applies
  * selection, crossover, and mutation to generate new populations.
- * 
+ *
  * @param int_vector_size Size of the integer vector
  * @param int_vector Pointer to the integer vector
  * @param real_vector_size Size of the real vector
@@ -833,7 +830,7 @@ int optimize(int real_vector_size, double* real_vector, std::function<double(int
  * @param hybrid_func Function to evaluate the fitness of the circuit
  * @param hybrid_validity Function to check the validity of the circuit
  * @param params Algorithm parameters for the optimization process
- * 
+ *
  * @return The best fitness value found during optimization
  */
 int optimize(int int_vector_size, int* int_vector, int real_vector_size, double* real_vector,

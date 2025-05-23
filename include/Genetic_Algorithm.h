@@ -2,7 +2,7 @@
  * @file Genetic_Algorithm.h
  * @brief Genetic Algorithm Header
  * @author
- * 
+ *
  * This header defines the interface for the genetic algorithm optimization
  */
 
