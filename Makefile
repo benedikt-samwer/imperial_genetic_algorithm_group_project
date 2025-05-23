@@ -21,7 +21,8 @@ CLANG_TIDY := $(shell command -v clang-tidy 2> /dev/null)
 # Help target
 help:
 	@echo "Available targets:"
-	@echo "  make              - Build the project"
+	@echo "  make build        - Build the project"
+	@echo "  make run          - Run the project"
 	@echo "  make test         - Run all tests"
 	@echo "  make performance  - Run performance tests"
 	@echo "  make format       - Format code and run linter"
@@ -30,6 +31,10 @@ help:
 	@echo "  make help         - Show this help message"
 
 # Build target
+build:
+	@bash build.sh
+
+# Run target
 run:
 	@bash run.sh
 
