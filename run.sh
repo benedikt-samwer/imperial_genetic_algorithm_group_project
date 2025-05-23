@@ -8,7 +8,7 @@ if [[ ! -d build ]]; then
 fi
 
 if [[ ! -f build/bin/Circuit_Optimizer ]]; then
-  echo "[Error] Circuit_Optimizer binary not found. Run ./build.sh first."
+  echo "[Error] Circuit_Optimizer binary not found. Run `make build` first."
   exit 1
 fi
 

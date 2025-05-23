@@ -36,7 +36,6 @@ build:
 
 # Run target
 run:
-	@bash build.sh
 	@bash run.sh
 
 # Test target
