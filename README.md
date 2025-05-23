@@ -9,7 +9,7 @@
 We must configure a circuit of identical separation units so that two valuable minerals—**palusznium (P)** and **gormanium (G)**—are recovered profitably while punishing waste entrainment and oversized equipment.
 The design space (both topology **and** unit volumes) is combinatorial, so we use a **genetic algorithm** (GA) to search it.
 
-Full background → *docs/Problem Statement for Genetic Algorithms Project 2025.pdf*.
+Full background → *Problem Statement for Genetic Algorithms Project 2025.pdf*.
 
 ---
 
@@ -57,45 +57,42 @@ Full background → *docs/Problem Statement for Genetic Algorithms Project�
 
 Install Python deps with `pip install -r requirements.txt` (matplotlib + pandas).
 
-### 3.2  Build  *(one‑liner)*
+### 3.2  Build
 
-Run the helper script; it creates the `build/` directory, configures CMake for a **Release** build and compiles the optimiser.
-
-```bash
-./build.sh          # → build/bin/Optimizer (plus unit‑test binaries)
-```
-
-If you need a clean rebuild:
+The project ships with a convenience **Makefile** that wraps the CMake build under the hood.
 
 ```bash
-./build.sh clean    # wipes previous build/ then recompiles
+make build      # configure + compile (Release) to build/
+make clean      # remove the build directory
 ```
+
+The first invocation generates `build/bin/Optimizer` (and unit‑test binaries).
 
 ### 3.3  Run
 
 ```bash
-./run.sh            # builds + runs optimiser, then auto‑plots results
+make run        # executes the optimiser, plots, appends CSV
 ```
 
-* Appends one line to `plotting/circuit_results.csv`.
-* Calls the Python helper `plotting/main.py -f` which reads that CSV and
-  writes a **PNG flow‑sheet diagram + vector table** to `output/flowchart.png`.
+Need more cores? → `OMP_NUM_THREADS=8 make run`
 
-Optional flags:
+Want a different GA mode? Edit **`parameters.txt`** (`mode = d | h | c`)
+– remember: *continuous‑only (`c`) is dev/test only; it will not yield profitable solutions.*
 
 ```bash
-./run.sh d          # discrete only (recommended)
-./run.sh h          # hybrid (shape + volumes)
-./run.sh c          # continuous DEV‑ONLY
+OMP_NUM_THREADS=8 make run        # force 8 OpenMP threads
+MODE=d            make run        # override mode in parameters.txt (d/h/c)
 ```
 
-> Rendering requires **Graphviz**, **Pillow** and **pandas**; install once with
-> `pip install -r plotting/requirements.txt`.
+Internally this calls the optimiser and then `plotting/main.py -f` to create `output/flowchart.png`.
 
-\-------------------------|------------|------------------|
-\| `d`  | **connections** only | explore profitable flowsheets |
-\| `c`  | **β‑volumes** only (connections frozen) – **DEV‑ONLY**.  \⚠️ This mode does *not* find profitable solutions; it is kept for unit‑testing kinetics & cost functions |
-\| `h`  | alternates *d* ↔ *c* | end‑to‑end optimisation |
+> Rendering requires **Graphviz**, **Pillow** and **pandas**; install once with `pip install -r plotting/requirements.txt`.
+
+| Mode | Search dimension treated as variable | Primary purpose |
+|------|--------------------------------------|-----------------|
+| `d`  | **connections** only                 | explore profitable flowsheets |
+| `c`  | **β-volumes** only (connections frozen) – **DEV-ONLY**. ⚠️ This mode does *not* find profitable solutions; it is kept for unit-testing kinetics & cost functions |
+| `h`  | alternates *d* ↔ *c*                 | end-to-end optimisation |
 
 ---
 
@@ -167,7 +164,6 @@ Open the PNG directly, or embed it in documentation.
 ## 7  Licence & citation
 
 The code is released under the **MIT Licence** (see `LICENSE`).
-If you use it in academic work, please cite the original *Palusznium Rush 2025* coursework and this repository.
 
 ---
 
