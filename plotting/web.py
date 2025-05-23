@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
-# filepath: /Users/hw1724/Desktop/Study/acs-palusznium-rush-ilmenite-1/plotting/web.py
+# filepath: plotting/web.py
 
 from flask import Flask, request, render_template_string, url_for
 import subprocess, os, re, time
 
+# Get the absolute path of the project root directory
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PLOTTING_DIR = os.path.dirname(os.path.abspath(__file__))
+
 app = Flask(__name__,
             static_url_path='/static',
-            static_folder='/Users/hw1724/Desktop/Study/acs-palusznium-rush-ilmenite-1/plotting')
+            static_folder=PLOTTING_DIR)
 
-PARAMS_FILE = "/Users/hw1724/Desktop/Study/acs-palusznium-rush-ilmenite-1/parameters.txt"
-RUN_SCRIPT  = "/Users/hw1724/Desktop/Study/acs-palusznium-rush-ilmenite-1/run.sh"
+PARAMS_FILE = os.path.join(PROJECT_ROOT, "parameters.txt")
+RUN_SCRIPT  = os.path.join(PROJECT_ROOT, "run.sh")
 
 def parse_params_file(filename, skip_lines=2):
     """
-    解析 parameters.txt，跳过前 skip_lines 行，将每行拆分成:
+    Parse parameters.txt, skip first skip_lines lines, split each line into:
       { 'type': 'parameter'/'heading'/'other',
-        'key':   参数名 或 None,
-        'value': 参数值 或 None,
-        'raw_line': 原始文本 }
+        'key':   parameter name or None,
+        'value': parameter value or None,
+        'raw_line': original text }
     """
     items = []
     param_regex = re.compile(r'^\s*([A-Za-z_]+)\s*=\s*(.*)$')
@@ -56,7 +60,7 @@ def parse_params_file(filename, skip_lines=2):
 
 def write_params_file(filename, items, form_data):
     """
-    将用户表单中的参数写回文件，保留其它注释、空行等
+    Write parameters from user form back to file, preserving comments and empty lines
     """
     new_lines = []
     for entry in items:
@@ -68,7 +72,7 @@ def write_params_file(filename, items, form_data):
             else:
                 new_lines.append(entry["raw_line"])
         else:
-            # heading 或其他原样写回
+            # Keep headings and other lines unchanged
             new_lines.append(entry["raw_line"])
     with open(filename, "w") as f:
         f.write("\n".join(new_lines) + "\n")
@@ -80,7 +84,7 @@ html_template = """
 <head>
   <title>GA Parameter Editor</title>
   <style>
-    /* 保持原有样式不变 */
+    /* Keep existing styles */
     body {
       font-family: sans-serif;
       margin: 20px;
@@ -116,14 +120,14 @@ html_template = """
       box-sizing: border-box;
       min-width: 260px;
     }
-    /* 其他样式保持不变 */
-        .img-section {
+    /* Keep other styles */
+    .img-section {
       margin-top: 20px;
     }
     .img-row {
-  display: block;
-  margin-bottom: 20px;
-}
+      display: block;
+      margin-bottom: 20px;
+    }
     .output-section {
       margin-top: 20px;
       max-height: 300px;
@@ -146,22 +150,22 @@ html_template = """
       margin-right: 20px;
       border: 1px solid #ccc;
     }
-        .flowchart {
+    .flowchart {
       max-width: 600px;
       border: 1px solid #ccc;
       display: block;
     }
-     /* 保持其他样式不变 */
+    /* Keep other styles */
     .params-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px; /* 控制卡片间距 */
+      gap: 10px; /* Control card spacing */
     }
     
     .param-card {
-      flex: 1 1 calc(50% - 10px); /* 关键修改：计算50%宽度并减去间距 */
-      min-width: 300px; /* 确保最小宽度 */
-      max-width: calc(50% - 10px); /* 防止弹性扩张超过50% */
+      flex: 1 1 calc(50% - 10px); /* Key change: calculate 50% width minus gap */
+      min-width: 300px; /* Ensure minimum width */
+      max-width: calc(50% - 10px); /* Prevent flex expansion beyond 50% */
       background: #f8f8f8;
       border: 1px solid #ccc;
       border-radius: 8px;
@@ -169,7 +173,7 @@ html_template = """
       box-sizing: border-box;
     }
 
-    /* 其他保持原有样式 */
+    /* Keep other styles */
     .param-heading {
       width: 100%;
       font-weight: bold;
@@ -196,11 +200,11 @@ html_template = """
             </div>
           {% endfor %}
         </div>
-        {% set ns.group = [] %}  {# 这里重置组 #}
+        {% set ns.group = [] %}  {# Reset group here #}
       {% endif %}
       <div class="param-heading">{{ item.raw_line|safe }}</div>
     {% elif item.type == 'parameter' %}
-      {% set ns.group = ns.group + [item] %}  {# 这里修复语法 #}
+      {% set ns.group = ns.group + [item] %}  {# Fix syntax here #}
     {% else %}
       <div class="other-line">{{ item.raw_line|safe }}</div>
     {% endif %}
@@ -215,15 +219,13 @@ html_template = """
       {% endfor %}
     </div>
   {% endif %}
-<
 </div>
     <br>
     <input type="submit" name="action" value="Save">
     <input type="submit" name="action" value="Run">
   </form>
 
-
-  <!-- 运行结果和图片部分保持不变 -->
+  <!-- Keep run results and images section -->
   <div class="output-section">
     <pre>{{ output }}</pre>
   </div>
