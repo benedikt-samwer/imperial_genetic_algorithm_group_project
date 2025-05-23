@@ -1,0 +1,60 @@
+# Project settings
+PROJECT_NAME           = "Palusznium‑Rush Ilmenite Optimiser"
+PROJECT_BRIEF          = "A C++17+OpenMP toolkit for mineral‑processing circuit design"
+OUTPUT_DIRECTORY       = docs/doxygen_html   # Output directory relative to Doxyfile location
+CREATE_SUBDIRS         = YES
+ALLOW_UNICODE_NAMES    = YES
+OPTIMIZE_OUTPUT_FOR_C  = YES # Good for C++ too
+
+# Input files and directories
+INPUT                  = . \
+                         include \
+                         src
+# Note: "." is included so Doxygen finds README (2).md in the root.
+# "include" and "src" are for your .h and .cpp files.
+
+FILE_PATTERNS          = *.h \
+                         *.cpp \
+                         *.md   # Add .md for Markdown files
+RECURSIVE              = YES    # Process subdirectories of INPUT paths
+
+# Exclude patterns (optional, but good practice)
+EXCLUDE                = build \
+                         plotting \
+                         tests \
+                         rng_examples \
+                         hooks \
+                         .git
+EXCLUDE_PATTERNS       = */CMakeLists.txt \
+                         */*.py \
+                         */*.sh \
+                         */parameters.txt \
+                         */requirements.txt \
+                         */LICENSE
+
+# Markdown support
+MARKDOWN_SUPPORT       = YES
+USE_MDFILE_AS_MAINPAGE = "README (2).md" # Crucial: Use your README file
+
+# Source browsing and extraction
+EXTRACT_ALL            = YES  # Document all entities, even if not documented
+EXTRACT_PRIVATE        = YES  # Include private members
+EXTRACT_STATIC         = YES  # Include static members
+STRIP_FROM_PATH        = $(DOXYFILE_DIR) # Removes project root from paths in docs
+                           # Or you can list specific paths:
+                           # $(DOXYFILE_DIR)/include \
+                           # $(DOXYFILE_DIR)/src
+
+# Diagram generation (requires Graphviz/dot)
+HAVE_DOT               = YES
+UML_LOOK               = YES  # Nicer UML-style class diagrams
+CALL_GRAPH             = YES  # Generate call graphs
+CALLER_GRAPH           = YES  # Generate caller graphs
+
+# HTML output specific
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html # Subdirectory within OUTPUT_DIRECTORY
+HTML_FILE_EXTENSION    = .html
+HTML_HEADER            = # Optional: path to a custom HTML header
+HTML_FOOTER            = # Optional: path to a custom HTML footer
+GENERATE_LATEX         = NO   # We only want HTML for now
