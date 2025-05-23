@@ -102,14 +102,14 @@ Every run-time option is in `parameters.txt` so you can tune the optimiser witho
 
 | Key                         | Type / Range      | Default      | Description                                                       |
 | --------------------------- | ----------------- | ------------ | ----------------------------------------------------------------- |
-| **num\_units**              | integer ≥ 2       | 6            | Number of separation units *(vector length = 2·n + 1)*            |
+| **num\_units**              | integer ≥ 2       | 10            | Number of separation units *(vector length = 2·n + 1)*            |
 | **mode**                    | `d` \| `c` \| `h` | `h`          | GA operating mode: discrete, continuous (**dev‑only**), or hybrid |
 | **max\_iterations**         | integer           | 100          | GA generations per optimisation call                              |
 | **population\_size**        | integer           | 600          | Individuals per generation                                        |
 | **elite\_count**            | integer           | 2            | Best genomes copied unchanged each generation                     |
 | **tournament\_size**        | integer           | 3            | k‑way tournament selection pressure                               |
-| **crossover\_probability**  | 0–1               | 0.9          | Chance two parents cross                                          |
-| **mutation\_probability**   | 0–1               | 0.08         | Per‑gene mutation chance (all modes)                              |
+| **crossover\_probability**  | 0–1               | 0.8          | Chance two parents cross                                          |
+| **mutation\_probability**   | 0–1               | 0.05         | Per‑gene mutation chance (all modes)                              |
 | **mutation\_step\_size**    | integer ≥ 1       | 3            | Max ± step for discrete "creep"                                   |
 | **use\_inversion**          | bool              | true         | Enable contiguous slice reversal (discrete)                       |
 | **inversion\_probability**  | 0–1               | 0.2          | Chance *per child* that inversion occurs                          |
