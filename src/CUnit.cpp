@@ -1,5 +1,19 @@
+/**
+ * @file CUnit.cpp
+ * @brief Implementation of the CUnit class
+ *
+ * This file contains the implementation of the CUnit class, which represents
+ * a single separation unit in a mineral-processing circuit. The class
+ * includes methods for processing the unit, updating its volume, and
+ * calculating recoveries for different components.
+ *
+ */
 #include "CUnit.h"
 
+/**
+ * @brief Constructors for the CUnit class
+ *
+ */
 CUnit::CUnit()
     : conc_num(0), tails_num(0), mark(false), volume(10.0), feed_palusznium(0.0), feed_gormanium(0.0), feed_waste(0.0),
       k_palusznium(0.008), k_gormanium(0.004), k_waste(0.0005), conc_palusznium(0.0), conc_gormanium(0.0),
@@ -28,8 +42,7 @@ CUnit::CUnit(int conc, int tails, bool testFlag)
 {
     if (testFlag)
     {
-        // std::cout<<"Here Test OPEN!!!!!!!"<<std::endl;
-        // std::cout<<"Constant: "<<Constants::Test::DEFAULT_UNIT_VOLUME<<std::endl;
+
         this->k_palusznium = Constants::Test::K_PALUSZNIUM;
         this->k_gormanium = Constants::Test::K_GORMANIUM;
         this->k_waste = Constants::Test::K_WASTE;
@@ -38,21 +51,24 @@ CUnit::CUnit(int conc, int tails, bool testFlag)
         this->V_min = Constants::Test::MIN_UNIT_VOLUME;
         this->V_max = Constants::Test::MAX_UNIT_VOLUME;
         this->volume = Constants::Test::DEFAULT_UNIT_VOLUME;
-        // std::cout<<"volume: "<<this->volume<<std::endl;
     }
 }
 
+/**
+ * @brief Process the unit
+ *
+ * This function processes the unit by calculating the residence time,
+ * recoveries, and splitting the feed into products.
+ *
+ */
 void CUnit::process()
 {
     /* ----------- 1. Residence time τ ----------- */
-    // constexpr double rho   = Constants::Physical::MATERIAL_DENSITY;   // 3000
-    // kg/m³ constexpr double phi   = Constants::Physical::SOLIDS_CONTENT; // 0.10
 
     // total solids feed (kg/s)
     const double Ftot = feed_palusznium + feed_gormanium + feed_waste;
     // guard against division‑by‑zero / vanishing flow
     const double minFlow = 1e-10;
-    // std::cout<<"volume: "<<this->volume<<std::endl;
     const double tau = phi * this->volume / (std::max(Ftot, minFlow) / rho);
 
     /* ----------- 2. Recoveries R_i^C ----------- */
@@ -74,10 +90,16 @@ void CUnit::process()
     tails_waste = feed_waste - conc_waste;
 }
 
+/**
+ * @brief Update the volume of the unit
+ *
+ * This function updates the volume of the unit based on the given beta
+ * value.
+ *
+ * @param beta The beta value to update the volume
+ *
+ */
 void CUnit::update_volume(double beta)
 {
-    // std::cout<<"beta: "<<beta<<std::endl;
-    // std::cout<<"before volume: "<<this->volume<<std::endl;
     this->volume = this->V_min + (this->V_max - this->V_min) * beta;
-    // std::cout<<"after volume: "<<this->volume<<std::endl;
 }

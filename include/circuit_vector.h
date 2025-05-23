@@ -1,19 +1,9 @@
 /**
- * Header for circuit vector representation
+ * @file circuit_vector.h
+ * @brief Circuit Vector Header
  *
  * This header defines the format and operations related to circuit vectors,
  * which describe the connections in a mineral processing circuit.
- */
-
-#pragma once
-
-#include "CCircuit.h" // Include for CircuitDestination enum
-#include <iostream>
-#include <string>
-#include <vector>
-
-/**
- * Class representing a circuit vector
  *
  * A circuit vector has the following format:
  * [feed_unit, unit0_conc, unit0_waste, unit1_conc, unit1_waste, ...]
@@ -29,6 +19,14 @@
  * - GORMANIUM_PRODUCT (-2): Final Gormanium concentrate product
  * - TAILINGS_OUTPUT (-3): Final tailings output
  */
+
+#pragma once
+
+#include "CCircuit.h" // Include for CircuitDestination enum
+#include <iostream>
+#include <string>
+#include <vector>
+
 class CircuitVector
 {
 public:

@@ -1,5 +1,12 @@
-// tests/test_genetic_algorithm.cpp
-
+/**
+ * @file test_genetic_algorithm.cpp
+ * @brief Unit tests for the Genetic Algorithm module
+ *
+ * This file contains unit tests for the Genetic Algorithm implementation
+ * using the Google Test framework. The tests cover various aspects of the
+ * algorithm, including optimization of discrete and continuous variables,
+ * validity checks, and performance evaluation.
+ */
 #include "CCircuit.h"   // For Circuit class and check_validity
 #include "CSimulator.h" // For circuit_performance
 #include "Genetic_Algorithm.h"
@@ -8,66 +15,64 @@
 #include <iostream>
 #include <vector>
 
-// Known "answer" vectors for testing
+// Test parameters
 static const int int_test_answer[21] = {0, 1, 2, 0, 3, 1, 4, 2, 0, 1, 3, 4, 2, 1, 0, 3, 2, 4, 1, 3, 0};
 double last_int_error = 0.0;
 double last_real_error = 0.0;
 static const std::vector<double> real_test_answer = {0.8, 0.4, 0.4, 0.8, 0.0, 0.8, 0.6, 0.3, 0.5, 0.9, 0.2,
                                                      0.7, 0.8, 0.1, 0.4, 0.6, 0.3, 0.5, 0.8, 0.0, 0.7};
 
-// Previous initial vectors from old main()
-static const std::vector<int> ga_initial_discrete_n10_vec =
-    { // L=20, so n should be (20-1)/2 -> not integer. This was for L=21 if
-      // int_test_answer was target
-      // The old main had L1 = vector1.size() for this, where vector1 had 20
-      // elements.
-      // This seems to be a mismatch with int_test_answer that has 21
-      // elements.
-      // For n=10, L must be 21. The old vector1 had 20 elements.
-      // Let's use a slice of int_test_answer or a new proper n=10 vector.
-      // For now, let's define it as it was in the old main's vector1 (L=20)
-      // and adjust if needed or make a new L=21 vector.
-      // Old vector1 (L=20):
-      //  1, 0, 3, 2, 1, 0, 4, 3, 2, 1, 0,
-      //  3, 4, 2, 1, 0, 3, 2, 1, 4 // (last element 0 was missing to make it
-      //  20 from 21 of int_test_answer's pair)
-      // Let's use a valid n=10 initial guess (L=21) for consistency in tests
-      // aiming for actual circuit performance.
-      // Example: feed to u0, u0->P1,T, u1->P1,T ... u9->P1,T
-        0, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12, 10, 12};
+// Initial guess for discrete variables (L=10)
+static const std::vector<int> ga_initial_discrete_n10_vec = {0,  10, 12, 10, 12, 10, 12, 10, 12, 10, 12,
+                                                             10, 12, 10, 12, 10, 12, 10, 12, 10, 12};
 
+// Initial guess for continuous variables (L=21)
 static const std::vector<double> ga_initial_continuous_L21_vec = { // L=21
     0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 0.1, 0.2};
 
-// Fitness function using actual circuit_performance
-// The GA aims to maximize this.
-// Note: circuit_performance itself might return negative values (costs >
-// revenue).
+/**
+ * @brief Fitness function for circuit performance optimization.
+ *
+ * This function evaluates the performance of a circuit based on its
+ * configuration and returns a fitness score. The fitness score is
+ * calculated as the negative of the circuit performance, as the
+ * optimization algorithm aims to maximize the fitness score.
+ *
+ * @param L_discrete The length of the discrete variable array.
+ * @param discrete_vars The array of discrete variables representing the
+ * circuit configuration.
+ *
+ * @return The fitness score of the circuit configuration.
+ *
+ */
 double circuit_performance_fitness_adapter(int L_discrete, int* discrete_vars)
 {
-    // This adapter is for the GA's discrete optimization function signature.
-    // It doesn't use continuous variables directly in this signature.
-    // If your circuit_performance or underlying CCircuit needs beta values that
-    // are NOT optimized by GA here, they would need to be handled differently
-    // (e.g. fixed default betas, or betas set externally).
     return circuit_performance(L_discrete, discrete_vars);
 }
 
+/**
+ * @brief Fitness function for circuit performance optimization with
+ * continuous variables.
+ *
+ * This function evaluates the performance of a circuit based on its
+ * configuration and continuous variables (e.g., beta values) and
+ * returns a fitness score. The fitness score is calculated as
+ * the negative of the circuit performance, as the optimization
+ * algorithm aims to maximize the fitness score.
+ *
+ * @param L_discrete The length of the discrete variable array.
+ * @param discrete_vars The array of discrete variables representing the
+ * circuit configuration.
+ * @param L_continuous The length of the continuous variable array.
+ * @param continuous_vars The array of continuous variables (e.g., beta
+ * values).
+ *
+ * @return The fitness score of the circuit configuration.
+ *
+ */
 double circuit_performance_mixed_fitness_adapter(int L_discrete, int* discrete_vars, int L_continuous,
                                                  double* continuous_vars)
 {
-    // This adapter is for the GA's mixed optimization function signature.
-    // We need to ensure circuit_performance or the underlying Circuit object can
-    // use these continuous_vars (betas). This is a placeholder for how one
-    // *might* integrate it. The actual CSimulator/CCircuit API will dictate.
-
-    // Option 1: If circuit_performance can take beta values (not shown in
-    // CSimulator.h example) return circuit_performance(L_discrete, discrete_vars,
-    // L_continuous, continuous_vars);
-
-    // Option 2: Create a temporary Circuit object, set betas, then calculate
-    // performance. This assumes CCircuit has a way to set betas and then a way to
-    // get performance that CSimulator typically wraps.
     int n_units = (L_discrete - 1) / 2;
     if (L_discrete <= 0 || (2 * n_units + 1) != L_discrete || (L_continuous > 0 && L_continuous != n_units))
     {
@@ -109,7 +114,19 @@ double circuit_performance_mixed_fitness_adapter(int L_discrete, int* discrete_v
     return base_performance - continuous_penalty * 1000; // Apply some penalty
 }
 
-// Validity function using CCircuit::check_validity
+/**
+ * @brief Validity function for discrete circuit configurations.
+ *
+ * This function checks if the given discrete circuit configuration is valid
+ * based on the number of units and their connections. It returns true if the
+ * configuration is valid, false otherwise.
+ *
+ * @param L_discrete The length of the discrete variable array.
+ * @param discrete_vars The array of discrete variables representing the
+ * circuit configuration.
+ *
+ * @return True if the configuration is valid, false otherwise.
+ */
 bool actual_validity_discrete_adapter(int L_discrete, int* discrete_vars)
 {
     if (L_discrete <= 0)
@@ -121,6 +138,23 @@ bool actual_validity_discrete_adapter(int L_discrete, int* discrete_vars)
     return temp_circuit.check_validity(L_discrete, discrete_vars);
 }
 
+/**
+ * @brief Validity function for mixed discrete-continuous circuit
+ * configurations.
+ *
+ * This function checks if the given mixed circuit configuration is valid
+ * based on the number of units, their connections, and continuous variables.
+ * It returns true if the configuration is valid, false otherwise.
+ *
+ * @param L_discrete The length of the discrete variable array.
+ * @param discrete_vars The array of discrete variables representing the
+ * circuit configuration.
+ * @param L_continuous The length of the continuous variable array.
+ * @param continuous_vars The array of continuous variables (e.g., beta
+ * values).
+ *
+ * @return True if the configuration is valid, false otherwise.
+ */
 bool actual_validity_mixed_adapter(int L_discrete, int* discrete_vars, int L_continuous, double* continuous_vars)
 {
     if (L_discrete <= 0)
@@ -141,6 +175,13 @@ bool actual_validity_mixed_adapter(int L_discrete, int* discrete_vars, int L_con
     return false; // Mismatch in continuous var length if present
 }
 
+/**
+ * @brief Test fixture for Genetic Algorithm tests.
+ *
+ * This class sets up the parameters and environment for running the
+ * Genetic Algorithm tests. It inherits from the Google Test framework's
+ * Test class.
+ */
 class GeneticAlgorithmTest : public ::testing::Test
 {
 protected:
@@ -157,15 +198,21 @@ protected:
         params.crossover_probability = 0.8;
         params.mutation_probability = 0.1;
         params.mutation_step_size = 1;
-        // params.continuous_mutation_step_size = 0.1; // This field does not exist
-        // in Algorithm_Parameters
         params.convergence_threshold = 1e-4;
         params.stall_generations = 20;
     }
 };
 
-// Test GA with discrete variables trying to find a known simple valid circuit
-// for n=1 Circuit: {0, 1, 3} (Feed u0, u0->P1,T). n=1, P1=1, P2=2, T=3.
+/**
+ * @brief Test for optimizing a simple valid discrete circuit.
+ *
+ * This test checks if the Genetic Algorithm can successfully optimize
+ * a simple valid discrete circuit configuration. It uses a known
+ * valid circuit and verifies that the optimization process converges
+ * to a valid solution.
+ *
+ * @return void
+ */
 TEST_F(GeneticAlgorithmTest, OptimizeSimpleValidDiscreteCircuit)
 {
     const int n_units = 1;
@@ -205,7 +252,8 @@ TEST_F(GeneticAlgorithmTest, OptimizeSimpleValidDiscreteCircuit)
 // available. The real_test_answer and real_test_function from original can be
 // adapted.
 static const std::vector<double> target_beta_values_for_cont_test = {0.5, 0.6}; // For n=2 example
-// This fitness function is for the continuous-only GA optimize signature
+
+// This fitness function is a simple sum of squares error to a target vector.
 double simple_continuous_fitness_adapter(int L_continuous, double* continuous_vars)
 {
     if (L_continuous != static_cast<int>(target_beta_values_for_cont_test.size()))
@@ -231,6 +279,10 @@ bool dummy_validity_continuous_adapter(int L_continuous, double* cv)
     return true;
 }
 
+/**
+ * @brief Test for optimizing simple continuous variables using the
+ * Genetic Algorithm.
+ */
 TEST_F(GeneticAlgorithmTest, OptimizeSimpleContinuousVariables)
 {
     const int L_continuous = target_beta_values_for_cont_test.size();
@@ -255,7 +307,20 @@ TEST_F(GeneticAlgorithmTest, OptimizeSimpleContinuousVariables)
     std::cout << std::endl;
 }
 
-// New fitness function to match the global real_test_answer (L=21)
+/**
+ * @brief Fitness function for matching the real test answer.
+ *
+ * This function evaluates the performance of a circuit based on its
+ * configuration and returns a fitness score. The fitness score is
+ * calculated as the negative of the squared error from the real test
+ * answer, as the optimization algorithm aims to minimize this error.
+ *
+ * @param L_continuous The length of the continuous variable array.
+ * @param continuous_vars The array of continuous variables representing the
+ * circuit configuration.
+ *
+ * @return The fitness score of the circuit configuration.
+ */
 double match_real_test_answer_fitness_adapter(int L_continuous, double* continuous_vars)
 {
     if (L_continuous != static_cast<int>(real_test_answer.size()))
@@ -269,6 +334,10 @@ double match_real_test_answer_fitness_adapter(int L_continuous, double* continuo
     return -sum_sq_error; // GA maximizes, so negative error
 }
 
+/**
+ * @brief Test for optimizing continuous variables to match the real test
+ * answer.
+ */
 TEST_F(GeneticAlgorithmTest, OptimizeContinuousToMatchRealTestAnswerL21)
 {
     const int L_continuous = real_test_answer.size();                  // Should be 21
@@ -305,6 +374,13 @@ TEST_F(GeneticAlgorithmTest, OptimizeContinuousToMatchRealTestAnswerL21)
     std::cout << std::endl;
 }
 
+/**
+ * @brief Test for optimizing discrete variables for a circuit with N=10.
+ *
+ * This test checks if the Genetic Algorithm can successfully optimize
+ * a discrete circuit configuration with 10 units. It verifies that the
+ * optimization process converges to a valid solution.
+ */
 TEST_F(GeneticAlgorithmTest, OptimizeDiscreteWithN10Circuit)
 {
     const int n_units = 10;
@@ -336,6 +412,14 @@ TEST_F(GeneticAlgorithmTest, OptimizeDiscreteWithN10Circuit)
     ASSERT_TRUE(c_final.check_validity(L_discrete, initial_guess.data())) << "GA found an invalid N10 solution.";
 }
 
+/**
+ * @brief Test for optimizing mixed discrete-continuous variables for a
+ * circuit with N=10.
+ *
+ * This test checks if the Genetic Algorithm can successfully optimize
+ * a mixed circuit configuration with 10 units. It verifies that the
+ * optimization process converges to a valid solution.
+ */
 TEST_F(GeneticAlgorithmTest, OptimizeMixedWithN10CircuitAndL10Betas)
 {
     const int n_units = 10;

@@ -1,5 +1,6 @@
 /**
- * Header file for project-wide constants
+ * @file constants.h
+ * @brief Header file for project-wide constants
  *
  * This file defines physical constants, economic parameters,
  * and other global values used throughout the project.

@@ -1,12 +1,38 @@
+/**
+ * @file CSimulator.cpp
+ * @brief C++ source file for the circuit simulator
+ * @author
+ *
+ * This source file contains the implementation of the function that will be
+ * used to evaluate the circuit and the parameters for the simulation.
+ *
+ */
 #include "CSimulator.h"
 #include "CCircuit.h"
 #include "CUnit.h"
 #include <cmath>
 #include <limits>
 
+// Default simulation parameters
 struct Simulator_Parameters default_simulator_parameters = {1e-6, 100};
 
-// Compute performance of a circuit vector
+/**
+ * @brief Evaluate the circuit performance
+ *
+ * This function evaluates the performance of the circuit based on the
+ * circuit vector and the unit parameters. It initializes the circuit,
+ * runs the mass balance, and returns the economic value of the circuit.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param circuit_vector Circuit vector
+ * @param unit_parameters_size Size of the unit parameters
+ * @param unit_parameters Unit parameters
+ * @param simulator_parameters Simulation parameters
+ * @param testFlag Test flag to indicate whether to use test parameters
+ *
+ * @return Economic value of the circuit
+ *
+ */
 double circuit_performance(int vector_size, int* circuit_vector,
 
                            int unit_parameters_size, double* unit_parameters,
@@ -77,6 +103,7 @@ double circuit_performance(int vector_size, int* circuit_vector, bool testFlag)
     double result = circuit_performance(vector_size, circuit_vector, num_parameters, nullptr,
                                         default_simulator_parameters, testFlag);
 
+    // Clean up
     delete[] parameters;
     return result;
 }

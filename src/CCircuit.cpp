@@ -1,3 +1,13 @@
+/**
+ * @file CCircuit.cpp
+ * @brief Implementation of the Circuit class
+ *
+ * This file contains the implementation of the Circuit class, which represents
+ * a mineral-processing circuit. The class includes methods for checking
+ * the validity of the circuit, marking units, running mass balance
+ * calculations, and exporting the circuit to a dot file for visualization.
+ *
+ */
 #include <cmath>
 #include <queue>
 #include <vector>
@@ -9,6 +19,10 @@
 #include <iostream>
 #include <stdio.h>
 
+/**
+ * @brief Constructor for the Circuit class
+ *
+ */
 Circuit::Circuit(int num_units)
     : units(num_units), feed_unit(0), feed_palusznium_rate(Constants::Feed::DEFAULT_PALUSZNIUM_FEED),
       feed_gormanium_rate(Constants::Feed::DEFAULT_GORMANIUM_FEED),
@@ -23,37 +37,37 @@ Circuit::Circuit(int num_units)
 {
 }
 
-// 1. length check: length must be 2*n+1
-// 2. feed check: feed cannot directly feed to terminal
-// 3. index check: conc must be in (0, n+2), tail must be in (0, n+2)
-// 4. no self-loop: conc cannot be equal to i, tail cannot be equal to i
-// 5. same output: conc cannot be equal to tail
-// 6. reachability check: all units must be reachable from feed
-// 7. two terminals check: each unit must reach at least 2 different terminals
-// 8. final terminal check: P1/P2, TA must be present
-// 9. mass balance check: mass balance must converge
+/**
+ * @brief Check the validity of the circuit
+ *
+ * This function checks the validity of the circuit vector by performing
+ * various checks, including length check, feed check, index check,
+ * self-loop check, same output check, reachability check, terminal check,
+ * and mass balance convergence check.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param vec Circuit vector
+ *
+ * @return true if the circuit is valid, false otherwise
+ *
+ */
 bool Circuit::check_validity(int vector_size, const int* vec)
 {
     // 1. length must be 2*n+1
     int expected = 2 * n + 1;
     if (vector_size != expected)
     {
-        // std::cout << "❌[Validity] Length mismatch: expected " << expected << ",
-        // got " << vector_size << std::endl;
         return false;
     }
 
-    // 2. feed check
+    // 2. feed check: feed cannot directly feed to terminal
     feed_dest = vec[0]; // feed points to the unit
-    // feed cannot directly feed to terminal
     if (feed_dest < 0 || feed_dest >= n)
     {
-        // std::cout << "❌[Validity] Feed destination " << feed_dest << " is
-        // invalid (must be 0 to " << (n-1) << ")" << std::endl;
         return false;
     }
 
-    // read each unit's conc and tail and do static check
+    // read each unit's concentrate and tailing and do static check
     struct Dest
     {
         int conc;
@@ -68,33 +82,25 @@ bool Circuit::check_validity(int vector_size, const int* vec)
         int conc = vec[1 + 2 * i]; // conc points to the unit
         int tail = vec[2 + 2 * i]; // tail points to the unit
 
-        // 3. index check
+        // 3. index check: conc must be in (0, n+2), tail must be in (0, n+2)
         if (conc < 0 || conc > max_idx)
         {
-            // std::cout << "❌[Validity] Unit " << i << " concentrate destination "
-            // << conc << " is out of range" << std::endl;
             return false;
         }
         if (tail < 0 || tail > max_idx)
         {
-            // std::cout << "❌[Validity] Unit " << i << " tailings destination " <<
-            // tail << " is out of range" << std::endl;
             return false;
         }
 
-        // 4. no self-loop
+        // 4. no self-loop: conc cannot be equal to i, tail cannot be equal to i
         if (conc == i || tail == i)
         {
-            // std::cout << "❌[Validity] Unit " << i << " has self-loop" <<
-            // std::endl;
             return false;
         }
 
-        // 5. same output
+        // 5. same output: conc cannot be equal to tail
         if (conc == tail)
         {
-            // std::cout << "❌[Validity] Unit " << i << " has same concentrate and
-            // tailings destination" << std::endl;
             return false;
         }
 
@@ -105,20 +111,18 @@ bool Circuit::check_validity(int vector_size, const int* vec)
         units[i].mark = false;
     }
 
-    // 6. unit reachability check
+    // 6. reachability check: all units must be reachable from feed
     this->mark_units(feed_dest);
 
     for (int i = 0; i < n; ++i)
     {
         if (!units[i].mark)
         {
-            // std::cout << "❌[Validity] Unit " << i << " is not reachable from feed"
-            // << std::endl;
             return false;
         }
     }
 
-    // 7. two terminals check
+    // 7. two terminals check: each unit must reach at least 2 different terminals
     std::vector<int8_t> cache(n, -1);
     uint8_t global_mask = 0;
     for (int i = 0; i < n; ++i)
@@ -128,8 +132,6 @@ bool Circuit::check_validity(int vector_size, const int* vec)
         int cnt = (mask & 1) + ((mask >> 1) & 1) + ((mask >> 2) & 1);
         if (cnt < 2)
         {
-            // std::cout << "❌[Validity] Unit " << i << " does not reach at least 2
-            // different terminals" << std::endl;
             return false;
         }
     }
@@ -137,29 +139,37 @@ bool Circuit::check_validity(int vector_size, const int* vec)
     // 8. final terminal check: P1/P2, TA must be present
     if ((global_mask & (0b001 | 0b010)) == 0)
     {
-        // std::cout << "❌[Validity] Circuit does not reach any product streams (P1
-        // or P2)" << std::endl;
         return false;
     }
 
     if ((global_mask & 0b100) == 0)
     {
-        // std::cout << "❌[Validity] Circuit does not reach tailings stream" <<
-        // std::endl;
         return false;
     }
 
-    // check mass balance convergence
+    // 9. mass balance check: mass balance must converge
     if (!run_mass_balance(1e-6, 100))
     {
-        // std::cout << "❌[Validity] Mass balance did not converge" << std::endl;
         return false;
     }
 
-    // std::cout << "✅[Validity] Circuit passed all validity checks" <<
-    // std::endl;
     return true;
 }
+
+/**
+ * @brief Check the validity of the circuit vector and its parameters
+ *
+ * This function checks the validity of the circuit vector and its parameters
+ * by performing various checks, including length check, parameter range check,
+ * and validity of the circuit vector.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param circuit_vector Circuit vector
+ * @param unit_parameters_size Size of the unit parameters
+ * @param unit_parameters Unit parameters
+ *
+ * @return true if the circuit vector and parameters are valid, false otherwise
+ */
 bool Circuit::check_validity(int vector_size, const int* circuit_vector, int unit_parameters_size,
                              double* unit_parameters)
 {
@@ -167,22 +177,17 @@ bool Circuit::check_validity(int vector_size, const int* circuit_vector, int uni
     // check the validity of the circuit vector
     if (!valid)
     {
-        // std::cout << "❌[Validity] Circuit vector is invalid" << std::endl;
         return false;
     }
-
+    // check the validity of the unit parameters
     if (unit_parameters == nullptr)
     {
-        // std::cout << "✅[Validity] Circuit vector is valid, no parameters to
-        // check" << std::endl;
         return valid;
     }
 
-    // the length of the continuous parameters must be exactly = n units
+    // the length of the continuous parameters must be exactly n units
     if (unit_parameters_size != n)
     {
-        // std::cout << "❌[Parameters] Parameter length mismatch: expected " << n
-        // << ", got " << unit_parameters_size << std::endl;
         return false;
     }
 
@@ -192,17 +197,22 @@ bool Circuit::check_validity(int vector_size, const int* circuit_vector, int uni
         double beta = unit_parameters[i];
         if (beta < 0.0 || beta > 1.0 || std::isnan(beta))
         {
-            // std::cout << "❌[Parameters] β" << i << " = " << beta << " is out of
-            // range [0,1]" << std::endl;
             return false;
         }
     }
 
-    // std::cout << "✅[Validity] Circuit vector and parameters are valid" <<
-    // std::endl;
-    return true; // legal
+    return true;
 }
 
+/**
+ * @brief Mark the units in the circuit
+ *
+ * This function marks the units in the circuit as visited. It recursively
+ * traverses the circuit starting from the given unit number and marks each
+ * unit as visited.
+ *
+ * @param unit_num The unit number to start marking from
+ */
 void Circuit::mark_units(int unit_num)
 {
 
@@ -220,10 +230,6 @@ void Circuit::mark_units(int unit_num)
     {
         mark_units(this->units[unit_num].conc_num);
     }
-    else
-    {
-        // ...Potentially do something to indicate that you have seen an exit
-    }
 
     // If tails_num does not point at a circuit outletrecursively call the
     // function
@@ -232,12 +238,17 @@ void Circuit::mark_units(int unit_num)
     {
         mark_units(this->units[unit_num].tails_num);
     }
-    else
-    {
-        // ...Potentially do something to indicate that you have seen an exit
-    }
 }
 
+/**
+ * @brief Constructor for the Circuit class
+ *
+ * This constructor initializes the circuit with the given number of units
+ * and a pointer to the beta array.
+ *
+ * @param num_units Number of units in the circuit
+ * @param beta Pointer to the beta array
+ */
 Circuit::Circuit(int num_units, double* beta)
     : units(num_units), feed_unit(0), n(num_units),
 
@@ -255,6 +266,16 @@ Circuit::Circuit(int num_units, double* beta)
 {
 }
 
+/**
+ * @brief Constructor for the Circuit class
+ *
+ * This constructor initializes the circuit with the given number of units,
+ * a pointer to the beta array, and a test flag.
+ *
+ * @param num_units Number of units in the circuit
+ * @param beta Pointer to the beta array
+ * @param testFlag Test flag to indicate whether to use test parameters
+ */
 Circuit::Circuit(int num_units, double* beta, bool testFlag)
     : units(num_units), feed_unit(0), n(num_units),
 
@@ -270,7 +291,6 @@ Circuit::Circuit(int num_units, double* beta, bool testFlag)
       palusznium_value_in_gormanium(Constants::Economic::PALUSZNIUM_VALUE_IN_GORMANIUM_STREAM),
       gormanium_value_in_palusznium(Constants::Economic::GORMANIUM_VALUE_IN_PALUSZNIUM_STREAM)
 {
-    // std::cout<<"testFlag: "<<testFlag<<std::endl;
     if (testFlag)
     {
         this->feed_palusznium_rate = Constants::Test::DEFAULT_PALUSZNIUM_FEED;
@@ -286,16 +306,54 @@ Circuit::Circuit(int num_units, double* beta, bool testFlag)
     }
 }
 
+/**
+ * @brief Initialize the circuit from a circuit vector
+ *
+ * This function initializes the circuit from a circuit vector. It takes
+ * the size of the vector and the vector itself as input parameters.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param circuit_vector Circuit vector
+ *
+ * @return true if initialization is successful, false otherwise
+ */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector)
 {
     return initialize_from_vector(vector_size, circuit_vector, nullptr, false);
 }
 
+/**
+ * @brief Initialize the circuit from a circuit vector
+ *
+ * This function initializes the circuit from a circuit vector. It takes
+ * the size of the vector, the vector itself, and a pointer to the beta
+ * array as input parameters.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param circuit_vector Circuit vector
+ * @param beta Pointer to the beta array
+ *
+ * @return true if initialization is successful, false otherwise
+ */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta)
 {
     return initialize_from_vector(vector_size, circuit_vector, beta, false);
 }
 
+/**
+ * @brief Initialize the circuit from a circuit vector
+ *
+ * This function initializes the circuit from a circuit vector. It takes
+ * the size of the vector, the vector itself, and a test flag as input
+ * parameters.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param circuit_vector Circuit vector
+ * @param testFlag Test flag to indicate whether to use test parameters
+ *
+ * @return true if initialization is successful, false otherwise
+ *
+ */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, bool testFlag)
 {
 
@@ -303,7 +361,20 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
     return initialize_from_vector(vector_size, circuit_vector, nullptr, testFlag);
 }
 
-// Initialize the circuit from a circuit vector
+/**
+ * @brief Initialize the circuit from a circuit vector
+ *
+ * This function initializes the circuit from a circuit vector. It takes
+ * the size of the vector, the vector itself, a pointer to the beta array,
+ * and a test flag as input parameters.
+ *
+ * @param vector_size Size of the circuit vector
+ * @param circuit_vector Circuit vector
+ * @param beta Pointer to the beta array
+ * @param testFlag Test flag to indicate whether to use test parameters
+ *
+ * @return true if initialization is successful, false otherwise
+ */
 bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector, const double* beta, bool testFlag)
 {
     // num_units = n
@@ -337,8 +408,6 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
         else if (tails == num_units + 2)
             tails = TAILINGS_OUTPUT;
 
-        // TODO: here we can set the volume of the unit through beta
-        //  beta is a choosable parameter
         units[i] = CUnit(conc, tails, testFlag);
         if (beta != nullptr)
         {
@@ -349,7 +418,17 @@ bool Circuit::initialize_from_vector(int vector_size, const int* circuit_vector,
     return true;
 }
 
-// Mass balance calculation
+/**
+ * @brief Run mass balance calculations for the circuit
+ *
+ * This function runs mass balance calculations for the circuit. It takes
+ * a tolerance and a maximum number of iterations as input parameters.
+ *
+ * @param tolerance Tolerance for convergence
+ * @param max_iterations Maximum number of iterations
+ *
+ * @return true if mass balance converges, false otherwise
+ */
 bool Circuit::run_mass_balance(double tolerance, int max_iterations)
 {
     // Initialize feed for all the units
@@ -372,7 +451,6 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
 
     for (int iter = 0; iter < max_iterations; ++iter)
     {
-        // std::cout << "\n==========Iteration" << iter + 1 << "==========\n\n";
 
         // Record the current feed
         // Record the current feed to last_feed and clear the current feed
@@ -406,17 +484,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
         // Process all units
         for (size_t i = 0; i < units.size(); ++i)
         {
-
-            // std::cout << "  unit" << i << " feed (P,G,W): " <<
-            // units[i].feed_palusznium << ", "
-            // << units[i].feed_gormanium << ", " << units[i].feed_waste << "\n";
             units[i].process();
-            // std::cout << "  unit" << i << " concentrate flow (P,G,W): " <<
-            // units[i].conc_palusznium << ", "
-            // << units[i].conc_gormanium << ", " << units[i].conc_waste << "\n";
-            // std::cout << "  unit" << i << " tailings flow (P,G,W): " <<
-            // units[i].tails_palusznium << ", "
-            // << units[i].tails_gormanium << ", " << units[i].tails_waste << "\n\n";
         }
 
         // This vector is used to mark whether the feed for each unit has been
@@ -429,13 +497,11 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
         gormanium_product_palusznium = gormanium_product_gormanium = gormanium_product_waste = 0.0;
         tailings_palusznium = tailings_gormanium = tailings_waste = 0.0;
 
-        // std::cout<<"=====Distributing downstream data====="<<std::endl;
+        // "=====Distributing downstream data====="<<std::endl;
         for (size_t i = 0; i < units.size(); ++i)
         {
             // concentrate flow
             int concDest = units[i].conc_num;
-            // std::cout << "  unit" << i << " concentrate flow to: " << concDest <<
-            // std::endl;
             if (concDest == PALUSZNIUM_PRODUCT)
             {
                 palusznium_product_palusznium += units[i].conc_palusznium;
@@ -444,8 +510,6 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
             }
             else if (concDest == GORMANIUM_PRODUCT)
             {
-                // std::cout << "  unit" << i << " concentrate flow to:
-                // GORMANIUM_PRODUCT" << std::endl;
                 gormanium_product_palusznium += units[i].conc_palusznium;
                 gormanium_product_gormanium += units[i].conc_gormanium;
                 gormanium_product_waste += units[i].conc_waste;
@@ -458,8 +522,6 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
             }
             else if (concDest >= 0 && concDest < (int)units.size())
             {
-                // std::cout << "  unit" << i << " concentrate flow to: " << concDest <<
-                // std::endl;
                 if (!feedCleared[concDest])
                 {
                     feedCleared[concDest] = true;
@@ -472,11 +534,7 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
                 units[concDest].feed_waste += units[i].conc_waste;
             }
 
-            // std::cout << "  unit" << i << " tailings flow to: " <<
-            // units[i].tails_num << std::endl; std::cout<<"Tailings
-            // data"<<std::endl<<units[i].tails_palusznium << " " <<
-            // units[i].tails_gormanium << std::endl; std::cout<<units[i].tails_waste
-            // << std::endl; tail flow
+            // tailings flow
             int tailsDest = units[i].tails_num;
             if (tailsDest == PALUSZNIUM_PRODUCT)
             {
@@ -486,14 +544,9 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
             }
             else if (tailsDest == GORMANIUM_PRODUCT)
             {
-                // std::cout << "  unit" << i << " tailings flow to: GORMANIUM_PRODUCT"
-                // << std::endl;
                 gormanium_product_palusznium += units[i].tails_palusznium;
                 gormanium_product_gormanium += units[i].tails_gormanium;
                 gormanium_product_waste += units[i].tails_waste;
-                // std::cout<<"Tailings data"<<std::endl<<units[i].tails_palusznium << "
-                // " << units[i].tails_gormanium << std::endl;
-                // std::cout<<units[i].tails_waste << std::endl;
             }
             else if (tailsDest == TAILINGS_OUTPUT)
             {
@@ -503,8 +556,6 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
             }
             else if (tailsDest >= 0 && tailsDest < (int)units.size())
             {
-                // std::cout << "  unit" << i << " non-tailings unit tailings flow to: "
-                // << tailsDest << std::endl;
                 if (!feedCleared[tailsDest])
                 {
                     feedCleared[tailsDest] = true;
@@ -512,17 +563,10 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
                     units[tailsDest].feed_gormanium = 0.0;
                     units[tailsDest].feed_waste = 0.0;
                 }
-                // std::cout<<"Tailings data"<<std::endl<<units[i].tails_palusznium << "
-                // " << units[i].tails_gormanium << std::endl;
-                // std::cout<<units[i].tails_waste << std::endl;
-                // std::cout<<"Ready to distribute!"<<std::endl;
+
                 units[tailsDest].feed_palusznium += units[i].tails_palusznium;
                 units[tailsDest].feed_gormanium += units[i].tails_gormanium;
                 units[tailsDest].feed_waste += units[i].tails_waste;
-                // std::cout<<"Tailings
-                // data"<<std::endl<<units[tailsDest].feed_palusznium << " " <<
-                // units[tailsDest].feed_gormanium << std::endl;
-                // std::cout<<units[tailsDest].feed_waste << std::endl;
             }
         }
 
@@ -536,29 +580,21 @@ bool Circuit::run_mass_balance(double tolerance, int max_iterations)
             max_rel_change = std::max({max_rel_change, rel_p, rel_g, rel_w});
         }
 
-        // ---- debug output ----
-        // for (size_t i = 0; i < units.size(); ++i) {
-        //     std::cout << "  Unit" << i
-        //             << " Last feed (P,G,W): " << last_feed_p[i] << ", "
-        //             << last_feed_g[i] << ", " << last_feed_w[i]
-        //             << " | Current feed (P,G,W): " << units[i].feed_palusznium <<
-        //             ", "
-        //             << units[i].feed_gormanium << ", " << units[i].feed_waste <<
-        //             "\n";
-        // }
-        // std::cout << "  Palusznium product flow: " <<
-        // palusznium_product_palusznium
-        //         << "  Gormanium product flow: " << gormanium_product_gormanium
-        //         << "  Tailings flow: " << tailings_waste << std::endl;
-        // std::cout << "  max_rel_change = " << max_rel_change << std::endl;
-        // ---- debug output ----
         if (max_rel_change < tolerance)
             return true;
     }
     return false; // not converged
 }
 
-// Calculate the economic value of the circuit
+/**
+ * @brief Get the economic value of the circuit
+ *
+ * This function calculates the economic value of the circuit based on
+ * the product flow rates and the values of the materials.
+ *
+ * @return The economic value of the circuit
+ *
+ */
 double Circuit::get_economic_value() const
 {
     double value = 0.0;
@@ -582,26 +618,20 @@ double Circuit::get_economic_value() const
         cost += 1000.0 * std::pow(total_volume - 150.0, 2.0);
     }
     value -= cost; // cost of the circuit
-    // std::cout<<"gormanium recovery:
-    // "<<(get_palusznium_recovery())*100<<"%"<<std::endl; std::cout<<"palusznium
-    // recovery: "<<(get_gormanium_recovery())*100<<"%"<<std::endl;
-
-    // std::cout<<"grade for palusznium:
-    // "<<(get_palusznium_grade())*100<<"%"<<std::endl;// debug output
-    // std::cout<<"grade for gormanium:
-    // "<<(get_gormanium_grade())*100<<"%"<<std::endl;// debug output
     return value;
 }
 
-// calculate the recovery of valuable materials
+/**
+ * @brief Get the recovery of valuable materials
+ *
+ * This function calculates the recovery of valuable materials in the
+ * circuit based on the product flow rates and the feed rates.
+ *
+ * @return The recovery of valuable materials
+ *
+ */
 double Circuit::get_palusznium_recovery() const
 {
-    // CUnit cal =  CUnit(-1,-1);
-    // cal.feed_palusznium = feed_palusznium_rate;
-    // cal.feed_gormanium = feed_gormanium_rate;
-    // cal.feed_waste = feed_waste_rate;
-    // cal.process();
-    // std::cout<<"palusznium recovery: "<<cal.Rp<<std::endl;
 
     double total_feed = feed_palusznium_rate;
     double recovered = palusznium_product_palusznium;
@@ -609,6 +639,16 @@ double Circuit::get_palusznium_recovery() const
         return 0.0;
     return recovered / total_feed;
 }
+
+/**
+ * @brief Get the recovery of gormanium
+ *
+ * This function calculates the recovery of gormanium in the circuit
+ * based on the product flow rates and the feed rates.
+ *
+ * @return The recovery of gormanium
+ *
+ */
 double Circuit::get_gormanium_recovery() const
 {
     double total_feed = feed_gormanium_rate;
@@ -616,27 +656,47 @@ double Circuit::get_gormanium_recovery() const
     if (total_feed < 1e-12)
         return 0.0;
     return recovered / total_feed;
-    // CUnit cal =  CUnit(-1,-1);
-    // cal.feed_palusznium = feed_palusznium_rate;
-    // cal.feed_gormanium = feed_gormanium_rate;
-    // cal.feed_waste = feed_waste_rate;
-    // cal.process();
-    // std::cout<<"gormanium recovery: "<<cal.Rg<<std::endl;
 }
 
-// Calculate the grade of valuable materials
+/**
+ * @brief Get the grade of palusznium
+ *
+ * This function calculates the grade of palusznium in the circuit
+ * based on the product flow rates.
+ *
+ * @return The grade of palusznium
+ *
+ */
 double Circuit::get_palusznium_grade() const
 {
     double total = palusznium_product_palusznium + palusznium_product_gormanium + palusznium_product_waste;
     return (total > 0) ? (palusznium_product_palusznium / total) : 0.0;
 }
+
+/**
+ * @brief Get the grade of gormanium
+ *
+ * This function calculates the grade of gormanium in the circuit
+ * based on the product flow rates.
+ *
+ * @return The grade of gormanium
+ *
+ */
 double Circuit::get_gormanium_grade() const
 {
     double total = gormanium_product_palusznium + gormanium_product_gormanium + gormanium_product_waste;
     return (total > 0) ? (gormanium_product_gormanium / total) : 0.0;
 }
 
-// Export the circuit to a dot file for visualization
+/**
+ * @brief Export the circuit to a DOT file
+ *
+ * This function exports the circuit to a DOT file for visualization.
+ *
+ * @param filename The name of the output DOT file
+ *
+ * @return true if export is successful, false otherwise
+ */
 bool Circuit::export_to_dot(const std::string& filename) const
 {
     std::ofstream ofs(filename);
@@ -672,6 +732,16 @@ bool Circuit::export_to_dot(const std::string& filename) const
     return true;
 }
 
+/**
+ * @brief Get the terminal mask for a given unit
+ *
+ * This function calculates the terminal mask for a given unit. It uses
+ * breadth-first search to traverse the circuit and find the terminals.
+ *
+ * @param start The starting unit number
+ *
+ * @return The terminal mask
+ */
 uint8_t Circuit::term_mask(int start) const
 {
     uint8_t mask = 0;
@@ -700,6 +770,18 @@ uint8_t Circuit::term_mask(int start) const
     return mask;
 }
 
+/**
+ * @brief Process the destination unit
+ *
+ * This function processes the destination unit and updates the mask
+ * accordingly. It also adds the destination unit to the queue for further
+ * processing.
+ *
+ * @param dest The destination unit number
+ * @param mask The terminal mask
+ * @param visited Vector to keep track of visited units
+ * @param q Queue for breadth-first search
+ */
 void Circuit::process_destination(int dest, uint8_t& mask, std::vector<bool>& visited, std::queue<int>& q) const
 {
     if (dest >= n)
@@ -721,6 +803,16 @@ void Circuit::process_destination(int dest, uint8_t& mask, std::vector<bool>& vi
     }
 }
 
+/**
+ * @brief Save the circuit output information to a CSV file
+ *
+ * This function saves the circuit output information to a CSV file.
+ * It appends the data to the file if it already exists.
+ *
+ * @param filename The name of the output CSV file
+ *
+ * @return true if saving is successful, false otherwise
+ */
 bool Circuit::save_all_units_to_csv(const std::string& filename)
 {
     std::ofstream ofs(filename, std::ios::app);
@@ -751,6 +843,16 @@ bool Circuit::save_all_units_to_csv(const std::string& filename)
     return true;
 }
 
+/**
+ * @brief Save the circuit output information to a CSV file
+ *
+ * This function saves the circuit output information to a CSV file.
+ * It appends the data to the file if it already exists.
+ *
+ * @param filename The name of the output CSV file
+ *
+ * @return true if saving is successful, false otherwise
+ */
 bool Circuit::save_vector_to_csv(const std::string& filename)
 {
     std::ofstream ofs(filename, std::ios::app);
@@ -776,6 +878,16 @@ bool Circuit::save_vector_to_csv(const std::string& filename)
     return true;
 }
 
+/**
+ * @brief Save the circuit output information to a CSV file
+ *
+ * This function saves the circuit output information to a CSV file.
+ * It appends the data to the file if it already exists.
+ *
+ * @param filename The name of the output CSV file
+ *
+ * @return true if saving is successful, false otherwise
+ */
 bool Circuit::save_output_info(const std::string& filename)
 {
     namespace fs = std::filesystem; // If you see an error here it is because of the C++ version, it will compile fine

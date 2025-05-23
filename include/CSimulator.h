@@ -1,9 +1,10 @@
-/** header file for the circuit simulator
+/**
+ * @file CSimulator.h
+ * @brief C++ header file for the circuit simulator
  *
  * This header file defines the function that will be used to evaluate the
  * circuit and the parameters for the simulation
  */
-
 #pragma once
 
 #include <string>

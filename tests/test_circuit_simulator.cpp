@@ -1,3 +1,11 @@
+/**
+ * @file test_circuit_simulator.cpp
+ * @brief Unit tests for the circuit simulator.
+ *
+ * This file contains unit tests for the circuit simulator, including
+ * performance tests and validity checks.
+ *
+ */
 #include <cmath>
 #include <iostream>
 
@@ -8,14 +16,15 @@
 #include <utility>
 #include <vector>
 
-// Define a test fixture if needed, or use TEST macro for simple tests
+/**
+ * @brief Class for testing the circuit simulator.
+ *
+ * This class contains unit tests for the circuit simulator, including
+ * performance tests and validity checks.
+ */
 class CircuitSimulatorTest : public ::testing::Test
 {
 protected:
-    // You can add SetUp and TearDown methods here if needed
-    // void SetUp() override {}
-    // void TearDown() override {}
-
     // Helper function to run a test case and check performance
     // We expect a certain performance or at least a non-zero/non-NaN value
     // For specific known circuits, we might have expected values.
@@ -28,9 +37,7 @@ protected:
         // Basic checks for any circuit performance call
         ASSERT_FALSE(std::isnan(performance)) << "Performance should not be NaN.";
         // Depending on the circuit, performance could be negative (costs exceed
-        // revenue) ASSERT_GE(performance, 0.0) << "Performance should generally be
-        // non-negative for valid, productive circuits.";
-
+        // revenue)
         if (expected_performance != -1.0)
         {
             ASSERT_NEAR(performance, expected_performance, tolerance) << "Performance did not match expected value.";
@@ -46,11 +53,14 @@ protected:
     }
 };
 
-// Test case based on the original vec1
-// The original test expected a performance around 301.91 for this vector with
-// n=6 However, circuit_performance internally uses n derived from vector size.
-// For {0,3,1,3,2,3,5,4,7,6,3,3,8}, size is 13. So, n = (13-1)/2 = 6.
-// This matches the original manual test's assumption for vec1.
+/**
+ * @brief Test case for the original vec1 performance.
+ *
+ * This test case checks the performance of a circuit defined by the
+ * original vec1 vector. The expected performance is not strictly defined,
+ * but it should be a valid circuit.
+ *
+ */
 TEST_F(CircuitSimulatorTest, OriginalVec1Performance)
 {
     std::vector<int> vec1 = {0, 3, 1, 3, 2, 3, 5, 4, 7, 6, 3, 3, 8}; // n=6. Terminals: P1=6, P2=7, T=8
@@ -65,16 +75,17 @@ TEST_F(CircuitSimulatorTest, OriginalVec1Performance)
     double performance = circuit_performance(static_cast<int>(vec1.size()), const_cast<int*>(vec1.data()));
     ASSERT_FALSE(std::isnan(performance));
     // It's reasonable to expect negative performance if all valuable material is
-    // lost. ASSERT_LT(performance, 0.0); For now, just ensure it runs. The exact
-    // expected value needs clarification for this specific (likely invalid)
-    // vector.
+    // lost.
     std::cout << "OriginalVec1 Performance: " << performance << std::endl;
 }
 
-// Test with a minimal valid circuit
-// n=1. Feed to u0. u0 -> P1, T.
-// P1 = 1, P2 = 2, T = 3
-// Vector: {0, 1, 3} -> size 3. (2*1+1)
+/**
+ * @brief Test case for a minimal valid circuit.
+ *
+ * This test case checks the performance of a minimal valid circuit
+ * with n=1. The expected performance is not strictly defined,
+ * but it should be a valid circuit.
+ */
 TEST_F(CircuitSimulatorTest, MinimalValidCircuit)
 {
     std::vector<int> vec = {0, 1, 3}; // n=1. u0 -> P1, T
@@ -83,6 +94,13 @@ TEST_F(CircuitSimulatorTest, MinimalValidCircuit)
     run_performance_test(vec);
 }
 
+/**
+ * @brief Test case for a circuit with all products to tailings.
+ *
+ * This test case checks the performance of a circuit where all products
+ * are routed to tailings. The expected performance is not strictly defined,
+ * but it should be a valid circuit.
+ */
 TEST_F(CircuitSimulatorTest, AllToTailingsN2)
 {
     // n=2. Terminals P1=2, P2=3, T=4
@@ -95,6 +113,13 @@ TEST_F(CircuitSimulatorTest, AllToTailingsN2)
     std::cout << "AllToTailingsN2 Performance: " << performance << std::endl;
 }
 
+/**
+ * @brief Test case for a circuit with misrouted products.
+ *
+ * This test case checks the performance of a circuit with misrouted
+ * products. The expected performance is not strictly defined, but it
+ * should be a valid circuit.
+ */
 TEST_F(CircuitSimulatorTest, MisroutedProductsN1)
 {
     // n=1. Terminals P1=1, P2=2, T=3
@@ -105,14 +130,13 @@ TEST_F(CircuitSimulatorTest, MisroutedProductsN1)
     run_performance_test(vec);
 }
 
-// This test is based on "Long Circuit with Volume Penalty"
-// n = 20. Size = 2*20+1 = 41.
-// Each unit i -> i+1 (or P1 for last), T. (A simple chain)
-// Example: u0->u1,T; u1->u2,T; ...; u19->P1,T
-// Terminals for n=20: P1=20, P2=21, T=22
-// The original vector {0, 1, 21, ...} implies P2 for concentrate, which is
-// Gormanium. If we want Palusznium, it should be P1 (n). Let's make a simple
-// chain: u0->u1,T ... u18->u19,T u19->P1,T
+/**
+ * @brief Test case for a long chain circuit.
+ *
+ * This test case checks the performance of a long chain circuit
+ * with 20 units. The expected performance is not strictly defined,
+ * but it should be a valid circuit.
+ */
 TEST_F(CircuitSimulatorTest, LongChainCircuit)
 {
     const int n_units = 20;
@@ -134,11 +158,13 @@ TEST_F(CircuitSimulatorTest, LongChainCircuit)
     run_performance_test(vec);
 }
 
-// Test for a circuit that is likely invalid and might not converge or be caught
-// by check_validity The original test_validity_checker had {0,0,1,1,0} for n=2
-// as problematic. circuit_performance should ideally call check_validity. If
-// it's invalid, performance should reflect that (e.g., a large negative
-// default).
+/**
+ * @brief Test case for a potentially invalid loop circuit.
+ *
+ * This test case checks the performance of a circuit that has
+ * a potentially invalid loop.
+ *
+ */
 TEST_F(CircuitSimulatorTest, PotentiallyInvalidLoopNoConvergence)
 {
     // n=2. Terminals P1=2,P2=3,T=4
@@ -151,20 +177,15 @@ TEST_F(CircuitSimulatorTest, PotentiallyInvalidLoopNoConvergence)
     ASSERT_FALSE(std::isnan(performance));
     // For an invalid circuit like this, expect a very poor (negative)
     // performance. The exact value might be a specific constant for invalid
-    // circuits if implemented. Example: ASSERT_EQ(performance,
-    // Constants::Circuit::INVALID_CIRCUIT_PERFORMANCE_VALUE); For now, just
-    // checking it doesn't crash and returns a number.
+    // circuits if implemented.
     std::cout << "PotentiallyInvalidLoopNoConvergence Performance: " << performance << std::endl;
 }
 
-// Example of a simple valid circuit with known n=2
-// Feed to u0. u0 -> P1, u1. u1 -> P2, T
-// n=2. P1=2, P2=3, T=4
-// Vector: {0, 2,1, 3,4}
+/**
+ * @brief Test case for a simple valid circuit with n=2.
+ */
 TEST_F(CircuitSimulatorTest, SimpleValidN2)
 {
     std::vector<int> vec = {0, 2, 1, 3, 4};
     run_performance_test(vec);
 }
-
-// The main function is provided by gtest_main
