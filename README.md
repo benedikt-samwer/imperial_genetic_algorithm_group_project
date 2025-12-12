@@ -1,177 +1,118 @@
-# Palusznium‑Rush Ilmenite Optimiser
+# Applied Data Science and Machine Learning Assessment
 
-*A self‑contained C++17 + OpenMP toolkit that designs mineral‑processing circuits with a genetic‑algorithm core, plus Python helpers for visualisation.*
+**Imperial College London**
 
----
+**MSc Applied Computational Science and Engineering (ACSE)**
 
-## 1  Problem in a nutshell
-
-We must configure a circuit of identical separation units so that two valuable minerals—**palusznium (P)** and **gormanium (G)**—are recovered profitably while punishing waste entrainment and oversized equipment.
-The design space (both topology **and** unit volumes) is combinatorial, so we use a **genetic algorithm** (GA) to search it.
-
-Full background → *Problem Statement for Genetic Algorithms Project 2025.pdf*.
+**Module:** Applied Data Science and Machine Learning (2024/25)
 
 ---
 
-## 2  Repository layout
+## Palusznium-Rush Ilmenite Optimiser
+
+This repository contains the solution for the **Genetic Algorithms** group project (Part 3 of the Applied Data Science and Machine Learning module). The goal was to design and implement a computational tool to optimize the configuration of a mineral processing circuit for the extraction of two valuable minerals: **Palusznium (P)** and **Gormanium (G)**.
+
+The project implements a **Genetic Algorithm (GA)** from scratch in **C++17** to explore the combinatorial search space of circuit topologies and continuous unit parameters.
+
+### 1. Problem Overview
+
+The challenge involves configuring a circuit of separation units to maximize profit.
+-   **Inputs**: A feed containing Palusznium, Gormanium, and Waste.
+-   **Components**: A set of identical separation units (e.g., flotation cells).
+-   **Decisions**:
+    -   **Topology**: How units are connected (feed, concentrate, tailings streams).
+    -   **Sizing**: The volume/residence time of each unit (in continuous/hybrid modes).
+-   **Objective**: Maximize Net Present Value (NPV) or a profit function based on recovery rates, purity grades, and operating costs (penalizing large volumes).
+
+### 2. Implementation Details
+
+The solution is a high-performance C++ application that combines circuit simulation with an evolutionary optimization strategy.
+
+#### Core Components
+-   **Circuit Simulator (`CCircuit`, `CUnit`)**:
+    -   Models the steady-state mass balance of the system.
+    -   Calculates recovery rates and grades for Palusznium and Gormanium.
+    -   Evaluates the economic performance (Profit/Loss).
+    -   Handles validity checks to ensure circuits are physically realizable (e.g., no self-loops, all units reachable).
+
+-   **Genetic Algorithm (`Genetic_Algorithm`)**:
+    -   **Representation**:
+        -   *Discrete*: Integer vector representing stream destinations (circuit topology).
+        -   *Continuous*: Real-valued vector representing unit volumes ($\tau$).
+    -   **Operators**:
+        -   *Selection*: Tournament selection to preserve diversity while applying selection pressure.
+        -   *Crossover*: Single and multi-point crossover to combine efficient substructures.
+        -   *Mutation*: Random stream redirection and volume scaling to explore new areas of the search space.
+        -   *Elitism*: Preserves the best performing individuals across generations.
+    -   **Parallelization**: Utilizes **OpenMP** to evaluate the fitness of the population in parallel, significantly speeding up convergence.
+
+#### Optimization Modes
+The solver supports three distinct modes of operation:
+1.  **Discrete (`d`)**: Optimizes only the circuit topology (connections) with fixed unit volumes.
+2.  **Continuous (`c`)**: Optimizes only the unit volumes for a fixed topology (primarily for sensitivity analysis).
+3.  **Hybrid (`h`)**: Simultaneously optimizes both the circuit structure and the unit volumes. This was the primary solution strategy to find the global optimum.
+
+### 3. Repository Structure
 
 ```
 .
-├── CMakeLists.txt            # top‑level build
-├── include/                  # public headers used by src/
-│   ├── CCircuit.h            # circuit class
-│   ├── CUnit.h               # single separation unit
-│   ├── CSimulator.h          # helper for testing/plotting
-│   ├── Genetic_Algorithm.h   # GA interface
-│   └── …
-├── src/                      # implementation (.cpp files)
-│   ├── CCircuit.cpp
-│   ├── CUnit.cpp
-│   ├── CSimulator.cpp
-│   ├── Genetic_Algorithm.cpp
-│   └── main.cpp              # CLI entry point
-├── docs/                     # PDF + Markdown design docs
-├── plotting/                 # **generated** on first run
-│   ├── circuit_results.csv   # GA output (append‑only)
-│   ├── plot.py               # matplotlib helper → png/pdf
-│   └── cplot.cpp             # minimal C++ visualiser (optional)
-├── tests/                    # GoogleTest unit‑tests & CTest driver
-├── rng_examples/             # tiny demos comparing RNG quality
-├── hooks/                    # pre‑commit & install helper for git hooks
-└── parameters.txt            # runtime GA settings (human‑readable)
+├── src/                    # C++ source code
+│   ├── main.cpp            # Entry point and CLI
+│   ├── Genetic_Algorithm.cpp # GA implementation
+│   ├── CSimulator.cpp      # Simulation logic
+│   ├── CCircuit.cpp        # Circuit graph and economic model
+│   └── CUnit.cpp           # Unit operation physics
+├── include/                # Header files
+├── plotting/               # Python visualization tools
+├── tests/                  # Unit tests (GoogleTest)
+├── parameters.txt          # Runtime configuration
+└── CMakeLists.txt          # Build configuration
 ```
 
-> **Tip:** The project builds out‑of‑tree; `build/` is ignored by git.
+### 4. Getting Started
 
----
+#### Prerequisites
+-   **C++ Compiler**: C++17 compliant (GCC, Clang, MSVC).
+-   **CMake**: Version 3.12+.
+-   **Python 3**: For visualization scripts (requires `matplotlib`, `graphviz`, `pandas`).
+-   **OpenMP**: Recommended for parallel execution.
 
-## 3  Build & run
+#### Build and Run
+The project uses a `Makefile` wrapper for CMake.
 
-### 3.1 Prerequisites
+1.  **Build the optimizer**:
+    ```bash
+    make build
+    ```
 
-| Tool                       | Minimum        | Tested on                   |
-| -------------------------- | -------------- | --------------------------- |
-| **CMake**                  | 3.12           | 3.27                        |
-| **C++ compiler**           | C++17 + OpenMP | GCC 9, Clang 14, MSVC 19.36 |
-| **Python (visualisation)** | 3.8            | 3.11                        |
+2.  **Run the optimization**:
+    ```bash
+    make run
+    ```
+    This will compile the code (if needed), run the genetic algorithm, and execute the visualization scripts.
 
-Install Python deps with `pip install -r requirements.txt` (matplotlib + pandas).
+3.  **Run Tests**:
+    ```bash
+    ./run_tests.sh
+    ```
 
-### 3.2  Build
+### 5. Configuration
 
-The project ships with a convenience **Makefile** that wraps the CMake build under the hood.
+The algorithm's behavior can be tuned via `parameters.txt` without recompiling:
 
-```bash
-make build      # configure + compile (Release) to build/
-make clean      # remove the build directory
-```
+-   `mode`: `d` (discrete), `c` (continuous), or `h` (hybrid).
+-   `num_units`: Number of separation units in the circuit.
+-   `population_size`, `max_iterations`: GA hyperparameters.
+-   `mutation_probability`, `crossover_probability`: Evolution rates.
 
-The first invocation generates `build/bin/Optimizer` (and unit‑test binaries).
+### 6. Results & Visualization
 
-### 3.3  Run
+Upon completion, the tool outputs:
+1.  **Console Summary**: Best fitness, circuit vector, and detailed recovery/grade metrics.
+2.  **CSV Log**: `plotting/circuit_results.csv` containing the history of the run.
+3.  **Flowchart**: A visual representation of the best circuit found, generated in `plotting/output/flowchart.png`.
 
-```bash
-make run        # executes the optimiser, plots, appends CSV
-```
+### 7. License
 
-Need more cores? → `OMP_NUM_THREADS=8 make run`
+This project is licensed under the MIT License.
 
-Want a different GA mode? Edit **`parameters.txt`** (`mode = d | h | c`)
-– remember: *continuous‑only (`c`) is dev/test only; it will not yield profitable solutions.*
-
-```bash
-OMP_NUM_THREADS=8 make run        # force 8 OpenMP threads
-MODE=d            make run        # override mode in parameters.txt (d/h/c)
-```
-
-Internally this calls the optimiser and then `plotting/main.py -f` to create `output/flowchart.png`.
-
-> Rendering requires **Graphviz**, **Pillow** and **pandas**; install once with `pip install -r plotting/requirements.txt`.
-
-| Mode | Search dimension treated as variable | Primary purpose |
-|------|--------------------------------------|-----------------|
-| `d`  | **connections** only                 | explore profitable flowsheets |
-| `c`  | **β-volumes** only (connections frozen) – **DEV-ONLY**. ⚠️ This mode does *not* find profitable solutions; it is kept for unit-testing kinetics & cost functions |
-| `h`  | alternates *d* ↔ *c*                 | end-to-end optimisation |
-
----
-
-## 4  `parameters.txt` — full reference
-
-Every run-time option is in `parameters.txt` so you can tune the optimiser without recompiling.
-
-| Key                         | Type / Range      | Default      | Description                                                       |
-| --------------------------- | ----------------- | ------------ | ----------------------------------------------------------------- |
-| **num\_units**              | integer ≥ 2       | 10            | Number of separation units *(vector length = 2·n + 1)*            |
-| **mode**                    | `d` \| `c` \| `h` | `h`          | GA operating mode: discrete, continuous (**dev‑only**), or hybrid |
-| **max\_iterations**         | integer           | 100          | GA generations per optimisation call                              |
-| **population\_size**        | integer           | 600          | Individuals per generation                                        |
-| **elite\_count**            | integer           | 2            | Best genomes copied unchanged each generation                     |
-| **tournament\_size**        | integer           | 3            | k‑way tournament selection pressure                               |
-| **crossover\_probability**  | 0–1               | 0.8          | Chance two parents cross                                          |
-| **mutation\_probability**   | 0–1               | 0.05         | Per‑gene mutation chance (all modes)                              |
-| **mutation\_step\_size**    | integer ≥ 1       | 3            | Max ± step for discrete "creep"                                   |
-| **use\_inversion**          | bool              | true         | Enable contiguous slice reversal (discrete)                       |
-| **inversion\_probability**  | 0–1               | 0.2          | Chance *per child* that inversion occurs                          |
-| **use\_scaling\_mutation**  | bool              | true         | Enable multiplicative tweak for β genes                           |
-| **scaling\_mutation\_prob** | 0–1               | 0.3          | Probability a child gets scaling mutation                         |
-| **scaling\_mutation\_min**  | >0                | 0.7          | Lower bound of scaling factor                                     |
-| **scaling\_mutation\_max**  | >1                | 1.3          | Upper bound of scaling factor                                     |
-| **convergence\_threshold**  | real ≥ 0          | 0.1          | Δfitness below which a change is deemed “no improvement”          |
-| **stall\_generations**      | integer           | 50           | Stop if no improvement for this many generations                  |
-| **verbose**                 | bool              | true         | Print progress every 10 generations                               |
-| **log\_results**            | bool              | false        | Append CSV copy of every generation to `log_file`                 |
-| **log\_file**               | filename          | `ga_run.log` | Only used if `log_results = true`                                 |
-| **random\_seed**            | integer \| −1     | 42           | ≥ 0 → deterministic RNG, −1 → random seed                         |
-
-> **Tip:** change a value, save the file, re‑run `./run.sh` — no rebuild is needed.
-
----
-
-## 5  Interpreting output  Analysing results
-
-### 5  Analysing results
-
-#### 5.1 CSV format
-
-Every optimiser run appends to `plotting/circuit_results.csv`:
-
-```
-[int vector …] , [Σ concentration flow/unit , Σ tailings flow/unit , …]
-```
-
-#### 5.2 Auto‑generated flowchart
-
-Running `./run.sh` (or `python plotting/main.py -f`) produces `output/flowchart.png`:
-
-* directed graph of the circuit with blue/red edge labels (concentrate / tails flow)
-* beneath it: a table showing the integer vector laid out by unit
-
-Open the PNG directly, or embed it in documentation.
-
----
-
-## 6  Developers’ guide
-
-* **Unit kinetics** – edit `src/CUnit.cpp` (`CUnit::process`).
-* **Economic model** – tune coefficients in `src/CCircuit.cpp` (`get_economic_value`).
-* **GA extensions** – new operators live in `src/Genetic_Algorithm.cpp` (see the three `optimize` overloads).
-* **Unit tests** – add cases in `tests/`; they build and run automatically with `./build.sh test` or `ctest`.
-* **Git hooks** – `hooks/install.sh` installs clang‑format, static‑analysis and pre‑commit checks.
----
-
-## 7. Notes
-
-The tests currently run only in the workflow for some reason in the final version they werre not run on local, but if you check the workflow they all pass! Work needed to fix that.
-
----
-
-## 8.  Licence & citation
-
-The code is released under the **MIT Licence** (see `LICENSE`).
-
----
-
-
-
-*Happy circuit hunting!* 🚀
